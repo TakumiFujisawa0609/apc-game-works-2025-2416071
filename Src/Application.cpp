@@ -25,6 +25,7 @@ void Application::Init(void)
 {
 
 	// アプリケーションの初期設定
+	// ウィンドウタイトル
 	SetWindowText("3DWorld");
 
 	// ウィンドウサイズ
