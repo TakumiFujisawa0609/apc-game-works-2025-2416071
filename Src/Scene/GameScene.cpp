@@ -5,6 +5,7 @@
 #include "../Object/Grid.h"
 #include "../Manager/Camera.h"
 #include "../Object/Stage/StageManager.h"
+#include "../Object/Player/PlayerManager.h"
 #include "GameScene.h"
 
 GameScene::GameScene()
@@ -30,15 +31,38 @@ void GameScene::Init()
 	grid_ = new Grid();
 	grid_->Init();
 
+	// プレイヤーマネージャー初期化
+	playerManager_ = new PlayerManager();
+	playerManager_->InitAllPlayers();
+
 }
 
 void GameScene::Update()
 {
+	InputManager& ins = InputManager::GetInstance();
+
 	// グリッド更新
 	grid_->Update();
 
+	// プレイヤーの人数を取得
+	playerNum_ = SceneManager::GetInstance().GetPlayerNum() + 1;
+
+	// プレイヤー更新
+
+	if (playerNum_ == 1)
+	{
+		playerManager_->CreatePlayer(CharacterType::Player_1, 0);
+		playerNum_ = 1;
+	}
+	else if (playerNum_ == 2)
+	{
+		playerManager_->CreatePlayer(CharacterType::Player_1, 0);
+		playerManager_->CreatePlayer(CharacterType::Player_2, 1);
+		playerNum_ = 2;
+	}
+
 	// シーン遷移
-	InputManager& ins = InputManager::GetInstance();
+	
 	if (ins.IsTrgDown(KEY_INPUT_SPACE))
 	{
 		// 実装後にデバッグをすること。
@@ -51,6 +75,9 @@ void GameScene::Draw()
 {
 	// グリッド描画
 	grid_->Draw();
+
+	// プレイヤー描画
+	playerManager_->DrawAllPlayers();
 
 	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "Game Scene");
 

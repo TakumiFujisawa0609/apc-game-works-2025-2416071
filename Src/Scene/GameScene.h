@@ -2,6 +2,7 @@
 #include "SceneBase.h"
 class Grid;
 class StageManager;
+class PlayerManager;
 
 class GameScene : public SceneBase
 {
@@ -38,6 +39,9 @@ private:
 
 	// ステージのオブジェクト
 	StageManager* stage_;
+
+	// プレイヤーマネージャー
+	PlayerManager* playerManager_;
 
 	
 
