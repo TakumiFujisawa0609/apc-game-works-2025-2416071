@@ -16,6 +16,7 @@ bld/
 
 # Visual Studio cache / temporary files
 .vs/
+log.txt
 *.suo
 *.user
 *.userosscache
