@@ -16,4 +16,24 @@ public:
 	void Draw(void);
 	std::string GetCharacterName(void) const override { return "Player_1"; }
 
+protected:
+
+	void UpdateMove(void) ;
+
+
+private:
+
+	// プレイヤーの情報
+	VECTOR pos_;
+
+	// 角度
+	float radius_;
+
+	// 高さ
+	float height_;
+
+	// 速さ
+	float speed_;
+
+
 };
