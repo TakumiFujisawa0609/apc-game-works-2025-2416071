@@ -1,8 +1,11 @@
 #pragma once
 #include "SceneBase.h"
+//#include "../Object/Stage/Stage.h" 
+
 class Grid;
 class StageManager;
 class PlayerManager;
+class Stage;
 
 class GameScene : public SceneBase
 {
@@ -43,7 +46,7 @@ private:
 	// プレイヤーマネージャー
 	PlayerManager* playerManager_;
 
-	
+	// ステージ
+	Stage* stageObj_;
 
 };
-

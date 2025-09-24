@@ -137,6 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\Object\Player\Player_3.cpp" />
+    <ClCompile Include="Src\Object\Player\Player_4.cpp" />
     <ClCompile Include="Src\Object\Player\Player_2.cpp" />
     <ClCompile Include="Src\Object\Player\Player_1.cpp" />
     <ClCompile Include="Src\Object\Player\Player.cpp" />
@@ -159,9 +161,11 @@
     <ClCompile Include="Src\Scene\TitleScene.cpp" />
     <ClCompile Include="Src\Common\Vector2.cpp" />
     <ClCompile Include="Src\Object\Stage\StageManager.cpp" />
-    <ClCompile Include="Src\Object\Stage\Stage_1.cpp" />
+    <ClCompile Include="Src\Object\Stage\Stage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Src\Object\Player\Player_3.h" />
+    <ClInclude Include="Src\Object\Player\Player_4.h" />
     <ClInclude Include="Src\Object\Player\Player_2.h" />
     <ClInclude Include="Src\Object\Player\Player_1.h" />
     <ClInclude Include="Src\Object\Player\Player.h" />
@@ -183,7 +187,7 @@
     <ClInclude Include="Src\Scene\TitleScene.h" />
     <ClInclude Include="Src\Common\Vector2.h" />
     <ClInclude Include="Src\Object\Stage\StageManager.h" />
-    <ClInclude Include="Src\Object\Stage\Stage_1.h" />
+    <ClInclude Include="Src\Object\Stage\Stage.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Data\Image\Background.png" />
