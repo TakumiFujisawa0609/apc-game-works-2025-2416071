@@ -11,8 +11,8 @@
 
 GameScene::GameScene()
 {
-	// ぬるぽ
 	grid_ = nullptr;
+	playerManager_ = nullptr;
 }
 
 GameScene::~GameScene()
@@ -21,9 +21,9 @@ GameScene::~GameScene()
 
 void GameScene::Init()
 {
-	// いったんカメラを固定にする
+	// カメラを固定
 	Camera* camera = SceneManager::GetInstance().GetCamera();
-	camera->ChangeMode(Camera::MODE::FREE);
+	camera->ChangeMode(Camera::MODE::FIXED_POINT);
 
 	// プレイヤー人数取得
 	playerNum_ = SceneManager::GetInstance().GetPlayerNum() + 1;
@@ -33,13 +33,19 @@ void GameScene::Init()
 	grid_->Init();
 
 	// ステージ初期化
-	stageObj_ = new Stage();
-	stageObj_->Init();
+	stage_.Init();
 
 	// プレイヤーマネージャー初期化
 	playerManager_ = new PlayerManager();
-	playerManager_->InitAllPlayers();
 
+	// プレイヤー生成
+	if (playerNum_ >= 1) playerManager_->CreatePlayer(CharacterType::Player_1, 0);
+	if (playerNum_ >= 2) playerManager_->CreatePlayer(CharacterType::Player_2, 1);
+	if (playerNum_ >= 3) playerManager_->CreatePlayer(CharacterType::Player_3, 2);
+	if (playerNum_ >= 4) playerManager_->CreatePlayer(CharacterType::Player_4, 3);
+
+	// プレイヤー初期化
+	playerManager_->InitAllPlayers();
 }
 
 void GameScene::Update()
@@ -49,44 +55,15 @@ void GameScene::Update()
 	// グリッド更新
 	grid_->Update();
 
-	// プレイヤーの人数を取得
-	playerNum_ = SceneManager::GetInstance().GetPlayerNum() + 1;
-
 	// プレイヤー更新
+	playerManager_->UpdateAllPlayers(stage_);
 
-	if (playerNum_ == 1)
-	{
-		playerManager_->CreatePlayer(CharacterType::Player_1, 0);
-		playerNum_ = 1;
-	}
-	else if (playerNum_ == 2)
-	{
-		playerManager_->CreatePlayer(CharacterType::Player_1, 0);
-		playerManager_->CreatePlayer(CharacterType::Player_2, 1);
-		playerNum_ = 2;
-	}
-	else if (playerNum_ == 3)
-	{
-		playerManager_->CreatePlayer(CharacterType::Player_1, 0);
-		playerManager_->CreatePlayer(CharacterType::Player_2, 1);
-		playerManager_->CreatePlayer(CharacterType::Player_3, 2);
-		playerNum_ = 3;
-	}
-	else if (playerNum_ == 4)
-	{
-		playerManager_->CreatePlayer(CharacterType::Player_1, 0);
-		playerManager_->CreatePlayer(CharacterType::Player_2, 1);
-		playerManager_->CreatePlayer(CharacterType::Player_3, 2);
-		playerManager_->CreatePlayer(CharacterType::Player_4, 3);
-		playerNum_ = 4;
-	}
+	// ステージ更新
+	stage_.Update();
 
-	// シーン遷移
-	
+	// シーン遷移（デバッグ用）
 	if (ins.IsTrgDown(KEY_INPUT_SPACE))
 	{
-		// 実装後にデバッグをすること。
-		// 例外スロー起きます
 		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
 	}
 }
@@ -100,34 +77,31 @@ void GameScene::Draw()
 	playerManager_->DrawAllPlayers();
 
 	// ステージ描画
-	stageObj_->Draw();
-
-	
+	stage_.Draw();
 
 	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "Game Scene");
-
-	// 背景色の水色は絶対に見せてはならないので、背景画像は描画必須
 }
 
 void GameScene::Draw3D()
 {
-	// 3D描画
-	DrawSphere3D({ 0.f, 100.f, 0.f }, 50.f, 32, GetColor(255, 0, 0),0xFF00FF,FALSE);
-
-	
-
-	// ステートパターンでキャラクターを描画
-	// ステージもステートパターンで描画
-
+	// 3D描画例（デバッグ）
+	DrawSphere3D({ 0.f, 100.f, 0.f }, 50.f, 32, GetColor(255, 0, 0), 0xFF00FF, FALSE);
 }
 
 void GameScene::Release()
 {
-	// グリッド解放
-	grid_->Release();
-	delete grid_;
+	if (grid_)
+	{
+		grid_->Release();
+		delete grid_;
+		grid_ = nullptr;
+	}
 
-	// ステージ解放
-	stageObj_->Release();
-	delete stageObj_;
+	stage_.Release();
+
+	if (playerManager_)
+	{
+		delete playerManager_;
+		playerManager_ = nullptr;
+	}
 }

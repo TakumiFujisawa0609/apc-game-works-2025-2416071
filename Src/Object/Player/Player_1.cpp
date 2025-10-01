@@ -1,84 +1,82 @@
 #include "Player_1.h"
-#include <DxLib.h>
+
+constexpr float GROUND_Y = 1.0f;
 
 void Player_1::Init(void)
 {
-
+    modelId_ = MV1LoadModel("Data/Model/Player/testModel.mv1");
+    pos_ = VGet(0.0f, 100.0f, 0.0f);
+    radius_ = 1.0f;
+    height_ = 2.0f;
+    speed_ = 10.2f;
+    velY_ = 0.0f;
+    isOnGround_ = false;
 }
 
 void Player_1::Update(void)
 {
-	// コントローラの状態を取得
-
-}
-void Player_1::Attack(void)
-{
-	//攻撃処理
+    UpdateMove();
 }
 
 void Player_1::Draw(void)
 {
-	// デバッグ
-	DrawFormatString(400, 0, GetColor(255, 255, 255), "Player_1");
+    // モデルを描画
+    MV1SetPosition(modelId_, pos_);
+    MV1SetScale(modelId_, VGet(1.0f, 1.0f, 1.0f));
+    MV1DrawModel(modelId_);
+
+    // プレイヤーの識別表示
+    DrawFormatString(600, 20, GetColor(255, 255, 255), "Player_1");
+
+    // プレイヤーの位置をデバッグ表示
+    DrawFormatString(0, 40, GetColor(255, 255, 255), "Player_1 Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);
+    // プレイヤーの大きさ
+    DrawFormatString(0, 60, GetColor(255, 255, 255), "Player_1 Size: Radius(%.1f) Height(%.1f)", radius_, height_);
+
 
 }
 
-// プレイヤーの情報
-VECTOR playerPos = VGet(0.0f, 200.0f, 0.0f); // 中心（腰あたり）
-float radius = 20.0f;   // 当たり判定の半径
-float height = 80.0f;   // プレイヤーの高さ
-float speed = 5.0f;
-
-void UpdatePlayer(int stageModelId)
+void Player_1::Release(void)
 {
-    VECTOR move = VGet(0.0f, 0.0f, 0.0f);
-
-    // 入力による移動方向
-    if (CheckHitKey(KEY_INPUT_W)) move.z -= 1.0f;
-    if (CheckHitKey(KEY_INPUT_S)) move.z += 1.0f;
-    if (CheckHitKey(KEY_INPUT_A)) move.x -= 1.0f;
-    if (CheckHitKey(KEY_INPUT_D)) move.x += 1.0f;
-
-    // 正規化して速度をかける
-    if (move.x != 0.0f || move.z != 0.0f)
-    {
-        move = VNorm(move);
-        move = VScale(move, speed);
-    }
-
-    // 移動後の座標を仮計算
-    VECTOR nextPos = VAdd(playerPos, move);
-
-    // ---- カプセルで衝突判定 ----
-    VECTOR capsuleStart = VAdd(nextPos, VGet(0.0f, -height / 2, 0.0f)); // 足元
-    VECTOR capsuleEnd = VAdd(nextPos, VGet(0.0f, height / 2, 0.0f)); // 頭
-
-    MV1_COLL_RESULT_POLY result = MV1CollCheck_Capsule(
-        stageModelId, -1,
-        capsuleStart, capsuleEnd, radius
-    );
-
-    if (result.HitFlag == TRUE)
-    {
-        // めり込んだら押し戻す
-        nextPos = VAdd(nextPos, VScale(result.Normal, result.Dist));
-    }
-
-    // ---- 足元をレイキャストして地面に立たせる ----
-    VECTOR start = nextPos;
-    VECTOR end = VAdd(nextPos, VGet(0.0f, -1000.0f, 0.0f));
-
-    MV1_COLL_RESULT_POLY ground = MV1CollCheck_Line(stageModelId, -1, start, end);
-    if (ground.HitFlag == TRUE)
-    {
-        nextPos.y = ground.HitPosition.y + height / 2.0f; // 足元を地面に
-    }
-
-    // 更新
-    playerPos = nextPos;
-
-    // 判定メモリ解放
-    MV1CollResultPolyDimTerminate(result);
-    MV1CollResultPolyDimTerminate(ground);
+    MV1DeleteModel(modelId_);
 }
 
+void Player_1::UpdateMove(void)
+{
+    // 横移動
+    if (CheckHitKey(KEY_INPUT_UP))    pos_.z += speed_;
+    if (CheckHitKey(KEY_INPUT_DOWN))  pos_.z -= speed_;
+    if (CheckHitKey(KEY_INPUT_LEFT))  pos_.x -= speed_;
+    if (CheckHitKey(KEY_INPUT_RIGHT)) pos_.x += speed_;
+
+    // ジャンプ処理
+    if (CheckHitKey(KEY_INPUT_1) && isOnGround_)
+    {
+        velY_ = 0.3f; // ジャンプ初速度
+        isOnGround_ = false;
+    }
+
+    // 重力
+    velY_ += gravity_;
+    pos_.y += velY_;
+
+    // --- 地面との当たり判定 ---
+    // プレイヤーの底面が地面より下に行ったら補正
+    float playerBottom = pos_.y - height_ / 2.0f;
+    if (playerBottom < GROUND_Y)
+    {
+        pos_.y = GROUND_Y + height_ / 2.0f;
+        velY_ = 0.0f;
+        isOnGround_ = true;
+    }
+    else
+    {
+        isOnGround_ = false;
+    }
+}
+
+void Player_1::Attack(void)
+{
+    // 攻撃処理をここに実装
+    std::cout << "Player_1 Attack!" << std::endl;
+}

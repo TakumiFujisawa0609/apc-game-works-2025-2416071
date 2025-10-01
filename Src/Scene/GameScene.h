@@ -1,6 +1,6 @@
 #pragma once
 #include "SceneBase.h"
-//#include "../Object/Stage/Stage.h" 
+#include "../Object/Stage/Stage.h" 
 
 class Grid;
 class StageManager;
@@ -40,13 +40,10 @@ private:
 	// グリッド線
 	Grid* grid_;
 
-	// ステージのオブジェクト
-	StageManager* stage_;
-
 	// プレイヤーマネージャー
 	PlayerManager* playerManager_;
 
 	// ステージ
-	Stage* stageObj_;
+	Stage& stage_ = Stage::GetInstance();
 
 };

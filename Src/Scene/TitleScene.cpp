@@ -46,6 +46,10 @@ void TitleScene::Update(void)
 	{
 		scene.ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
 	}
+	else if(ins.IsTrgDown(KEY_INPUT_0))
+	{
+		scene.ChangeScene(SceneManager::SCENE_ID::GAME);
+	}
 
 }
 

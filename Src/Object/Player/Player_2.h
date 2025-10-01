@@ -10,7 +10,8 @@ public:
 	void Init(void) override;
 	void Update(void) override;
 	void Attack(void) override;
-	void Draw(void);
+	void Draw(void)override;
+	void Release(void) override;
 	std::string GetCharacterName(void) const override { return "Player_2"; }
 };
 

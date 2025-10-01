@@ -1,27 +1,22 @@
 #include "Player.h"
 
-
-void Player::Init(void)
+void Player::Init()
 {
 }
 
-void Player::Update(void)
+void Player::Update()
 {
 }
 
-void Player::Draw(void)
-{
-
-}
-
-void Player::Attack(void)
+void Player::Draw()
 {
 }
-	
-std::string Player::GetCharacterName(void) const
+
+void Player::Attack()
 {
-	return "Player";
 }
 
-// ステートメントは後ほど実装
+void Player::Release()
+{
+}
 

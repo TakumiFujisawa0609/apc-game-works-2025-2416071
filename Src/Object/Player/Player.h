@@ -1,37 +1,41 @@
 #pragma once
 #include <string>
+#include <DxLib.h>
 
-// プレイヤークラス(基底クラス)
 class Player
 {
-protected:
 
-	// 操作するコントローラID
-	int ctrlId_;
 
 public:
 
-	// コンストラクタ
-	Player(int id) : ctrlId_(id) {}		// コントローラIDをセット
+    Player(int id) : ctrlId_(id), pos_(VGet(0, 0, 0)), radius_(1), height_(2), speed_(0) {}
+    virtual ~Player() = default;
 
-	// デストラクタ
-	virtual ~Player() = default;
 
-	// 純粋仮想関数でクラス設計実施
+    virtual void Init();
+    virtual void Update();
+    virtual void Draw();
+    virtual void Attack();
+    virtual void Release();
 
-	// 初期化処理
-	virtual void Init(void) = 0;
+    // 座標操作
+    VECTOR GetPos() const { return pos_; }
+    void SetPos(const VECTOR& v) { pos_ = v; }
+    float GetRadius() const { return radius_; }
+    float GetHeight() const { return height_; }
 
-	// 更新処理
-	virtual void Update(void) = 0;
+    // キャラクター名取得
+    virtual std::string GetCharacterName() const = 0;
 
-	virtual void Draw(void) = 0;
+	// プレイヤーID取得
+	int GetID() const { return ctrlId_; }
 
-	// 攻撃処理
-	virtual void Attack(void) = 0;
+protected:
+    VECTOR pos_;
+    float radius_;
+    float height_;
+    float speed_;
+    int modelId_;
+    int ctrlId_; // コントローラーID
 
-	// ステートメントは後ほど実装
-
-	// character名を取得
-	virtual std::string GetCharacterName(void) const = 0;
 };
