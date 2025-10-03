@@ -11,7 +11,7 @@ public:
 	void Update(void) override;
 	void Attack(void) override;
 	void Draw(void)override;
-	void Release(void) override;
+	void Release(void) ;
 	std::string GetCharacterName(void) const override { return "Player_2"; }
 };
 

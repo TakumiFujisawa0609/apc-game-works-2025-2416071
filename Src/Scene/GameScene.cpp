@@ -23,7 +23,7 @@ void GameScene::Init()
 {
 	// カメラを固定
 	Camera* camera = SceneManager::GetInstance().GetCamera();
-	camera->ChangeMode(Camera::MODE::FIXED_POINT);
+	camera->ChangeMode(Camera::MODE::FREE);
 
 	// プレイヤー人数取得
 	playerNum_ = SceneManager::GetInstance().GetPlayerNum() + 1;
