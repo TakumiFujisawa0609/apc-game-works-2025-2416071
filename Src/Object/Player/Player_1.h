@@ -3,10 +3,12 @@
 #include <DxLib.h>
 #include <iostream>
 
+
 class Player_1 : public Player
 {
 public:
-    Player_1(int id) : Player(id) {}
+    Player_1(int id, float weight = 1.0f)
+        : Player(id, weight) {} // 基底コンストラクタ呼び出し
 
     void Init() override;
     void Update() override;
@@ -18,3 +20,5 @@ public:
 private:
     int modelId_;
 };
+
+

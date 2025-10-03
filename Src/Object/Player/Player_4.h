@@ -5,7 +5,10 @@ class Player_4 :
 {
 public:
 	// コンストラクタ
-	Player_4(int id) :Player(id) {}
+	Player_4(int id, float weight = 1.0f)
+		: Player(id, weight) {
+	}  // 基底クラスのコンストラクタに渡す
+
 	// 基底クラスの仮想関数をオーバーライド
 	void Init(void) override;
 	void Update(void) override;

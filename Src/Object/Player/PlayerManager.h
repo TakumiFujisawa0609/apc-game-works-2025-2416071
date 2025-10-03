@@ -16,8 +16,15 @@ enum class CharacterType
 class PlayerManager
 {
 public:
-    PlayerManager() = default;
-    ~PlayerManager() = default;
+   
+
+    // 明示的なインスタンスを生成
+    static void CreateInstance(void);
+    // インスタンスを取得
+    static PlayerManager& GetInstance(void);
+
+    // 初期化
+	void Init(void);
 
     // プレイヤー生成
     void CreatePlayer(CharacterType type, int id);
@@ -40,12 +47,25 @@ public:
 	// ステージとの当たり判定
 	void CheckCollWithStage(Stage& stage);
 
+
+
 	// ステージローカル座標に変換
 	static VECTOR TransformToStageLocal(const VECTOR& worldPos, const Stage& stage);
 
 	// ワールド座標に変換
     static VECTOR TransformToWorldPos(const VECTOR& local, const Stage& stage);
 
+    std::vector<Player*> GetPlayerRawPlayers() const;
+
 private:
+
+    PlayerManager();
+	~PlayerManager();
+
+
+    // インスタンス
+    static PlayerManager* instance_;
+
+
     std::vector<std::shared_ptr<Player>> players_;
 };

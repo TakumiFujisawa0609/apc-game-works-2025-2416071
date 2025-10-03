@@ -36,7 +36,7 @@ void GameScene::Init()
 	stage_.Init();
 
 	// プレイヤーマネージャー初期化
-	playerManager_ = new PlayerManager();
+	playerManager_ = &PlayerManager::GetInstance();
 
 	// プレイヤー生成
 	if (playerNum_ >= 1) playerManager_->CreatePlayer(CharacterType::Player_1, 0);
@@ -101,7 +101,7 @@ void GameScene::Release()
 
 	if (playerManager_)
 	{
-		delete playerManager_;
+		playerManager_->ClearPlayers();
 		playerManager_ = nullptr;
 	}
 }

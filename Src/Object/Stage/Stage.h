@@ -20,6 +20,8 @@ public:
 	// ステージの初期座標
 	static constexpr VECTOR DEFAULT_POS = { 0.0f, -750.0f, 0.0f };
 
+
+
 	 // 明示的なインスタンスを生成
 	static void CreateInstance(void);
 	// インスタンスを取得
@@ -34,6 +36,9 @@ public:
 
 	// 解放処理
 	 void Release(void) ;
+
+	 // モデルID取得
+	 int GetModelID(void) const { return modelId_; }
 
 	// パラメータ
 	void SetParam(int playerNum);
@@ -51,6 +56,15 @@ public:
 
 	// コライダー取得
 	const CylinderCollider& GetCollider() const { return cylinder_; }
+
+	// プレイヤーの頭上から真下にレイを飛ばしてステージに当たるか
+	float RayGroundHeight(const VECTOR& pos);
+
+	// ステージの重心
+	void UpdateTilt(const std::vector<Player*>& players);
+
+	// 地面計算
+	float GetGroundHeight(const VECTOR& pos);
 
 private:
 

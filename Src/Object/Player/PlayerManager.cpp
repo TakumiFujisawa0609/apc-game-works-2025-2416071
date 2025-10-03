@@ -7,6 +7,42 @@
 #include "Player.h"
 #include <DxLib.h>
 
+PlayerManager* PlayerManager::instance_ = nullptr;
+
+
+PlayerManager::PlayerManager()
+{
+}
+
+PlayerManager::~PlayerManager()
+{
+}
+
+
+void PlayerManager::CreateInstance(void)
+{
+    if (instance_ == nullptr)
+    {
+        instance_ = new PlayerManager();
+    }
+    instance_->Init();
+}
+
+PlayerManager& PlayerManager::GetInstance(void)
+{
+    if (instance_ == nullptr)
+    {
+        PlayerManager::CreateInstance();
+    }
+    return *instance_;
+}
+
+void PlayerManager::Init(void)
+{
+	players_.clear();
+}
+
+
 void PlayerManager::CreatePlayer(CharacterType type, int id)
 {
     // 同じIDのプレイヤーが既に存在するかチェック
@@ -103,30 +139,49 @@ VECTOR PlayerManager::TransformToWorldPos(const VECTOR& local, const Stage& stag
 	return worldPos;
 }
 
+std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
+{
+	std::vector<Player*> rawPlayers; 
+	for (const auto& player : players_)
+	{
+		rawPlayers.push_back(player.get());
+	}
+	return rawPlayers;
+}
+
+
 
 void PlayerManager::CheckCollWithStage(Stage& stage)
 {
-	const CylinderCollider& col = stage.GetCollider();
-	for (auto& player : players_)
-	{
-		VECTOR pos = player->GetPos();
-		float r = player->GetRadius();
-		float h = player->GetHeight();
-		// XZ平面での距離
-		float dx = pos.x - col.center.x;
-		float dz = pos.z - col.center.z;
-		float dist = sqrtf(dx * dx + dz * dz);
-		if (dist + r > col.radius)
-		{
-			// 円柱の外に出そうなら押し戻す
-			float push = col.radius - r;
-			float angle = atan2f(dz, dx);
-			pos.x = col.center.x + push * cosf(angle);
-			pos.z = col.center.z + push * sinf(angle);
-		}
-		// Y軸制御（床・天井）
-		if (pos.y - h / 2 < col.yMin) pos.y = col.yMin + h / 2;
-		if (pos.y + h / 2 > col.yMax) pos.y = col.yMax - h / 2;
-		player->SetPos(pos);
-	}
+    for (auto& player : players_)
+    {
+        VECTOR pos = player->GetPos();
+        float r = player->GetRadius();
+        float h = player->GetHeight();
+
+        // XZ制限（円柱）
+        const CylinderCollider& col = stage.GetCollider();
+        float dx = pos.x - col.center.x;
+        float dz = pos.z - col.center.z;
+        float dist = sqrtf(dx * dx + dz * dz);
+        if (dist + r > col.radius)
+        {
+            float push = col.radius - r;
+            float angle = atan2f(dz, dx);
+            pos.x = col.center.x + push * cosf(angle);
+            pos.z = col.center.z + push * sinf(angle);
+        }
+
+        // レイを飛ばして接地
+        VECTOR from = VGet(pos.x, pos.y + 1000.0f, pos.z);
+        VECTOR to = VGet(pos.x, pos.y - 1000.0f, pos.z);
+        MV1_COLL_RESULT_POLY result = MV1CollCheck_Line(stage.GetModelID(), -1, from, to);
+
+        if (result.HitFlag)
+        {
+            pos.y = result.HitPosition.y + h / 2.0f; // 足元を接地
+        }
+
+        player->SetPos(pos);
+    }
 }
