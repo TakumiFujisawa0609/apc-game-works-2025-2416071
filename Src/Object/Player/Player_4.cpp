@@ -9,10 +9,6 @@ void Player_4::Update(void)
 {
 }
 
-void Player_4::Attack(void)
-{
-}
-
 void Player_4::Draw(void)
 {
 	// デバッグ

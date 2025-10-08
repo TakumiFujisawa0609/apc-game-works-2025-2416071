@@ -1,92 +1,71 @@
 #pragma once
 #include <DxLib.h>
-#include "../../Utility/AsoUtility.h"
+#include <vector>
+#include <algorithm>
 
 class Player;
 
 struct CylinderCollider
 {
-	VECTOR center; // XZ座標の中心
-	float radius;  // 円の半径
-	float yMin;    // 床
-	float yMax;    // 天井
+	VECTOR center;	// 中心位置
+	float radius;	// 半径
+	float yMin;     // Yの最小値
+	float yMax;		// Yの最大値
 };
 
-
-class Stage 
+class Stage
 {
-public:
+public: 
+
 	
-	// ステージの初期座標
-	static constexpr VECTOR DEFAULT_POS = { 0.0f, -750.0f, 0.0f };
+	static void CreateInstance();
+	static Stage& GetInstance();
 
+	// 基本処理
+	void Init();
+	void Update();
+	void Draw();
+	void Release();
 
+	// モデルID
+	int GetModelId() const { return modelId_; }
 
-	 // 明示的なインスタンスを生成
-	static void CreateInstance(void);
-	// インスタンスを取得
-	static Stage& GetInstance(void);
+	// ステージの位置・角度・スケール
+	const VECTOR& GetPos() const { return pos_; }
+	const VECTOR& GetAngle() const { return angle_; }
+	const VECTOR& GetScale() const { return scale_; }
 
-	// 初期化処理
-	 void Init(void) ;
-	// 更新ステップ
-	 void Update(void) ;
-	// 描画処理
-	 void Draw(void);
+	// ステージの傾き更新（プレイヤーの位置に応じて傾く）
+	const CylinderCollider& GetCollider() const { return collider_; }
 
-	// 解放処理
-	 void Release(void) ;
-
-	 // モデルID取得
-	 int GetModelID(void) const { return modelId_; }
-
-	// パラメータ
-	void SetParam(int playerNum);
-
-	// アングル
-	void SetAngle(const VECTOR& angle) { angle_ = angle; }
-
-	VECTOR GetAngle() const { return angle_; }
-
-	// ステージの位置取得
-	VECTOR GetPos() const { return pos_; }
-
-	// ステージの当たり判定
-	bool IsInsideStage(const VECTOR& pos) const;
-
-	// コライダー取得
-	const CylinderCollider& GetCollider() const { return cylinder_; }
-
-	// プレイヤーの頭上から真下にレイを飛ばしてステージに当たるか
-	float RayGroundHeight(const VECTOR& pos);
-
-	// ステージの重心
 	void UpdateTilt(const std::vector<Player*>& players);
+	float GetGroundHeight(const VECTOR& pos) const;
 
-	// 地面計算
-	float GetGroundHeight(const VECTOR& pos);
+	// playerがステージ内にいるか判定
+	bool IsPlayerOnStage(const VECTOR& playerPos) const;
 
 private:
 
-	// コンストラクタ
-	Stage(void);
-	// デストラクタ
-	~Stage(void);
+	// コンストラクタ・デストラクタ
+	Stage();
+	~Stage();
 
-	// ステージモデル(3D)
-	int modelId_;
-
-	// 大きさ、角度、向き
-	VECTOR scale_, angle_, pos_;
-
-	// インスタンス
 	static Stage* instance_;
 
-	// プレイヤーのインスタンスを取得
-	Player* player_;
+	int modelId_;			// ステージのモデルID
+	VECTOR pos_;			// ステージの位置
+	VECTOR angle_;			// ステージの角度
+	VECTOR scale_;			// ステージのスケール
+	CylinderCollider collider_; // ステージの当たり判定（円柱）
 
-	// コライダー情報
-	CylinderCollider cylinder_;
+
+	// 物理的な制御用関数
+	VECTOR angularVelocity_; // 角速度
+	float momentOfInertia_; // 慣性モーメント
+	float dampingFactor_; // 減衰係数
+	float restitutionFactor_; // 反発係数
+
+	float maxStageRange_ = 300.0f; // ステージの最大範囲
+
 
 };
-

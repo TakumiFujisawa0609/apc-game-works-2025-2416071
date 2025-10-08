@@ -1,71 +1,67 @@
 #include "Player.h"
+#include "../../Utility/MatrixUtility.h"	// Lerp用
+#include "../../Utility/AsoUtility.h"
+#include "../../Manager/InputManager.h"
+#include "../Stage/Stage.h"
+#include <DxLib.h>
 
-
-void Player::UpdateMove(void)
+Player::Player(int id, float weight)
+	:id_(id), weight_(weight), pos_(AsoUtility::VECTOR_ZERO), moveVec_(AsoUtility::VECTOR_ZERO), speed_(0.0f), modelId_(-1)
 {
-	// InputManagerのインスタンス
-	InputManager& ins = InputManager::GetInstance();
-
-	// 今後、パッドでの移動処理を追加予定
-
-	// キーボード移動
-	if (ins.IsNew(KEY_INPUT_W))    pos_.z += speed_;
-
-	if (ins.IsNew(KEY_INPUT_S))    pos_.z -= speed_;
-
-	if (ins.IsNew(KEY_INPUT_A))    pos_.x -= speed_;
-
-	if (ins.IsNew(KEY_INPUT_D))    pos_.x += speed_;
-
-
-	// 円形コライダー
-	// ステージの円柱コライダーを取得
-	const CylinderCollider& col = Stage::GetInstance().GetCollider();
-
-	// まとめて減算ができないので、XとZを別々に処理
-	float dx = pos_.x - col.center.x;
-	float dz = pos_.z - col.center.z;
-
-	// XZ平面での距離
-	float distXZ = sqrtf(dx * dx + dz * dz);
-
-	// 円柱コライダーの内側にいるか
-	bool isInside = distXZ + radius_ < col.radius;
-
-
-
-	// ジャンプ処理
-	if (ins.IsNew(KEY_INPUT_1) && isOnGround_)
-	{
-		velY_ = jumpPower_;
-		isOnGround_ = false;
-	}
-
-	// 重力処理
-	velY_ += gravity_;
-	pos_.y += velY_;
-
-	// 落下判定
-	if (isInside)
-	{
-		// ステージ内なら地面を補正
-		float groundY = Stage::GetInstance().RayGroundHeight(pos_);
-
-		// 地面より下に行ったら地面に戻す
-		if (pos_.y - height_ / 2.0f < groundY)
-		{
-			pos_.y = groundY + height_ / 2.0f;
-			velY_ = 0.0f;
-			isOnGround_ = true;
-		}
-		else
-		{
-			isOnGround_ = false;
-		}
-	}
-	else
-	{
-		// ステージ外なら補正しない
-		isOnGround_ = false;
-	}
 }
+
+Player::~Player()
+{
+}
+
+void Player::Init()
+{
+	// モデルの読み込み
+	// 派生クラスで実装
+
+	// 変数は初期化
+	moveVec_ = { 0.0f,0.0f,0.0f };
+	speed_ = 15.0f;
+
+}
+
+void Player::Update()
+{
+	// 処理自体は派生クラスで実装
+	Move();
+
+	// ステージの地面に合わせてY座標を補正
+	Stage& stage = Stage::GetInstance();
+	ApplyStageGround(stage);
+}
+
+void Player::Draw()
+{
+	MV1SetPosition(modelId_, pos_);
+	MV1DrawModel(modelId_);
+
+	// デバッグ用に座標に球を描画
+	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
+
+	// 座標に線を描画
+	DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
+
+	// プレイヤー座標を表示
+	DrawFormatString(0, 20 * id_, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_, pos_.x, pos_.y, pos_.z);
+}
+
+
+
+void Player::Move()
+{
+	
+}
+
+void Player::ApplyStageGround(const Stage& stage)
+{
+	// 1. ステージの地面の高さを取得
+	float groundY = stage.GetGroundHeight(pos_);
+
+	pos_.y = MatrixUtility::Lerp(pos_.y, groundY, 0.1f);
+}
+

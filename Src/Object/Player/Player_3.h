@@ -11,9 +11,9 @@ public:
 	// 基底クラスの仮想関数をオーバーライド
 	void Init(void) override;
 	void Update(void) override;
-	void Attack(void) override;
+	//void Attack(void) override;
 	void Draw(void)override;
 	void Release(void) ;
-	std::string GetCharacterName(void) const override { return "Player_3"; }
+	//std::string GetCharacterName(void) const override { return "Player_3"; }
 };
 

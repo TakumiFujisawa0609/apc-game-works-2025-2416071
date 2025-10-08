@@ -1,187 +1,106 @@
-
 #include "PlayerManager.h"
-#include "Player_1.h"
-#include "Player_2.h"
-#include "Player_3.h"
-#include "Player_4.h"
 #include "Player.h"
 #include <DxLib.h>
+#include "Player_1.h"
 
+// 静的メンバ変数の定義
 PlayerManager* PlayerManager::instance_ = nullptr;
 
+// コンストラクタ
+PlayerManager::PlayerManager() {}
 
-PlayerManager::PlayerManager()
-{
+// デストラクタ
+PlayerManager::~PlayerManager() {}
+
+// インスタンス生成
+void PlayerManager::CreateInstance() {
+
+	if (instance_ == nullptr) instance_ = new PlayerManager();
+	instance_->Init();
 }
 
-PlayerManager::~PlayerManager()
+// インスタンス取得
+PlayerManager& PlayerManager::GetInstance()
 {
+	if (instance_ == nullptr) PlayerManager::CreateInstance();
+	return *instance_;
 }
 
-
-void PlayerManager::CreateInstance(void)
+// 初期化
+void PlayerManager::Init()
 {
-    if (instance_ == nullptr)
-    {
-        instance_ = new PlayerManager();
-    }
-    instance_->Init();
+	// プレイヤー配列クリア
+	players_.clear();
 }
 
-PlayerManager& PlayerManager::GetInstance(void)
+// 全プレイヤー初期化
+void PlayerManager::InitAllPlayers()
 {
-    if (instance_ == nullptr)
-    {
-        PlayerManager::CreateInstance();
-    }
-    return *instance_;
+	for (auto& player : players_)
+	{
+		player->Init();
+	}
 }
 
-void PlayerManager::Init(void)
+// プレイヤー生成
+void PlayerManager::CreatePlayer(PlayerType type ,int id, float weight)
+{
+	// 重複防止
+	for (auto& player : players_) {
+		if (player->GetID() == id) return;
+	}
+
+	std::shared_ptr<Player> newPlayer = nullptr;
+
+	switch (type)
+	{
+	case PlayerType::Player_1:
+		newPlayer = std::make_shared<Player_1>(id, weight);
+		break;
+		// 他のプレイヤータイプもここに追加可能
+	default:
+		return; // 未知のタイプの場合は何もしない
+	}
+
+	players_.push_back(newPlayer);
+
+		
+}
+
+// 全プレイヤー更新
+void PlayerManager::UpdatePlayers(Stage& stage)
+{
+	// ステージの傾きを更新
+	stage.UpdateTilt(GetPlayerRawPlayers());
+
+	// 全プレイヤー更新
+	for (auto& player : players_)
+	{
+		player->Update();
+	}
+}
+
+// 全プレイヤー描画
+void PlayerManager::DrawPlayers()
+{
+	for (auto& player : players_)
+	{
+		player->Draw();
+	}
+}
+
+// 全プレイヤー解放
+void PlayerManager::ClearPlayers()
 {
 	players_.clear();
 }
 
-
-void PlayerManager::CreatePlayer(CharacterType type, int id)
-{
-    // 同じIDのプレイヤーが既に存在するかチェック
-    for (auto& player : players_)
-    {
-        if (player->GetID() == id)
-        {
-            return; // 既に存在 → 新しく作らない
-        }
-    }
-
-    switch (type)
-    {
-    case CharacterType::Player_1:
-        players_.emplace_back(std::make_shared<Player_1>(id));
-        break;
-    case CharacterType::Player_2:
-        players_.emplace_back(std::make_shared<Player_2>(id));
-        break;
-    case CharacterType::Player_3:
-        players_.emplace_back(std::make_shared<Player_3>(id));
-        break;
-    case CharacterType::Player_4:
-        players_.emplace_back(std::make_shared<Player_4>(id));
-        break;
-    default:
-        break;
-    }
-}
-
-void PlayerManager::InitAllPlayers(void)
-{
-    for (auto& player : players_)
-    {
-        player->Init();
-    }
-}
-
-void PlayerManager::UpdateAllPlayers(Stage& stage)
-{
-    for (auto& player : players_)
-    {
-        player->Update();
-    }
-	
-	// ステージとの当たり判定
-	CheckCollWithStage(stage);
-}
-
-void PlayerManager::DrawAllPlayers(void)
-{
-    for (auto& player : players_)
-    {
-        player->Draw();
-    }
-}
-
-void PlayerManager::AttackAllPlayers(void)
-{
-    for (auto& player : players_)
-    {
-        player->Attack();
-    }
-}
-
-void PlayerManager::ClearPlayers(void)
-{
-    players_.clear();
-}
-
-VECTOR PlayerManager::TransformToStageLocal(const VECTOR& worldPos, const Stage& stage)
-{
-	VECTOR local = VSub(worldPos, stage.GetPos());
-
-    float angle = -stage.GetAngle().y; // Y軸回転逆
-	float x = local.x * cosf(angle) - local.z * sinf(angle);
-	float z = local.x * sinf(angle) + local.z * cosf(angle);
-
-	local.x = x;
-	local.z = z;
-
-	return local;
-}
-
-
-// ステージローカル座標からワールド座標に変換
-VECTOR PlayerManager::TransformToWorldPos(const VECTOR& local, const Stage& stage)
-{
-	float angle = stage.GetAngle().y; // Y軸回転
-	float x = local.x * cosf(angle) - local.z * sinf(angle);
-	float z = local.x * sinf(angle) + local.z * cosf(angle);
-
-	VECTOR worldPos = VAdd(VGet(x, local.y, z), stage.GetPos());
-	return worldPos;
-}
-
+// 生ポインタの配列を取得
 std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 {
-	std::vector<Player*> rawPlayers; 
-	for (const auto& player : players_)
-	{
-		rawPlayers.push_back(player.get());
-	}
+	std::vector<Player*> rawPlayers;
+	for (auto& p : players_) rawPlayers.push_back(p.get());
 	return rawPlayers;
 }
 
 
-
-void PlayerManager::CheckCollWithStage(Stage& stage)
-{
-    for (auto& player : players_)
-    {
-        VECTOR pos = player->GetPos();
-        float r = player->GetRadius();
-        float h = player->GetHeight();
-
-        // XZ制限（円柱）
-        const CylinderCollider& col = stage.GetCollider();
-        float dx = pos.x - col.center.x;
-        float dz = pos.z - col.center.z;
-        float dist = sqrtf(dx * dx + dz * dz);
-        if (dist + r > col.radius)
-        {
-            float push = col.radius - r;
-            float angle = atan2f(dz, dx);
-            pos.x = col.center.x + push * cosf(angle);
-            pos.z = col.center.z + push * sinf(angle);
-        }
-
-        // レイを飛ばして接地
-        VECTOR from = VGet(pos.x, pos.y + 1000.0f, pos.z);
-        VECTOR to = VGet(pos.x, pos.y - 1000.0f, pos.z);
-        MV1_COLL_RESULT_POLY result = MV1CollCheck_Line(stage.GetModelID(), -1, from, to);
-
-        if (result.HitFlag)
-        {
-            pos.y = result.HitPosition.y + h / 2.0f; // 足元を接地
-        }
-
-        player->SetPos(pos);
-    }
-}

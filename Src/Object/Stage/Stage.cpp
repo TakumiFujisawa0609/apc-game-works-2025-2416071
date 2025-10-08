@@ -1,72 +1,69 @@
 #include "Stage.h"
-#include <DxLib.h>
 #include "../Player/Player.h"
 #include "../Player/PlayerManager.h"
+#include "../../Utility/AsoUtility.h"
+#include <cmath>
 
+// 静的メンバ変数の初期化
 Stage* Stage::instance_ = nullptr;
 
+// コンストラクタ
+Stage::Stage(){}
 
+// デストラクタ
+Stage::~Stage(){}
 
-
-Stage::Stage(void)
+// インスタンス生成
+void Stage::CreateInstance()
 {
+	if (instance_ == nullptr)
+	{
+		instance_ = new Stage();
+	}
 }
 
-Stage::~Stage(void)
+// インスタンス取得
+Stage& Stage::GetInstance()
 {
+	if (!instance_) Stage::CreateInstance();
+	return *instance_;
 }
 
-void Stage::CreateInstance(void)
+// 初期化
+void Stage::Init()
 {
-    if (instance_ == nullptr)
-    {
-        instance_ = new Stage();
-    }
-    instance_->Init();
+	// モデルの読み込み
+	modelId_ = MV1LoadModel("Data/Model/Stage/Stage.mv1");
+
+	// モデルの位置・角度・スケールの設定
+	pos_ = { 0.0f,-750.f,0.0f };
+	angle_ = { 0.0f,0.0f,0.0f };
+	scale_ = { 1.0f,1.0f,1.0f };
+
+	// コライダーの設定
+	collider_.center = pos_;
+	collider_.radius = 300.0f;
+	collider_.yMin = pos_.y; // ステージの下端
+	collider_.yMax = pos_.y + 50000.0f; // ステージの上端
+
+	// 物理制御の初期化
+	angularVelocity_ = AsoUtility::VECTOR_ZERO;
+	momentOfInertia_ = 15000.f; // 慣性モーメント（適当な値）
+	dampingFactor_ = 0.4f; // 角速度の減衰率（適当な値）
+	restitutionFactor_ = 0.4f; // 反発係数（適当な値）
+
 }
 
-Stage& Stage::GetInstance(void)
-{
-    if (instance_ == nullptr)
-    {
-        Stage::CreateInstance();
-    }
-    return *instance_;
-}
-
-void Stage::Init(void)
-{
-    // モデルの読み込み
-    modelId_ = MV1LoadModel("Data/Model/Stage/Stage.mv1");
-
-    if (modelId_ == -1)
-    {
-        DxLib::DxLib_End();
-        exit(-1);
-    }
-
-    pos_ = DEFAULT_POS;
-    angle_ = { 0.0f, 0.0f, 0.0f };
-    scale_ = { 1.0f, 1.0f, 1.0f };
-
-    // 円柱コライダー設定（仮の半径/高さ）
-    cylinder_.center = pos_;
-    cylinder_.radius = 300.0f;
-    cylinder_.yMin = pos_.y;            // 床
-    cylinder_.yMax = pos_.y + 1000.0f;  // 高さ100
-}
-
+// 更新
 void Stage::Update()
 {
-    // PlayerManager から全プレイヤー取得
-    auto players = PlayerManager::GetInstance().GetPlayerRawPlayers(); // 生ポインタ配列
-
-    // プレイヤーの重さに応じて傾きを更新
-    UpdateTilt(players);
+	// 傾きの更新はPlayerManagerから呼び出す
+	/*auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+	UpdateTilt(players);*/
 }
 
-
-void Stage::Draw(void)
+// 描画
+void Stage::Draw()
 {
 	// モデルの描画
 	MV1SetPosition(modelId_, pos_);
@@ -75,95 +72,155 @@ void Stage::Draw(void)
 	MV1DrawModel(modelId_);
 }
 
-void Stage::Release(void)
+// 解放
+void Stage::Release()
 {
-	MV1DeleteModel(modelId_);
+	if (modelId_ != -1)
+	{
+		MV1DeleteModel(modelId_);
+		modelId_ = -1;
+	}
 }
 
-void Stage::SetParam(int playerNum)
-{
-
-}
-
-bool Stage::IsInsideStage(const VECTOR& pos) const
-{
-
-    // 仮でx,zが±500以内ならステージ内とする
-    if (pos.x < 500.0f && pos.x > -500.0f &&
-        pos.z < 500.0f && pos.z > -500.0f)
-    {
-        return true;
-    }
-}
-
-
-float Stage::RayGroundHeight(const VECTOR& pos)
-{
-    MV1_COLL_RESULT_POLY result{};
-
-	// 初期化
-	
-    // プレイヤーの頭上からレイを飛ばす
-    VECTOR from = VGet(pos.x, pos.y + 1000.0f, pos.z);
-	VECTOR to = VGet(pos.x, pos.y - 1000.0f, pos.z);
-
-	// レイの当たり判定
-    MV1CollCheck_Line(modelId_, -1, from, to);
-
-    if (result.HitFlag)  // 当たったかどうか判定
-    {
-		return result.HitPosition.y; // 当たった位置のY座標を返す
-    }
-
-	return 0.0f; // 当たらなかった場合は-1を返す
-}
-
+// プレイヤーの位置に応じてステージを傾ける
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
-    float totalWeight = 0.0f;
-    float weightedX = 0.0f;
-    float weightedZ = 0.0f;
+	// プレイヤーの情報がなければ傾けない
+	if (players.empty()) return;
 
-    for (auto p : players)
-    {
-        float w = p->GetWeight();
-        weightedX += (p->GetPos().x - pos_.x) * w;
-        weightedZ += (p->GetPos().z - pos_.z) * w;
-        totalWeight += w;
-    }
+	// プレイヤーの重さを
 
-    if (totalWeight == 0.0f) return;
+	// プレイヤーの平均位置を計算
+	float totalWeight = 0.0f;
+	float weightedX = 0.0f;
+	float weightedZ = 0.0f;
 
-    float centerX = weightedX / totalWeight;
-    float centerZ = weightedZ / totalWeight;
+	// あらぶり対策
+	bool anyPlayerOnStage = false;
+	VECTOR totalPlayerPos = AsoUtility::VECTOR_ZERO;
 
-    // =========================
-    // プレイヤーがいる側に傾くように符号調整
-    // =========================
-    float tiltFactor = 0.0005f; // 調整用 (小さめにすると自然)
+	for (auto p : players)
+	{
+		if (IsPlayerOnStage(p->GetPos()))
+		{
+			anyPlayerOnStage = true;
+			totalPlayerPos = VAdd(totalPlayerPos, p->GetPos());
+		}
+	}
+	if (!anyPlayerOnStage)
+	{
+		// プレイヤーが誰もステージ上にいない場合
 
-    angle_.x = centerZ * tiltFactor;  // Z方向の偏りでX軸回転
-    angle_.z = -centerX * tiltFactor;  // X方向の偏りでZ軸回転
+		// 徐々に中央に戻すことで、荒ぶりを止めつつ自然な停止を表現
+		angle_.x = AsoUtility::Lerp(angle_.x, 0.0f, 0.05f); // 0.05fは戻る速さ
+		angle_.z = AsoUtility::Lerp(angle_.z, 0.0f, 0.05f);
 
-    MV1SetRotationXYZ(modelId_, angle_);
+		// Y軸の角度は変えない
+		angle_.y = 0.0f;
+
+		return; // ★ 物理計算をスキップして終了
+	}
+
+	for (auto p : players)
+	{
+		float w = p->GetWeight();
+		VECTOR pos = p->GetPos();
+		weightedX += (pos.x - this->pos_.x) * w;
+		weightedZ += (pos.z - this->pos_.z) * w;
+		totalWeight += w;
+
+	}
+
+	// 重さが0以下ならreturn
+	if (totalWeight <= 0.0f) return;
+
+	// 中心位置
+	float centerX = weightedX / totalWeight;
+	float centerZ = weightedZ / totalWeight;
+
+	// プレイヤーの重さによる力の計算
+	float totalMass = totalWeight; // 重さの総和を質量とみなす
+	const float GRAVITY = 9.81f; // 重力加速度
+
+	// プレイヤーの重さによる力(プレイヤーの合計質量とステージの中心からの距離で計算)
+	// T = r * F
+	VECTOR torque = AsoUtility::VECTOR_ZERO;
+
+	// X軸周りの力
+	torque.x = centerZ * totalMass * GRAVITY; // Z方向の位置が遠いほどX軸周りの力が大きい
+
+	// Z軸周りの力
+	torque.z = -centerX * totalMass * GRAVITY; // X方向の位置が遠いほどZ軸周りの力が大きい
+
+
+	// ステージの傾きを元に戻そうとする力
+	VECTOR restoringTorque = AsoUtility::VECTOR_ZERO;
+	restoringTorque.x = -angle_.x * restitutionFactor_; // X軸周りの復元力
+	restoringTorque.z = -angle_.z * restitutionFactor_; // Z軸周りの復元力
+
+	// すべての力を合計
+	VECTOR totalTorque = AsoUtility::VECTOR_ZERO;
+	totalTorque = VAdd(torque, restoringTorque);
+
+	// 角加速度の計算
+	VECTOR angularAcceleration = VScale(totalTorque, 1.0f / momentOfInertia_);
+
+	//　角速度の更新
+	float deltaTime = 1.0f / 60.0f; // フレーム時間（60FPS想定）
+	angularVelocity_ = VAdd(angularVelocity_, VScale(angularAcceleration, deltaTime));
+
+	// 減衰の適用
+	angularVelocity_ = VScale(angularVelocity_, dampingFactor_);
+
+	// 角度の更新
+	angle_ = VAdd(angle_, VScale(angularVelocity_, deltaTime));
+
+	// 最大角の制限
+	const float maxTilt = AsoUtility::Deg2RadF(45.0f); // 最大傾き15度
+	angle_.x = std::fmax(std::fmin(angle_.x, maxTilt), -maxTilt);
+	angle_.z = std::fmax(std::fmin(angle_.z, maxTilt), -maxTilt);
+
+	// ステージの角度をモデルに反映
+	MV1SetRotationXYZ(modelId_, angle_);
+
+	// Y軸の角度は変えない
+	angle_.y = 0.0f;
 }
 
-float Stage::GetGroundHeight(const VECTOR& pos)
+// 指定位置の地面の高さを取得
+float Stage::GetGroundHeight(const VECTOR& pos) const
 {
-    // ステージ中心を原点としたローカルXZ
-    float dx = pos.x - pos_.x;
-    float dz = pos.z - pos_.z;
+	// ステージのY範囲外なら非常に低い値を返す
+	if (pos.y < collider_.yMin || pos.y > collider_.yMax)
+	{
+		return -100000.0f;
+	}
 
-    // 傾きを使って高さ計算
-    float groundY = pos_.y; // 基本高さ
-    groundY = pos_.y
-        + sinf(angle_.x) * dz   // X軸回転による傾き補正
-        + sinf(angle_.z) * dx;  // Z軸回転による傾き補正
+	// レイを飛ばして地面の高さを取得
+	VECTOR from = VGet(pos.x, pos.y + 1000.0f, pos.z);
+	VECTOR to = VGet(pos.x, pos.y - 1000.0f, pos.z);
 
-    return groundY;
+	MV1_COLL_RESULT_POLY result = MV1CollCheck_Line(modelId_, -1, from, to);
+	if (result.HitFlag)
+	{
+		return result.HitPosition.y;
+	}
+	else
+	{
+		// 当たらなかった場合は非常に低い値を返す
+		return -100000.0f;
+	}
 }
 
+bool Stage::IsPlayerOnStage(const VECTOR& playerPos) const
+{
+	// ステージの中心からプレイヤーまでの水平位置を計算
+	VECTOR relationPos = VSub(playerPos, this->pos_);
 
+	//Y軸は無視で、水平面のみで距離を計算
+	relationPos.y = 0.0f;
+	float dist = relationPos.x * relationPos.x + relationPos.z * relationPos.z;
 
-
-
+	// 距離の二乗が範囲の二乗以内ならステージ内
+	return dist <= (collider_.radius * collider_.radius);
+}

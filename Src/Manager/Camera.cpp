@@ -76,10 +76,10 @@ void Camera::MoveXYZDirection(void)
 	// WASDでカメラを移動させる
 	const float movePow = 3.0f;
 	VECTOR dir = AsoUtility::VECTOR_ZERO;
-	if (ins.IsNew(KEY_INPUT_W)) { dir = { 0.0f, 0.0f, 1.0f }; }
-	if (ins.IsNew(KEY_INPUT_A)) { dir = { -1.0f, 0.0f, 0.0f }; }
-	if (ins.IsNew(KEY_INPUT_S)) { dir = { 0.0f, 0.0f, -1.0f }; }
-	if (ins.IsNew(KEY_INPUT_D)) { dir = { 1.0f, 0.0f, 0.0f }; }
+	if (ins.IsNew(KEY_INPUT_I)) { dir = { 0.0f, 0.0f, 1.0f }; }
+	if (ins.IsNew(KEY_INPUT_J)) { dir = { -1.0f, 0.0f, 0.0f }; }
+	if (ins.IsNew(KEY_INPUT_K)) { dir = { 0.0f, 0.0f, -1.0f }; }
+	if (ins.IsNew(KEY_INPUT_L)) { dir = { 1.0f, 0.0f, 0.0f }; }
 	if (!AsoUtility::EqualsVZero(dir))
 	{
 		// XYZの回転行列
@@ -124,11 +124,11 @@ void Camera::DrawDebug(void)
 {
 	//#ifdef DEBUG
 		// デバッグ用描画
-	DrawFormatString(0, 0, GetColor(255, 255, 255),
+	DrawFormatString(0, 600, GetColor(255, 255, 255),
 		"Camera Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);
 
 	// 角度はラジアン表示
-	DrawFormatString(0, 20, GetColor(255, 255, 255),
+	DrawFormatString(0, 620, GetColor(255, 255, 255),
 		"Camera Angles:(%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angles_.x), AsoUtility::Rad2DegF(angles_.y), AsoUtility::Rad2DegF(angles_.z));
 
 	//#endif //DEBUG

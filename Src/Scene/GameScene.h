@@ -6,6 +6,7 @@ class Grid;
 class StageManager;
 class PlayerManager;
 class Stage;
+class Player_1;
 
 class GameScene : public SceneBase
 {
@@ -45,5 +46,8 @@ private:
 
 	// ステージ
 	Stage& stage_ = Stage::GetInstance();
+
+	// デバッグ　プレイヤー
+	Player_1* debugPlayer_;
 
 };
