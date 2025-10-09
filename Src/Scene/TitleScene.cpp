@@ -25,6 +25,8 @@ void TitleScene::Init(void)
 	grid_ = new Grid();
 	grid_->Init();
 
+	image_ = LoadGraph("Data/Image/Title_1.png");
+
 }
 
 void TitleScene::Update(void)
@@ -65,7 +67,7 @@ void TitleScene::Draw(void)
 
 	// ”wŒiF‚Ì…F‚Íâ‘Î‚ÉŒ©‚¹‚Ä‚Í‚È‚ç‚È‚¢‚Ì‚ÅA”wŒi‰æ‘œ‚Í•`‰æ•K{
 
-
+	DrawGraph(0, 0, image_, true);
 }
 
 void TitleScene::Release(void)
@@ -73,5 +75,7 @@ void TitleScene::Release(void)
 	// ƒOƒŠƒbƒh‰ð•ú
 	grid_->Release();
 	delete grid_;
+
+	DeleteGraph(image_);
 }
 

@@ -147,6 +147,8 @@ GameScene::~GameScene()
 
 void GameScene::Init()
 {
+
+	image_ = LoadGraph("Data/Image/Title_1.png");
 	// カメラを固定
 	Camera* camera = SceneManager::GetInstance().GetCamera();
 	camera->ChangeMode(Camera::MODE::FREE);
@@ -208,6 +210,8 @@ void GameScene::Update()
 
 void GameScene::Draw()
 {
+
+	DrawGraph(0, 0, image_, true);
 	// グリッド描画
 	grid_->Draw();
 
@@ -248,6 +252,9 @@ void GameScene::Release()
 		playerManager_->ClearPlayers();
 		playerManager_ = nullptr;
 	}
+
+
+	DeleteGraph(image_);
 
 	// ★ debugPlayer_ の解放も不要になるか、PlayerManagerに任せる
 }

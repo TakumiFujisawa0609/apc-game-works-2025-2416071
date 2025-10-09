@@ -22,6 +22,8 @@ private:
 
 	// ƒOƒŠƒbƒhü
 	Grid* grid_;
+
+	int image_;
 };
 
 

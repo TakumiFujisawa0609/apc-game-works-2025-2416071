@@ -128,6 +128,7 @@ void Player_1::Move()
         pos_.y += 5.0f;
     }
 }
+
 void Player_1::DebugDraw()
 {
 	// プレイヤー座標を表示

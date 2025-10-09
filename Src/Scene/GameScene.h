@@ -50,4 +50,6 @@ private:
 	// デバッグ　プレイヤー
 	Player_1* debugPlayer_;
 
+	int image_;
+
 };
