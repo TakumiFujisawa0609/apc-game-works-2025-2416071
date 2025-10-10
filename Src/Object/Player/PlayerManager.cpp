@@ -2,6 +2,7 @@
 #include "Player.h"
 #include <DxLib.h>
 #include "Player_1.h"
+#include "Player_2.h"
 
 // 静的メンバ変数の定義
 PlayerManager* PlayerManager::instance_ = nullptr;
@@ -43,7 +44,7 @@ void PlayerManager::InitAllPlayers()
 }
 
 // プレイヤー生成
-void PlayerManager::CreatePlayer(PlayerType type ,int id, float weight)
+void PlayerManager::CreatePlayer(PlayerType type ,int id, float weight,int inputId)
 {
 	// 重複防止
 	for (auto& player : players_) {
@@ -55,11 +56,13 @@ void PlayerManager::CreatePlayer(PlayerType type ,int id, float weight)
 	switch (type)
 	{
 	case PlayerType::Player_1:
-		newPlayer = std::make_shared<Player_1>(id, weight);
+		newPlayer = std::make_shared<Player_1>(id,inputId, weight);
 		break;
-		// 他のプレイヤータイプもここに追加可能
+	case PlayerType::Player_2:
+		newPlayer = std::make_shared<Player_2>(id, inputId,weight);
+		break;
 	default:
-		return; // 未知のタイプの場合は何もしない
+		return; 
 	}
 
 	players_.push_back(newPlayer);

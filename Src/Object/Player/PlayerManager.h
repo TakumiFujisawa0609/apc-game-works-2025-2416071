@@ -31,7 +31,7 @@ public:
 
 
 	// プレイヤー生成
-	void CreatePlayer(PlayerType type,int id, float weight);
+	void CreatePlayer(PlayerType type,int id, float weight,int inputId);
 
 	// 全プレイヤー更新
 	void UpdatePlayers(Stage& stage);

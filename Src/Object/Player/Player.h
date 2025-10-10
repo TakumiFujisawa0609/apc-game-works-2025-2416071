@@ -15,7 +15,7 @@ public:
 
 
 	// コンストラクタ・デストラクタ
-	Player(int id, float weight = 1.0f);
+	Player(int id, float weight,int inputId);
 	virtual ~Player();
 
 	// 基本処理
@@ -50,4 +50,9 @@ protected:
 	VECTOR moveVec_; // 移動ベクトル
 	float speed_;   // 移動速度
 	int modelId_; // モデルID
+
+	int inputId_; // 入力ID
+
+	VECTOR worldInputVec; // ワールド入力ベクトル
+	
 };
