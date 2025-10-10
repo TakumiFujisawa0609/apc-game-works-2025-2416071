@@ -5,8 +5,7 @@ class Player_1 : public Player
 {
 public:
 
-	static constexpr float MAX_SLIDE_SPEED = 5.0f; // プレイヤーが滑る最大速度
-
+	static constexpr float MAX_SLIDE_SPEED = 10000.0f; // プレイヤーが滑る最大速度
 
 	// コンストラクタ
 	Player_1(int id, float weight);

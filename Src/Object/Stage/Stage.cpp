@@ -48,9 +48,9 @@ void Stage::Init()
 
 	// 物理制御の初期化
 	angularVelocity_ = AsoUtility::VECTOR_ZERO;
-	momentOfInertia_ = 15000.f; // 慣性モーメント（適当な値）
+	momentOfInertia_ = (float)24000; // 慣性モーメント（適当な値）
 	dampingFactor_ = 0.4f; // 角速度の減衰率（適当な値）
-	restitutionFactor_ = 0.4f; // 反発係数（適当な値）
+	restitutionFactor_ = 3000.0f; // 反発係数（適当な値）
 
 }
 
@@ -60,6 +60,9 @@ void Stage::Update()
 	// 傾きの更新はPlayerManagerから呼び出す
 	/*auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
 	UpdateTilt(players);*/
+
+
+
 }
 
 // 描画
@@ -70,6 +73,9 @@ void Stage::Draw()
 	MV1SetRotationXYZ(modelId_, angle_);
 	MV1SetScale(modelId_, scale_);
 	MV1DrawModel(modelId_);
+
+	// デバッグ用に角度を表示
+	DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
 }
 
 // 解放
@@ -85,6 +91,7 @@ void Stage::Release()
 // プレイヤーの位置に応じてステージを傾ける
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
+
 	// プレイヤーの情報がなければ傾けない
 	if (players.empty()) return;
 
@@ -176,7 +183,7 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	angle_ = VAdd(angle_, VScale(angularVelocity_, deltaTime));
 
 	// 最大角の制限
-	const float maxTilt = AsoUtility::Deg2RadF(45.0f); // 最大傾き15度
+	const float maxTilt = AsoUtility::Deg2RadF(45.0f); // 最大傾き45度
 	angle_.x = std::fmax(std::fmin(angle_.x, maxTilt), -maxTilt);
 	angle_.z = std::fmax(std::fmin(angle_.z, maxTilt), -maxTilt);
 

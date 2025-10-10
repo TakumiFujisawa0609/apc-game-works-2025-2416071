@@ -5,6 +5,15 @@
 class Player
 {
 public:
+
+	static constexpr float GRAVITY = 9.81f;                            // 重力加速度
+	static constexpr float SLIDE_FACTOR = 0.5f;                        // 滑り落ちる力の強さ
+	static constexpr float PLAYER_FRICTION = 0.85f;                    // 摩擦による減衰
+	static constexpr float MAX_SPEED = 15.0f;                          // プレイヤーの最大速度
+	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;          // 操作による加速の強さ調整
+
+
+
 	// コンストラクタ・デストラクタ
 	Player(int id, float weight = 1.0f);
 	virtual ~Player();

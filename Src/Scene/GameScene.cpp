@@ -172,7 +172,7 @@ void GameScene::Init()
 	for (int i = 0; i < playerNum_; ++i)
 	{
 		// IDを i に統一し、重さ 1.0f で生成
-		playerManager_->CreatePlayer(static_cast<PlayerType>(i), i, 1.0f);
+		playerManager_->CreatePlayer(static_cast<PlayerType>(i), i, 15.0f);
 	}
 
 	// プレイヤー初期化

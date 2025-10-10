@@ -17,6 +17,9 @@ class Stage
 {
 public: 
 
+	// ’è” 
+	static constexpr VECTOR DEFAULT_POS = { 0.0f,-750.f,0.0f };
+
 	
 	static void CreateInstance();
 	static Stage& GetInstance();
