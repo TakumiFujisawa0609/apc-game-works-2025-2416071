@@ -143,6 +143,8 @@ void SceneManager::Draw(void)
 	// ˆÃ“]E–¾“]
 	fader_->Draw();
 
+	
+
 }
 
 void SceneManager::Destroy(void)

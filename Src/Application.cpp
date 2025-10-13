@@ -26,7 +26,7 @@ void Application::Init(void)
 
 	// アプリケーションの初期設定
 	// ウィンドウタイトル
-	SetWindowText("3DWorld");
+	SetWindowText("ふっ飛ばしアリーナ！");
 
 	// ウィンドウサイズ
 	SetGraphMode(SCREEN_SIZE_X, SCREEN_SIZE_Y, 32);
@@ -66,6 +66,9 @@ void Application::Run(void)
 	InputManager& inputManager = InputManager::GetInstance();
 	SceneManager& sceneManager = SceneManager::GetInstance();
 
+	// 前フレームのミリ秒を取得
+	int prevTime = GetNowCount();
+
 	// ゲームループ
 	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0)
 	{
@@ -75,7 +78,29 @@ void Application::Run(void)
 
 		sceneManager.Draw();
 
+		// フレームレート数を表示
+		// 画面左上に表示
+		DrawFormatString(0, 0, GetColor(255, 255, 255), "FPS: %.2f", GetFPS());
+
 		ScreenFlip();
+
+		// フレームレート制御
+		int currentTime = GetNowCount();
+
+		// 経過時間を計算
+		int elapsedTime = currentTime - prevTime;
+
+		// 待機時間を計算
+		int waitTime = static_cast<int>(FRAME_TIME) - elapsedTime;
+
+		// 待機時間が正の値なら待機する
+		if (waitTime > 0)
+		{
+			DxLib::WaitTimer(waitTime);
+		}
+
+		// 現在の時間を前フレームの時間として保存
+		prevTime = GetNowCount();
 
 	}
 

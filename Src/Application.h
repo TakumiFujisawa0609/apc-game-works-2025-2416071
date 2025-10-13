@@ -10,6 +10,10 @@ public:
 	static constexpr int SCREEN_SIZE_X = 1024;
 	static constexpr int SCREEN_SIZE_Y = 640;
 
+	// FPS制御
+	static constexpr float TARGET_FPS = 60.0f;
+	static constexpr float FRAME_TIME = 1000.0f / TARGET_FPS;
+
 	// データパス関連
 	//-------------------------------------------
 	static const std::string PATH_DATA;
