@@ -1,5 +1,4 @@
 #include "Player_2.h"
-#include <DxLib.h>
 
 void Player_2::Init(void)
 {

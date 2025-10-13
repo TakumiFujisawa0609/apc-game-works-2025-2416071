@@ -76,6 +76,7 @@ void Stage::Draw()
 
 	// デバッグ用に角度を表示
 	DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
+
 }
 
 // 解放

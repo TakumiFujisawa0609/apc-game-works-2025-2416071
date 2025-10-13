@@ -1,14 +1,15 @@
 #pragma once
 #include "Player.h"
+#include "Control/InputController.h"
+#include <DxLib.h>
 
 class Player_2 : public Player
 {
 public:
 
-	// コンストラクタ
-	Player_2(int id, int inputId, float weight)
-		: Player(id, inputId, weight) {
-	}  // 基底クラスのコンストラクタに渡す
+	// コンストラクタ: 基底クラスPlayerのコンストラクタに引数を渡す
+	Player_2(int id, float weight, std::unique_ptr<InputController> controller)
+		: Player(id, weight, std::move(controller)){}
 
 	// 基底クラスの仮想関数をオーバーライド
 	void Init(void) override;

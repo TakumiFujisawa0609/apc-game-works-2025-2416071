@@ -1,12 +1,17 @@
 #include "Player.h"
-#include "../../Utility/MatrixUtility.h"	// Lerp用
+#include "../../Utility/MatrixUtility.h"
 #include "../../Utility/AsoUtility.h"
 #include "../../Manager/InputManager.h"
 #include "../Stage/Stage.h"
+#include "Control/InputController.h"
 #include <DxLib.h>
 
-Player::Player(int id, float weight,int inputId)
-	:id_(id), weight_(weight), pos_(AsoUtility::VECTOR_ZERO), moveVec_(AsoUtility::VECTOR_ZERO), speed_(0.0f), modelId_(-1)
+// コンストラクタ
+Player::Player(int id, float weight, std::unique_ptr<InputController> controller)
+// 必須メンバとcontrollerの所有権を初期化子リストで設定
+	: id_(id),
+	weight_(weight),
+	controller_(std::move(controller))
 {
 }
 
@@ -16,25 +21,21 @@ Player::~Player()
 
 void Player::Init()
 {
-	// モデルの読み込み
-	// 派生クラスで実装
+	// モデルの読み込みは派生クラスで実装
 
-	// 変数は初期化
+	// 変数の初期化 (リセット可能な状態をInitで設定)
+	pos_ = { 0.0f, 0.0f, 0.0f }; // 初期座標を設定
 	moveVec_ = { 0.0f,0.0f,0.0f };
 	speed_ = 15.0f;
-	worldInputVec = { 0.0f,0.0f,0.0f };
-	inputId_ = 0;
-
+	modelId_ = -1; // Initでロードしない場合は-1で初期化
 }
 
 void Player::Update()
 {
-	// 処理自体は派生クラスで実装
 	Move();
 
 	// ステージの地面に合わせてY座標を補正
-	Stage& stage = Stage::GetInstance();
-	ApplyStageGround(stage);
+	ApplyStageGround(Stage::GetInstance());
 }
 
 void Player::Draw()
@@ -42,78 +43,37 @@ void Player::Draw()
 	MV1SetPosition(modelId_, pos_);
 	MV1DrawModel(modelId_);
 
-	// デバッグ用に座標に球を描画
+	// デバッグ表示
 	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
-
-	// 座標に線を描画
 	DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
-
-	// プレイヤー座標を表示
-	DrawFormatString(0, 0, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
-
-	// プレイヤー_2の座標を表示
-	if (id_ == 1) {
-		DrawFormatString(0, 20, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
-	}
-
-	// inputId_ を表示
-	DrawFormatString(0, 40, GetColor(255, 255, 255), "Player %d InputId: %d", id_ + 1, inputId_);
+	DrawFormatString(0, 0 + id_ * 20, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
 }
 
 
 void Player::Move()
 {
-	// ステージのインスタンス取得
 	Stage& stage = Stage::GetInstance();
 
 	// ステージの傾きを取得
 	VECTOR stageAngle = stage.GetAngle();
 
-	// 入力管理インスタンス取得
-	InputManager& ins = InputManager::GetInstance();
-
 	// 回転行列の準備
 	MATRIX rotX = MGetRotX(stageAngle.x);
 	MATRIX rotZ = MGetRotZ(stageAngle.z);
 	MATRIX stageRotationMatrix = MMult(rotZ, rotX);
-
-	// ステージの回転 (ローカル -> ワールド)
 	MATRIX invStageRotationMatrix = MTranspose(stageRotationMatrix);
 
+	// InputControllerから移動入力を取得
+	VECTOR worldInputVec = controller_->GetMoveInputVector();
 
-	// worldInputVec をローカル変数として宣言し、毎回初期化する！
-	VECTOR worldInputVec = { 0.0f, 0.0f, 0.0f };
-
-	// inputId_ に応じた入力処理
-	if (inputId_ == 0)
-	{
-		// P1のキー操作 (WASD)
-		// ※ここでは IsPress() の方が自然だが、IsNew()を維持して進める
-		if (ins.IsNew(KEY_INPUT_W)) worldInputVec.z += 10.0f;
-		if (ins.IsNew(KEY_INPUT_S)) worldInputVec.z -= 10.0f;
-		if (ins.IsNew(KEY_INPUT_A)) worldInputVec.x -= 10.0f;
-		if (ins.IsNew(KEY_INPUT_D)) worldInputVec.x += 10.0f;
-	}
-	else if (inputId_ == 1) 
-	{
-		// P2のキー操作 (矢印キー)
-		if (ins.IsNew(KEY_INPUT_UP)) worldInputVec.z += 10.0f;
-		if (ins.IsNew(KEY_INPUT_DOWN)) worldInputVec.z -= 10.0f;
-		if (ins.IsNew(KEY_INPUT_LEFT)) worldInputVec.x -= 10.0f;
-		if (ins.IsNew(KEY_INPUT_RIGHT)) worldInputVec.x += 10.0f;
-	}
-	// P3, P4 の入力も else if でここに追加
-
-	// ワールドの重力ベクトル（下向き）
+	// ワールドの重力ベクトル
 	VECTOR worldGravity = { 0.0f, -GRAVITY * SLIDE_FACTOR, 0.0f };
 
-	// 重力ベクトルを逆行列
+	// 重力ベクトルを逆行列で変換
 	VECTOR slideAccel = VTransform(worldGravity, invStageRotationMatrix);
+	slideAccel.y = 0.0f; // 垂直方向の力は無視
 
-	// 垂直方向(Y)の力は無視
-	slideAccel.y = 0.0f;
-
-	//操作による加速 A_Input の計算
+	// 操作による加速 A_Input の計算
 	VECTOR inputAccel = AsoUtility::VECTOR_ZERO;
 	if (worldInputVec.x != 0.0f || worldInputVec.z != 0.0f) {
 		VECTOR actualMoveDir = VTransform(VNorm(worldInputVec), invStageRotationMatrix);
@@ -127,6 +87,7 @@ void Player::Move()
 
 	// 既存の速度に摩擦（減衰）を適用
 	moveVec_ = VScale(moveVec_, PLAYER_FRICTION);
+
 	// 移動ベクトルの長さが最大速度を超えていたら、最大速度に制限
 	if (AsoUtility::MagnitudeF(moveVec_) > MAX_SPEED) {
 		moveVec_ = VScale(VNorm(moveVec_), MAX_SPEED);
@@ -135,19 +96,16 @@ void Player::Move()
 	// 座標に移動ベクトルを加算
 	pos_ = VAdd(pos_, moveVec_);
 
-	// ジャンプ入力も inputId_ で切り替え！
-	if ((inputId_ == 0 && ins.IsTrgDown(KEY_INPUT_SPACE)) ||
-		(inputId_ == 1 && ins.IsTrgDown(KEY_INPUT_RETURN)))
+	// ジャンプ入力
+	if (controller_->IsJumpTrigger())
 	{
-		moveVec_.y += 5.0f; // ジャンプ力を調整
+		moveVec_.y += 5.0f; // ジャンプ力を加算
 	}
 }
 
 void Player::ApplyStageGround(const Stage& stage)
 {
-	// 1. ステージの地面の高さを取得
+	// ステージの地面の高さを取得し、Lerpで補正
 	float groundY = stage.GetGroundHeight(pos_);
-
 	pos_.y = MatrixUtility::Lerp(pos_.y, groundY, 0.1f);
 }
-

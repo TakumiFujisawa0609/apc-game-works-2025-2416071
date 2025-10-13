@@ -1,5 +1,6 @@
 #pragma once
 #include "Player.h"
+#include "Control/InputController.h"
 
 class Player_1 : public Player
 {
@@ -7,10 +8,9 @@ public:
 
 	static constexpr float MAX_SLIDE_SPEED = 10000.0f; // プレイヤーが滑る最大速度
 
-	// コンストラクタ
-	Player_1(int id, int inputId, float weight)
-		: Player(id, weight, inputId) {
-	}  // 基底クラスのコンストラクタに渡す
+	// コンストラクタ: 基底クラスPlayerのコンストラクタに引数を渡す
+	Player_1(int id, float weight, std::unique_ptr<InputController> controller)
+		: Player(id, weight, std::move(controller)){}
 
 	~Player_1() override = default;
 

@@ -48,9 +48,11 @@ void PlayerNumScene::Update(void)
 void PlayerNumScene::Draw(void)
 {
 	// タイトル表示
-	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "PlayerNum Scene");
+	DrawFormatString2(100, 40, GetColor(255, 255, 255), -1, "プレイヤー人数選択画面");
 
-	DrawFormatString(100, 150, GetColor(255, 255, 255), "PlayNum: %n",(int)(selectNum_));
+	DrawFormatString(100, 90, GetColor(255, 255, 255), "プレイヤー人数 %n",(int)(selectNum_));
+
+	DrawFormatString2(300, 200, GetColor(255, 0, 0), -1, "プレイヤー人数を3人以上に登録してもステージ上には2体しかプレイヤーは出現しません");
 
 
 	// 選択人数表示

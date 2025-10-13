@@ -3,6 +3,9 @@
 #include <DxLib.h>
 #include "Player_1.h"
 #include "Player_2.h"
+#include <memory> 
+#include "Control/InputController.h" // KeyConfigのために必要
+#include "Control/KeyController.h"   // KeyControllerを使うために必要
 
 // 静的メンバ変数の定義
 PlayerManager* PlayerManager::instance_ = nullptr;
@@ -44,7 +47,8 @@ void PlayerManager::InitAllPlayers()
 }
 
 // プレイヤー生成
-void PlayerManager::CreatePlayer(PlayerType type ,int id, float weight,int inputId)
+// ★ 修正点1: inputIdを削除（コンストラクタで直接渡さなくなったため）
+void PlayerManager::CreatePlayer(PlayerType type, int id, float weight)
 {
 	// 重複防止
 	for (auto& player : players_) {
@@ -52,22 +56,38 @@ void PlayerManager::CreatePlayer(PlayerType type ,int id, float weight,int input
 	}
 
 	std::shared_ptr<Player> newPlayer = nullptr;
+	std::unique_ptr<InputController> controller = nullptr; // InputControllerの準備
+	KeyConfig keyConfig; // キー設定の準備
+
+	// IDに基づいてキー設定データを作成
+	if (id == 0) {
+		// P1設定: WASD + SPACE
+		keyConfig = { KEY_INPUT_W, KEY_INPUT_S, KEY_INPUT_A, KEY_INPUT_D, KEY_INPUT_SPACE };
+	}
+	else if (id == 1) {
+		// P2設定: 矢印キー + RETURN
+		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN };
+	}
+	else {
+		return;
+	}
+
+	// KeyControllerに設定データを渡して生成
+	controller = std::make_unique<KeyController>(keyConfig);
 
 	switch (type)
 	{
 	case PlayerType::Player_1:
-		newPlayer = std::make_shared<Player_1>(id,inputId, weight);
+		newPlayer = std::make_shared<Player_1>(id, weight, std::move(controller));
 		break;
 	case PlayerType::Player_2:
-		newPlayer = std::make_shared<Player_2>(id, inputId,weight);
+		newPlayer = std::make_shared<Player_2>(id, weight, std::move(controller));
 		break;
 	default:
-		return; 
+		return;
 	}
 
 	players_.push_back(newPlayer);
-
-		
 }
 
 // 全プレイヤー更新
@@ -105,5 +125,3 @@ std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 	for (auto& p : players_) rawPlayers.push_back(p.get());
 	return rawPlayers;
 }
-
-

@@ -33,9 +33,9 @@ void ManualScene::Update(void)
 
 void ManualScene::Draw(void)
 {
-	DrawFormatString(100, 100, GetColor(255, 255, 255), "Manual Scene");
-	DrawFormatString(100, 140, GetColor(255, 255, 255), "A to PLAYERNUMBERSELECT");
-	DrawFormatString(100, 180, GetColor(255, 255, 255), "B to TITLE");
+	DrawFormatString(100, 100, GetColor(255, 255, 255), "操作説明画面");
+	DrawFormatString(100, 140, GetColor(255, 255, 255), "Aキーでプレイヤー人数選択");
+	DrawFormatString(100, 180, GetColor(255, 255, 255), "Bキーでタイトル");
 }
 
 void ManualScene::Release(void)

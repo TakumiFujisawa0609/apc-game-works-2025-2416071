@@ -49,7 +49,7 @@ void GameScene::Init()
 		// InputIdもIDと同じにする
 		int inputId = i;
 
-		playerManager_->CreatePlayer(type, i, 15.0f,inputId);
+		playerManager_->CreatePlayer(type, i, 15.0f);
 	}
 
 	// プレイヤー初期化
@@ -66,8 +66,8 @@ void GameScene::Update()
 	// プレイヤー更新とステージ傾き更新を一本化
 	playerManager_->UpdatePlayers(Stage::GetInstance());
 
-	// シーン遷移（デバッグ用）
-	if (ins.IsTrgDown(KEY_INPUT_SPACE))
+	// エンターキーでタイトルへ戻る
+	if (ins.IsTrgDown(KEY_INPUT_RETURN))
 	{
 		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
 	}
@@ -84,7 +84,24 @@ void GameScene::Draw()
 	// ステージ描画
 	Stage::GetInstance().Draw(); // ★ シングルトンのDrawを呼ぶ
 
-	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "Game Scene");
+	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "ゲームシーン");
+
+	// 操作説明(点滅)
+	int time = GetNowCount() / 500;
+	if (time % 2 == 0)
+	DrawFormatString2(100, 140, GetColor(255, 0, 130), -1, "ENTERでタイトルに戻ります");
+	
+	DrawFormatString2(0, 180, GetColor(255, 130, 130), -1, "簡易操作説明→　P1: WASD + SPACE / P2: 矢印キー + ENTER");
+
+	DrawFormatString(0, 560, GetColor(255, 255, 255), "ステージ傾き X: %.2f Y: %.2f Z: %.2f",
+		Stage::GetInstance().GetAngle().x * 180.f / DX_PI_F,
+		Stage::GetInstance().GetAngle().y * 180.f / DX_PI_F,
+		Stage::GetInstance().GetAngle().z * 180.f / DX_PI_F);
+
+	
+	
+
+
 
 }
 

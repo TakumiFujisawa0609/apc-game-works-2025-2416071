@@ -48,11 +48,10 @@ void CharacterSelect::Update(void)
 void CharacterSelect::Draw(void)
 {
 	// キャラ選択表示
-	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "Character Select Scene");
-	DrawFormatString2(100, 140, GetColor(255, 255, 255), -1, "A to GAME");
-	DrawFormatString2(100, 180, GetColor(255, 255, 255), -1, "B to PLAYERNUMBERSELECT");
-
-	DrawFormatString(100, 220, GetColor(255, 255, 255), "人数: %d", playerNum_);
+	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "キャラ選択画面(未実装)");
+	DrawFormatString2(100, 140, GetColor(255, 0, 130), -1, "Aキーでそのまま遷移してください(キャラのパラメータは同じです)");
+	DrawFormatString2(100, 180, GetColor(255, 255, 255), -1, "Bキーで人数選択画面に戻ります");
+	DrawFormatString(100, 220, GetColor(255, 255, 255), "遊ぶ人数: %d", playerNum_);
 }
 
 void CharacterSelect::Release(void)

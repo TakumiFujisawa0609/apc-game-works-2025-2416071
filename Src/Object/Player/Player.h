@@ -1,21 +1,22 @@
 #pragma once
 #include <DxLib.h>
+#include <memory>
 #include "../Stage/Stage.h"
+
+class InputController;
 
 class Player
 {
 public:
 
-	static constexpr float GRAVITY = 9.81f;                            // 重力加速度
-	static constexpr float SLIDE_FACTOR = 0.5f;                        // 滑り落ちる力の強さ
-	static constexpr float PLAYER_FRICTION = 0.85f;                    // 摩擦による減衰
-	static constexpr float MAX_SPEED = 15.0f;                          // プレイヤーの最大速度
-	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;          // 操作による加速の強さ調整
+	static constexpr float GRAVITY = 9.81f;
+	static constexpr float SLIDE_FACTOR = 0.5f;
+	static constexpr float PLAYER_FRICTION = 0.85f;
+	static constexpr float MAX_SPEED = 15.0f;
+	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;
 
-
-
-	// コンストラクタ・デストラクタ
-	Player(int id, float weight,int inputId);
+	// コンストラクタ: 固有ID, 重さ, InputControllerを受け取る
+	Player(int id, float weight, std::unique_ptr<InputController> controller);
 	virtual ~Player();
 
 	// 基本処理
@@ -37,22 +38,18 @@ public:
 
 protected:
 
-	// 派生クラスで動きを実装
-	// 今後純粋仮想関数化
+	// プレイヤーの動き
 	virtual void Move();
 
 	// 座標補正
 	void ApplyStageGround(const Stage& stage);
 
-	int id_;         // プレイヤーID
-	float weight_;  // プレイヤーの重さ（ステージの傾きに影響）
-	VECTOR pos_;    // プレイヤーの座標
-	VECTOR moveVec_; // 移動ベクトル
-	float speed_;   // 移動速度
-	int modelId_; // モデルID
+	int id_;
+	float weight_;
+	VECTOR pos_;
+	VECTOR moveVec_;
+	float speed_;
+	int modelId_;
 
-	int inputId_; // 入力ID
-
-	VECTOR worldInputVec; // ワールド入力ベクトル
-	
+	std::unique_ptr<InputController> controller_;
 };

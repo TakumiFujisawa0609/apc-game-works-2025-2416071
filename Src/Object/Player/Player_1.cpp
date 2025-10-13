@@ -13,7 +13,7 @@ void Player_1::Init()
 	// モデルの読み込み
 	modelId_ = MV1LoadModel("Data/Model/Player/testModel.mv1");
 
-	pos_ = { 30.0f, 0.0f, -0.0f };
+	pos_ = { 0.0f, 0.0f, 0.0f };
 	speed_ = 5.0f;
 }
 
