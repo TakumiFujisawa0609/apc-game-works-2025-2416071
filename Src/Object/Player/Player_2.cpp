@@ -6,7 +6,7 @@ void Player_2::Init(void)
 	Player::Init();
 	// ƒ‚ƒfƒ‹‚Ì“Ç‚İ‚İ
 	modelId_ = MV1LoadModel("Data/Model/Player/testModel.mv1");
-	pos_ = { 0.0f, 0.0f, 0.0f };
+	pos_ = { 60.0f, 0.0f, 0.0f };
 	speed_ = 5.0f;
 }
 

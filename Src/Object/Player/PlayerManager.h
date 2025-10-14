@@ -45,8 +45,20 @@ public:
 	// 全削除
 	void ClearPlayers();
 
-	// ステージとの当たり判定
-	//void CheckCollWithStage(Stage& stage);
+	// 勝敗判定を行う
+	void CheckGameResult();
+
+	// ゲームオーバー状態を取得
+	bool IsGameOver() const { return isGameOver_; }
+
+	// 勝者IDを取得
+	int GetWinnerID() const { return winnerID_; }
+
+	// ゲームオーバーフラグを取得
+	bool GetIsGameOver() const { return isGameOver_; }
+
+	// プレイヤー同士の衝突判定
+	void CheckPlayerCollisions();
 
 private:
 
@@ -55,5 +67,11 @@ private:
 	// インスタンス
 	static PlayerManager* instance_;
 	std::vector<std::shared_ptr<Player>> players_;
+
+	// ゲーム終了フラグ (勝者が決定したらtrue)
+	bool isGameOver_ = false;
+
+	// 勝者ID (-1: 未決定, 0, 1...: プレイヤーID)
+	int winnerID_ = -1;
 
 };

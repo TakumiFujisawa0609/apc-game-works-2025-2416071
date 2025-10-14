@@ -1,19 +1,23 @@
 #pragma once
 #include "Player.h"
-class Player_3 :
-    public Player
+#include "Control/InputController.h"
+
+class Player_3 : public Player
 {
 public:
-	Player_3(int id, float weight = 1.0f)
-		: Player(id, weight) {
-	}  // 基底クラスのコンストラクタに渡す
 
-	// 基底クラスの仮想関数をオーバーライド
-	void Init(void) override;
-	void Update(void) override;
-	//void Attack(void) override;
-	void Draw(void)override;
-	void Release(void) ;
-	//std::string GetCharacterName(void) const override { return "Player_3"; }
+	static constexpr float MAX_SLIDE_SPEED = 10000.0f; // プレイヤーが滑る最大速度
+
+	// コンストラクタ: 基底クラスPlayerのコンストラクタに引数を渡す
+	Player_3(int id, float weight, std::unique_ptr<InputController> controller)
+		: Player(id, weight, std::move(controller)) {
+	}
+
+	~Player_3() override = default;
+
+	// 基本処理
+	void Init() override;
+	void Release() override;
+
 };
 

@@ -1,26 +1,22 @@
 #include "Player_3.h"
 #include <DxLib.h>
+#include "../../Utility/AsoUtility.h"
 
-void Player_3::Init(void)
+
+void Player_3::Init()
 {
-	// 初期化処理
-	
+	// 親クラスの初期化
+	Player::Init();
+
+	// モデルの読み込み
+	modelId_ = MV1LoadModel("Data/Model/Player/testModel.mv1");
+
+	pos_ = { 0.0f, 0.0f, -60.0f };
+	speed_ = 5.0f;
+
 }
 
-void Player_3::Update(void)
+void Player_3::Release()
 {
-	// 移動処理（簡易）
-	
-}
-
-
-void Player_3::Draw(void)
-{
-	// デバッグ
-	//DrawFormatString(500, 0, GetColor(255, 255, 255), "Player_3");
-}
-
-void Player_3::Release(void)
-{
-	// リソース解放処理があればここに実装
+	MV1DeleteModel(modelId_);
 }

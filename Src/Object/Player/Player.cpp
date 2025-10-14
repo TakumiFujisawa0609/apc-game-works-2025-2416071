@@ -6,6 +6,10 @@
 #include "Control/InputController.h"
 #include <DxLib.h>
 
+
+// 静的メンバ
+int Player::nextDeathOrder_ = 1;
+
 // コンストラクタ
 Player::Player(int id, float weight, std::unique_ptr<InputController> controller)
 // 必須メンバとcontrollerの所有権を初期化子リストで設定
@@ -32,10 +36,22 @@ void Player::Init()
 
 void Player::Update()
 {
+	// 生存状態が偽なら更新しない
+	if (!isAlive_)
+	{
+		return;
+	}
+
 	Move();
 
 	// ステージの地面に合わせてY座標を補正
 	ApplyStageGround(Stage::GetInstance());
+
+	// 死亡判定: Y座標が-100以下なら死亡
+	if (pos_.y < -100.0f)
+	{
+		Die();
+	}
 }
 
 void Player::Draw()
@@ -47,8 +63,22 @@ void Player::Draw()
 	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
 	DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
 	DrawFormatString(0, 0 + id_ * 20, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
-}
 
+	if (isAlive_) {
+		// 生存時の表示
+		DrawFormatString(850, 600 + id_ * 20, GetColor(0, 255, 0), "Player %d: Alive", id_ + 1);
+	}
+	else {
+		// 死亡時の表示
+		DrawFormatString(850, 600 + id_ * 20, GetColor(255, 0, 0), "Player %d: Dead", id_ + 1);
+	}
+
+	// 1Pには赤色、2Pには青色の球体を表示
+	VECTOR spherPos = { pos_.x + 50.f ,pos_.y + 100.f,pos_.z };
+	DrawSphere3D(spherPos, 20.0f, 10, (id_ == 0) ? GetColor(255, 0, 0) : GetColor(0, 0, 255), (id_ == 0) ? GetColor(255, 0, 0) : GetColor(0, 0, 255), TRUE);
+
+
+}
 
 void Player::Move()
 {
@@ -95,7 +125,7 @@ void Player::Move()
 
 	// 座標に移動ベクトルを加算
 	pos_ = VAdd(pos_, moveVec_);
-
+	
 	// ジャンプ入力
 	if (controller_->IsJumpTrigger())
 	{
@@ -108,4 +138,16 @@ void Player::ApplyStageGround(const Stage& stage)
 	// ステージの地面の高さを取得し、Lerpで補正
 	float groundY = stage.GetGroundHeight(pos_);
 	pos_.y = MatrixUtility::Lerp(pos_.y, groundY, 0.1f);
+}
+
+void Player::Die()
+{
+	// 既に死亡している場合は処理しない
+	if (!isAlive_) return;
+
+	// 死亡順序を設定し、次の順序に進める
+	isAlive_ = false;
+
+	// 死亡順序を設定
+	deathOrder_ = nextDeathOrder_++;
 }

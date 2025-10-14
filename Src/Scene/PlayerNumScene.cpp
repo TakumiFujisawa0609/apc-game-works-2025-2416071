@@ -52,7 +52,13 @@ void PlayerNumScene::Draw(void)
 
 	DrawFormatString(100, 90, GetColor(255, 255, 255), "プレイヤー人数 %n",(int)(selectNum_));
 
-	DrawFormatString2(300, 200, GetColor(255, 0, 0), -1, "プレイヤー人数を3人以上に登録してもステージ上には2体しかプレイヤーは出現しません");
+	// 点滅
+	int time = GetNowCount() / 500;
+	if (time % 2 == 0)
+	{
+		DrawFormatString2(300, 200, GetColor(255, 0, 0), -1, "試遊版はプレイヤー人数を3人以上登録可能ですが、\n 2人プレイまで対応しています");
+	}
+
 
 
 	// 選択人数表示

@@ -138,6 +138,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Src\Object\Player\Control\KeyController.cpp" />
+    <ClCompile Include="Src\Object\Player\Player_3.cpp" />
     <ClCompile Include="Src\Utility\MatrixUtility.cpp" />
     <ClCompile Include="Src\Object\Player\Player_2.cpp" />
     <ClCompile Include="Src\Object\Player\Player_1.cpp" />
@@ -166,6 +167,7 @@
   <ItemGroup>
     <ClInclude Include="Src\Object\Player\Control\KeyController.h" />
     <ClInclude Include="Src\Object\Player\Control\InputController.h" />
+    <ClInclude Include="Src\Object\Player\Player_3.h" />
     <ClInclude Include="Src\Utility\MatrixUtility.h" />
     <ClInclude Include="Src\Object\Player\Player_2.h" />
     <ClInclude Include="Src\Object\Player\Player_1.h" />

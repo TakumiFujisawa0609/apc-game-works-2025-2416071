@@ -60,9 +60,9 @@ void TitleScene::Draw(void)
 
 	// タイトル表示
 	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "タイトルシーン");
-	DrawFormatString2(100, 140, GetColor(255, 255, 255), -1, "Aキーでプレイヤー人数選択");
+	DrawFormatString2(100, 140, GetColor(255, 255, 255), -1, "Aキーでプレイヤー人数選択(ここから始めるのを推奨します)");
 	DrawFormatString2(100, 170, GetColor(255, 255, 255), -1, "Bキーで操作説明(遷移はできますが、操作説明はありません)");
-	DrawFormatString2(100, 200, GetColor(255, 255, 255), -1, "0キーでゲーム開始(1人プレイで簡易スタート)");
+	DrawFormatString2(100, 200, GetColor(255, 255, 255), -1, "0 DebugMode");
 
 	// 背景色の水色は絶対に見せてはならないので、背景画像は描画必須
 
