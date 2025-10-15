@@ -371,4 +371,31 @@ bool InputManager::IsPadBtnTrgUp(JOYPAD_NO no, JOYPAD_BTN btn) const
 	return padInfos_[static_cast<int>(no)].IsTrgUp[static_cast<int>(btn)];
 }
 
+VECTOR InputManager::GetDirXZAKey(int akeyX, int akeyY)
+{
+	VECTOR ret = { 0.0f,0.0f,0.0f };
+
+	// スティックの個々の入力値は-1000.f～1000.fの範囲
+
+	// スティックの入力値を-1.0f～1.0fに変換
+	float dirX = static_cast<float>(akeyX) / AKEY_VAL_MAX;
+	float dirZ = static_cast<float>(akeyY) / AKEY_VAL_MAX;
+
+	// 平方根により、おおよその最大角が1.0fになるように調整
+	float len = sqrtf(dirX * dirX + dirZ * dirZ);
+	if (len < THRESHOLD)
+	{
+		return ret;
+	}
+
+	// デッドゾーン境界から再スケーリング
+	float scale = (len - THRESHOLD) / (1.0f - THRESHOLD);
+	dirX = (dirX / len) * scale;
+	dirZ = (dirZ / len) * scale;
+
+	// Zは前に倒すとマイナス値が帰ってくるので反転
+	ret = VNorm({ dirX,0.0f,-dirZ });
+	return ret;
+}
+
 

@@ -4,7 +4,7 @@
 #include "Player_2.h"
 #include "Player_3.h"
 #include "Control/InputController.h"
-#include "Control/KeyController.h"
+#include "Control/Controller.h"
 #include <DxLib.h>
 #include <memory>
 #include <algorithm> 
@@ -57,43 +57,53 @@ void PlayerManager::InitAllPlayers()
 	}
 }
 
-void PlayerManager::CreatePlayer(PlayerType type, int id, float weight)
+void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& param)
 {
-	// 重複防止
+	// 同じIDのプレイヤーが既に存在する場合は生成しない
 	for (auto& player : players_) {
 		if (player->GetID() == id) return;
 	}
 
+	// 新しいプレイヤーを生成
 	std::shared_ptr<Player> newPlayer = nullptr;
 	std::unique_ptr<InputController> controller = nullptr;
-	KeyConfig keyConfig;
 
-	// IDに基づいてキー設定データを作成（既存コードから流用）
+	// 入力設定 (ID 0: WASD + SPACE, ID 1: 矢印キー + ENTER)
+	KeyConfig keyConfig;
+	InputManager::JOYPAD_NO padNo = static_cast<InputManager::JOYPAD_NO>(0);
+
 	if (id == 0) {
 		keyConfig = { KEY_INPUT_W, KEY_INPUT_S, KEY_INPUT_A, KEY_INPUT_D, KEY_INPUT_SPACE };
+		
+		// PAD1を割り当て
+		padNo = InputManager::JOYPAD_NO::PAD1;
 	}
 	else if (id == 1) {
 		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN };
+		
+		// PAD2を割り当て
+		padNo = InputManager::JOYPAD_NO::PAD2;
 	}
 	else {
 		return;
 	}
 
-	// KeyControllerに設定データを渡して生成
-	controller = std::make_unique<KeyController>(keyConfig);
+	// コントローラー生成
+	controller = std::make_unique<Controller>(keyConfig, padNo);
 
 	switch (type)
 	{
 	case PlayerType::Player_1:
-		newPlayer = std::make_shared<Player_1>(id, weight, std::move(controller));
+		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_2:
-		newPlayer = std::make_shared<Player_2>(id, weight, std::move(controller));
+		newPlayer = std::make_shared<Player_2>(id, param, std::move(controller));
+		break;
+	case PlayerType::Player_3:
+		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
 		break;
 	default:
-	case PlayerType::Player_3:
-		newPlayer = std::make_shared<Player_3>(id, weight, std::move(controller));
-		return;
+		break;
 	}
 
 	players_.push_back(newPlayer);
@@ -188,6 +198,8 @@ void PlayerManager::CheckGameResult()
 
 		// 死亡順序でソートする (deathOrderが小さい=早く死んだ方が前)
 		std::vector<Player*> sortedDeadPlayers = GetPlayerRawPlayers();
+
+		// 死亡順序でソート (0は未死亡なので最後に回す)
 		std::sort(sortedDeadPlayers.begin(), sortedDeadPlayers.end(), [](const Player* a, const Player* b) {
 			// 死亡順序が0(未死亡)は後回し、それ以外は小さい順
 			if (a->GetDeathOrder() == 0) return false;
@@ -247,4 +259,10 @@ void PlayerManager::CheckPlayerCollisions()
 			}
 		}
 	}
+}
+
+void PlayerManager::Reset()
+{
+	ClearPlayers();
+	Init();
 }

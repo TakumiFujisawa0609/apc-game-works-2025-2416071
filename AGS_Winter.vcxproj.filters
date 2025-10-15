@@ -87,7 +87,7 @@
     <ClCompile Include="Src\Utility\MatrixUtility.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Object\Player\Control\KeyController.cpp">
+    <ClCompile Include="Src\Object\Player\Control\Controller.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Src\Object\Player\Player_3.cpp">
@@ -167,7 +167,7 @@
     <ClInclude Include="Src\Object\Player\Control\InputController.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Object\Player\Control\KeyController.h">
+    <ClInclude Include="Src\Object\Player\Control\Controller.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Src\Object\Player\Player_3.h">

@@ -5,6 +5,15 @@
 
 class InputController;
 
+struct PlayerParam
+{
+	float weight = 10.0f;	// 重さ
+	float speed = 5.0f;		// 移動速度
+	float jumpPower = 5.0f;	// ジャンプ力
+	float friction = 0.85f;	// 摩擦係数
+	float maxSpeed = 15.0f;	// 最大速度
+};
+
 class Player
 {
 private:
@@ -30,7 +39,7 @@ public:
 	static void ResetDeathCounter() { nextDeathOrder_ = 1; }
 
 	// コンストラクタ: 固有ID, 重さ, InputControllerを受け取る
-	Player(int id, float weight, std::unique_ptr<InputController> controller);
+	Player(int id, const PlayerParam& param, std::unique_ptr<InputController> controller);
 	virtual ~Player();
 
 	// 基本処理
@@ -45,7 +54,7 @@ public:
 	int GetID() const { return id_; }
 
 	// 重さ取得
-	float GetWeight() const { return weight_; }
+	float GetWeight() const { return param_.weight; }
 
 	// 座標取得
 	const VECTOR& GetPos() const { return pos_; }
@@ -70,11 +79,15 @@ protected:
 	void ApplyStageGround(const Stage& stage);
 
 	int id_;
-	float weight_;
+	PlayerParam param_;
 	
 	VECTOR moveVec_;
 	float speed_;
 	int modelId_;
+
+	// プレイヤーの向き
+	VECTOR angle_ = { 0.0f, 0.0f, 0.0f };
+
 
 	// プレイヤーの生存状態
 	bool isAlive_ = true;

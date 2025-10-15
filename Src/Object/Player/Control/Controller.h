@@ -3,11 +3,11 @@
 #include <DxLib.h>								// VECTOR型のために必要
 #include "../../../Manager/InputManager.h"		// InputManagerを使うために必要
 
-class KeyController : public InputController
+class Controller : public InputController
 {
 public:
 	// コンストラクタ: KeyConfigを受け取る
-	KeyController(const KeyConfig& config);
+	Controller(const KeyConfig& config, InputManager::JOYPAD_NO padNo);
 
 	// 入力ベクトルを取得
 	VECTOR GetMoveInputVector() const override;
@@ -19,4 +19,7 @@ private:
 
 	// このコントローラーが使うキー設定を保持
 	KeyConfig config_;
+
+	// パッドの接続数
+	InputManager::JOYPAD_NO padNo_;
 };

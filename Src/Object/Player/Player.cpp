@@ -11,10 +11,9 @@
 int Player::nextDeathOrder_ = 1;
 
 // コンストラクタ
-Player::Player(int id, float weight, std::unique_ptr<InputController> controller)
-// 必須メンバとcontrollerの所有権を初期化子リストで設定
+Player::Player(int id, const PlayerParam& param, std::unique_ptr<InputController> controller)
 	: id_(id),
-	weight_(weight),
+	param_(param),
 	controller_(std::move(controller))
 {
 }
@@ -31,6 +30,7 @@ void Player::Init()
 	pos_ = { 0.0f, 0.0f, 0.0f }; // 初期座標を設定
 	moveVec_ = { 0.0f,0.0f,0.0f };
 	speed_ = 15.0f;
+	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f}; // 初期向きはZ+方向}
 	modelId_ = -1; // Initでロードしない場合は-1で初期化
 }
 
@@ -52,11 +52,54 @@ void Player::Update()
 	{
 		Die();
 	}
+
+	// ステージの傾き取得
+	VECTOR tilt = Stage::GetInstance().GetAngle();
+
+	// 傾きをX,Z成分で取得（ラジアン）
+	float tiltX = tilt.x; // 前後方向の傾き
+	float tiltZ = tilt.z; // 左右方向の傾き
+
+	// 重力加速度の大きさ（調整用）
+	const float gravityAccel = 0.3f;
+
+	// ステージの傾きに基づく加速度方向を算出
+	// X軸が前後方向、Z軸が左右方向として、
+	// ステージの傾きに応じて滑るベクトルを計算
+	VECTOR slopeAccel = VGet(
+		sinf(tiltZ) * gravityAccel,  // Z軸の傾きでX方向に加速
+		0.0f,
+		-sinf(tiltX) * gravityAccel  // X軸の傾きでZ方向に加速
+	);
+
+	// プレイヤーの速度に傾き分を加える
+	moveVec_ = VAdd(moveVec_, slopeAccel);
+
+	// 摩擦（減速）
+	moveVec_ = VScale(moveVec_, param_.friction);
+
+	// 最大速度制限
+	float len = VSize(moveVec_);
+	if (len > param_.maxSpeed) {
+		moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
+	}
+
+	// 位置更新
+	pos_ = VAdd(pos_, moveVec_);
+
+	// モデル座標に反映
+	MV1SetPosition(modelId_, pos_);
 }
 
 void Player::Draw()
 {
 	MV1SetPosition(modelId_, pos_);
+
+	// 向きの設定
+	float rotY = atan2f(-angle_.x, -angle_.z); // XZ平面での角度を計算
+	VECTOR rot = { 0.0f, rotY, 0.0f };
+	MV1SetRotationXYZ(modelId_, rot);
+
 	MV1DrawModel(modelId_);
 
 	// デバッグ表示
@@ -77,6 +120,9 @@ void Player::Draw()
 	VECTOR spherPos = { pos_.x + 50.f ,pos_.y + 100.f,pos_.z };
 	DrawSphere3D(spherPos, 20.0f, 10, (id_ == 0) ? GetColor(255, 0, 0) : GetColor(0, 0, 255), (id_ == 0) ? GetColor(255, 0, 0) : GetColor(0, 0, 255), TRUE);
 
+	// プレイヤーのパラメータを表示
+	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f",id_, param_.weight, param_.speed, param_.jumpPower);
+
 
 }
 
@@ -93,7 +139,7 @@ void Player::Move()
 	MATRIX stageRotationMatrix = MMult(rotZ, rotX);
 	MATRIX invStageRotationMatrix = MTranspose(stageRotationMatrix);
 
-	// InputControllerから移動入力を取得
+	// 移動処理//
 	VECTOR worldInputVec = controller_->GetMoveInputVector();
 
 	// ワールドの重力ベクトル
@@ -130,6 +176,13 @@ void Player::Move()
 	if (controller_->IsJumpTrigger())
 	{
 		moveVec_.y += 5.0f; // ジャンプ力を加算
+	}
+
+	// 移動方向があるときのみ向きのベクトルを変更
+	if (moveVec_.x != 0.0f || moveVec_.z != 0.0f)
+	{
+		VECTOR flatMoveVec = { moveVec_.x,0.0f,moveVec_.z };
+		angle_ = VNorm(flatMoveVec);
 	}
 }
 

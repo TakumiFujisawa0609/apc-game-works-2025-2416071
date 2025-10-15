@@ -9,8 +9,8 @@ public:
 	static constexpr float MAX_SLIDE_SPEED = 10000.0f; // プレイヤーが滑る最大速度
 
 	// コンストラクタ: 基底クラスPlayerのコンストラクタに引数を渡す
-	Player_3(int id, float weight, std::unique_ptr<InputController> controller)
-		: Player(id, weight, std::move(controller)) {
+	Player_3(int id, const PlayerParam& param, std::unique_ptr<InputController> controller)
+		: Player(id, param, std::move(controller)) {
 	}
 
 	~Player_3() override = default;

@@ -37,19 +37,22 @@ void GameScene::Init()
 
 	// プレイヤーマネージャー初期化
 	playerManager_ = &PlayerManager::GetInstance();
+	playerManager_->Reset();
 
 
 	// プレイヤー生成（デバッグ用を含め、ID:0 から生成）
 	for (int i = 0; i < playerNum_; ++i)
 	{
 
-		// Playerも変わってほしいので、ここでタイプ変更
 		PlayerType type = static_cast<PlayerType>(i);
 
-		// InputIdもIDと同じにする
-		int inputId = i;
+		PlayerParam param; 
 
-		playerManager_->CreatePlayer(type, i, 15.0f);
+		// IDやタイプによって調整
+		if (i == (int)PlayerType::Player_1) { param.weight = 10.0f; param.speed = 1.0f; param.jumpPower = 7.0f; }
+		if (i == (int)PlayerType::Player_2) { param.weight = 20.0f; param.speed = 4.0f; param.jumpPower = 5.0f; }
+
+		playerManager_->CreatePlayer(type, i, param);
 	}
 
 	// プレイヤー初期化

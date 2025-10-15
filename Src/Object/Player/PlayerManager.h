@@ -31,7 +31,7 @@ public:
 
 
 	// プレイヤー生成
-	void CreatePlayer(PlayerType type, int id, float weight);
+	void CreatePlayer(PlayerType type, int id, const PlayerParam& param);
 
 	// 全プレイヤー更新
 	void UpdatePlayers(Stage& stage);
@@ -59,6 +59,8 @@ public:
 
 	// プレイヤー同士の衝突判定
 	void CheckPlayerCollisions();
+
+	void Reset();
 
 private:
 
