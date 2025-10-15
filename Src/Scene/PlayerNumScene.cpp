@@ -57,9 +57,13 @@ void PlayerNumScene::Draw(void)
 	if (time % 2 == 0)
 	{
 		DrawFormatString2(300, 200, GetColor(255, 0, 0), -1, "試遊版はプレイヤー人数を3人以上登録可能ですが、\n 2人プレイまで対応しています");
+		// 警告　1人目は対応していないので、赤字で表示
+		DrawFormatString2(300, 240, GetColor(255, 0, 0), -1, "警告: 1人プレイはデバッグ用です。\n	選択しないでください");
+
 	}
 
 
+	
 
 	// 選択人数表示
 	for (int i = 0; i < SELECT::SELECT_MAX; i++)
