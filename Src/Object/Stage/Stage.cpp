@@ -36,13 +36,13 @@ void Stage::Init()
 	modelId_ = MV1LoadModel("Data/Model/Stage/Stage.mv1");
 
 	// モデルの位置・角度・スケールの設定
-	pos_ = { 0.0f,-750.f,0.0f };
+	pos_ = { 0.0f,-1500.f,0.0f };
 	angle_ = { 0.0f,0.0f,0.0f };
-	scale_ = { 1.0f,1.0f,1.0f };
+	scale_ = { 2.0f,2.0f,2.0f };
 
 	// コライダーの設定
 	collider_.center = pos_;
-	collider_.radius = 300.0f;
+	collider_.radius = 600.0f;
 	collider_.yMin = pos_.y; // ステージの下端
 	collider_.yMax = pos_.y + 50000.0f; // ステージの上端
 
@@ -57,12 +57,6 @@ void Stage::Init()
 // 更新
 void Stage::Update()
 {
-	// 傾きの更新はPlayerManagerから呼び出す
-	/*auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	UpdateTilt(players);*/
-
-
-
 }
 
 // 描画
@@ -92,6 +86,8 @@ void Stage::Release()
 // プレイヤーの位置に応じてステージを傾ける
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
+	// プレイヤーの機能実装まで傾けない
+	//return;
 
 	// プレイヤーの情報がなければ傾けない
 	if (players.empty()) return;
@@ -201,22 +197,26 @@ float Stage::GetGroundHeight(const VECTOR& pos) const
 	// ステージのY範囲外なら非常に低い値を返す
 	if (pos.y < collider_.yMin || pos.y > collider_.yMax)
 	{
-		return -100000.0f;
+		return -1000.0f;
 	}
 
-	// レイを飛ばして地面の高さを取得
-	VECTOR from = VGet(pos.x, pos.y + 1000.0f, pos.z);
-	VECTOR to = VGet(pos.x, pos.y - 1000.0f, pos.z);
+	// レイ小野開始位置と終端位置を設定
+	VECTOR from = VGet(pos.x, collider_.yMax + 1000.0f, pos.z);
+	VECTOR to = VGet(pos.x, collider_.yMin - 5000.0f, pos.z);
 
-	MV1_COLL_RESULT_POLY result = MV1CollCheck_Line(modelId_, -1, from, to);
+	// MV1CollCheck_Lineでステージモデルとレイ交差を確認
+	MV1_COLL_RESULT_POLY result{};
+	result = MV1CollCheck_Line(modelId_,-1, from, to);
+
+	// 衝突していれば衝突位置のY座標を返す
 	if (result.HitFlag)
 	{
 		return result.HitPosition.y;
 	}
 	else
 	{
-		// 当たらなかった場合は非常に低い値を返す
-		return -100000.0f;
+		// 衝突していなければ非常に低い値を返す
+		return collider_.yMin - 1000.0f;
 	}
 }
 

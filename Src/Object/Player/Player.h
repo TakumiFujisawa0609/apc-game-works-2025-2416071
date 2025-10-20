@@ -17,8 +17,14 @@ struct PlayerParam
 class Player
 {
 private:
+
+	// プレイヤーモデルの中心から足元までの距離
+	static constexpr float MODEL_CENTER_TO_FEET = 50.0f;
+
 	// 死亡順序を管理するための静的カウンタ
 	static int nextDeathOrder_;
+
+	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
 
 protected:
 	// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
@@ -59,6 +65,9 @@ public:
 	// 座標取得
 	const VECTOR& GetPos() const { return pos_; }
 
+	// 座標設定
+	void SetPos(const VECTOR& newPos) { pos_ = newPos; }
+
 	// 生存状態取得
 	bool IsAlive() const { return isAlive_; }
 
@@ -67,7 +76,6 @@ public:
 
 	// 当たり判定用の半径取得
 	float GetCollisionRadius() const { return collisionRadius_; }
-
 
 
 protected:
@@ -82,7 +90,6 @@ protected:
 	PlayerParam param_;
 	
 	VECTOR moveVec_;
-	float speed_;
 	int modelId_;
 
 	// プレイヤーの向き

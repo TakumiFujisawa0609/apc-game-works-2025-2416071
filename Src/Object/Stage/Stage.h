@@ -68,7 +68,7 @@ private:
 	float dampingFactor_; // 減衰係数
 	float restitutionFactor_; // 反発係数
 
-	float maxStageRange_ = 300.0f; // ステージの最大範囲
+	float maxStageRange_ = 10000.f; // ステージの最大範囲
 
 
 };

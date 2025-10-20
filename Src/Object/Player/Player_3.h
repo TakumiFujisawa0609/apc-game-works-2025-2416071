@@ -13,7 +13,6 @@ public:
 		: Player(id, param, std::move(controller)) {
 	}
 
-	~Player_3() override = default;
 
 	// Šî–{ˆ—
 	void Init() override;

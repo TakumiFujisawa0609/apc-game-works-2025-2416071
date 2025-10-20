@@ -3,6 +3,7 @@
 #include "Player_1.h" 
 #include "Player_2.h"
 #include "Player_3.h"
+#include "Player_4.h"
 #include "Control/InputController.h"
 #include "Control/Controller.h"
 #include <DxLib.h>
@@ -84,6 +85,19 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		// PAD2を割り当て
 		padNo = InputManager::JOYPAD_NO::PAD2;
 	}
+	else if (id == 2) {
+
+		// 3P目はIJKL + RSHIFT
+		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_RSHIFT };
+		// PAD3を割り当て
+		padNo = InputManager::JOYPAD_NO::PAD3;
+	}
+	else if (id == 3){
+		// 4P目はテンキー + RCTRL
+		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_RCONTROL };
+		// PAD4を割り当て
+		padNo = InputManager::JOYPAD_NO::PAD4;
+	}
 	else {
 		return;
 	}
@@ -101,6 +115,9 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		break;
 	case PlayerType::Player_3:
 		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
+		break;
+	case PlayerType::Player_4:
+		newPlayer = std::make_shared<Player_4>(id, param, std::move(controller));
 		break;
 	default:
 		break;
@@ -225,8 +242,9 @@ std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 // プレイヤー同士の当たり判定
 void PlayerManager::CheckPlayerCollisions()
 {
+	// 生ポインタ配列取得
 	const auto& rawPlayers = GetPlayerRawPlayers();
-	
+
 	for (size_t i = 0; i < rawPlayers.size(); i++)
 	{
 		for (size_t j = i + 1; j < rawPlayers.size(); ++j)
@@ -234,28 +252,42 @@ void PlayerManager::CheckPlayerCollisions()
 			Player* p1 = rawPlayers[i];
 			Player* p2 = rawPlayers[j];
 
-			// 生存している場合のみ判定
+			// 生存している場合にのみ当たり判定を実施
 			if (!p1->IsAlive() || !p2->IsAlive()) continue;
 
+			// 当たり判定
 			// 距離計算
 			VECTOR diff = VSub(p1->GetPos(), p2->GetPos());
 			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-			float radiusSum = p1->GetCollisionRadius() + p2->GetCollisionRadius();
+			float radSum = p1->GetCollisionRadius() + p2->GetCollisionRadius();
 
-			if (distSq < radiusSum * radiusSum)
+			// 衝突しているかチェック
+			if (distSq < radSum * radSum)
 			{
-				// 衝突している場合は、お互いを押し出す
+				// 衝突しているときはお互いを押し返す
 				float dist = sqrtf(distSq);
+
+				// 押し出し方向(0除算控除として　dist > 0.0f)
 				VECTOR pushDir = (dist > 0.0f) ? VScale(diff, 1.0f / dist) : VGet(1.0f, 0.0f, 0.0f);
-				float overlap = radiusSum - dist;
-				VECTOR pushVec = VScale(pushDir, overlap * 0.5f); // 半分ずつ押し出す
 
-				// プレイヤーの位置を取得
-				VECTOR Player1Pos = p1->GetPos();
-				VECTOR Player2Pos = p2->GetPos();
+				// めり込み量
+				float overlap = radSum - dist;
 
-				Player1Pos = VAdd(p1->GetPos(), pushVec);
-				Player2Pos = VSub(p2->GetPos(), pushVec);
+				// 重さを使って押し出す値方を計算する
+				float w1 = p1->GetWeight();
+				float w2 = p2->GetWeight();
+				float inMv1 = 1.0f / w1;
+				float inMv2 = 1.0f / w2;
+				float totalInvMass = inMv1 + inMv2;
+
+				// 押し出しベクトル計算
+				VECTOR pVec1 = VScale(pushDir, overlap * (inMv1 / totalInvMass));
+				VECTOR pVec2 = VScale(pushDir, overlap * (inMv2 / totalInvMass));
+
+				// 位置更新
+				p1->SetPos(VAdd(p1->GetPos(), pVec1));
+				p2->SetPos(VSub(p2->GetPos(), pVec2));
+
 			}
 		}
 	}
