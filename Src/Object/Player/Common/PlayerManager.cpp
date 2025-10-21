@@ -1,11 +1,11 @@
 #include "PlayerManager.h"
 #include "Player.h"
-#include "Player_1.h" 
-#include "Player_2.h"
-#include "Player_3.h"
-#include "Player_4.h"
-#include "Control/InputController.h"
-#include "Control/Controller.h"
+#include "../Player/Player_1.h" 
+#include "../Player/Player_2.h"
+#include "../Player/Player_3.h"
+#include "../Player/Player_4.h"
+#include "../Control/InputController.h"
+#include "../Control/Controller.h"
 #include <DxLib.h>
 #include <memory>
 #include <algorithm> 
@@ -297,4 +297,10 @@ void PlayerManager::Reset()
 {
 	ClearPlayers();
 	Init();
+}
+
+void PlayerManager::AddAttackObject(AttackObj* attackObj)  
+{  
+   // std::unique_ptr‚É•ÏŠ·‚µ‚Ä‚©‚çpush_back‚·‚é  
+   attackObjects_.push_back(std::unique_ptr<AttackObj>(attackObj));  
 }

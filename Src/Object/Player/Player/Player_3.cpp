@@ -1,8 +1,10 @@
-#include "Player_4.h"
+#include "Player_3.h"
 #include <DxLib.h>
-#include "Control/InputController.h"
+#include "../../../Utility/AsoUtility.h"
+#include "../Control/InputController.h"
 
-void Player_4::Init()
+
+void Player_3::Init()
 {
 	// eƒNƒ‰ƒX‚Ì‰Šú‰»
 	Player::Init();
@@ -15,7 +17,7 @@ void Player_4::Init()
 
 }
 
-void Player_4::Release()
+void Player_3::Release()
 {
 	MV1DeleteModel(modelId_);
 }

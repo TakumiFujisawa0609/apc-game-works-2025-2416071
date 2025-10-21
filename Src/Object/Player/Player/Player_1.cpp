@@ -1,8 +1,9 @@
 ﻿#include "Player_1.h"
 #include <DxLib.h>
-#include "../../Utility/MatrixUtility.h"	// Lerp用
-#include "../../Manager/InputManager.h"
-#include "../../Utility/AsoUtility.h"
+#include "../../../Utility/MatrixUtility.h"	// Lerp用
+#include "../../../Manager/InputManager.h"
+#include "../../../Utility/AsoUtility.h"
+#include "../Control/InputController.h"
 
 
 void Player_1::Init()
@@ -22,4 +23,9 @@ void Player_1::Init()
 void Player_1::Release()
 {
 	MV1DeleteModel(modelId_);
+}
+
+void Player_1::Attack()
+{
+    
 }

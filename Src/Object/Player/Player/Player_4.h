@@ -1,5 +1,6 @@
 #pragma once
-#include "Player.h"
+#include "../Common/Player.h"
+#include "../Control/InputController.h"
 class Player_4 :
     public Player
 {

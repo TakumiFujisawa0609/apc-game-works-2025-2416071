@@ -4,10 +4,10 @@
 #include "../Manager/SceneManager.h"
 #include "../Object/Grid.h"
 #include "../Manager/Camera.h"
-#include "../Object/Player/PlayerManager.h"
+#include "../Object/Player/Common/PlayerManager.h"
 #include "../Object/Stage/Stage.h"
 #include "GameScene.h"
-#include "../Object/Player/Player_1.h"
+#include "../Object/Player/Player/Player_1.h"
 
 GameScene::GameScene()
 {

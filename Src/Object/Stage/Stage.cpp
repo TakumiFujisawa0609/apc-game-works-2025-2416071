@@ -1,6 +1,6 @@
 #include "Stage.h"
-#include "../Player/Player.h"
-#include "../Player/PlayerManager.h"
+#include "../Player/Common/Player.h"
+#include "../Player/Common/PlayerManager.h"
 #include "../../Utility/AsoUtility.h"
 #include <cmath>
 
@@ -70,6 +70,7 @@ void Stage::Draw()
 
 	// デバッグ用に角度を表示
 	DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
+	DrawSphere3D(collider_.center, collider_.radius, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), FALSE);
 
 }
 
@@ -187,6 +188,9 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	// ステージの角度をモデルに反映
 	MV1SetRotationXYZ(modelId_, angle_);
 
+	// 衝突情報の更新
+	MV1RefreshCollInfo(modelId_);
+
 	// Y軸の角度は変えない
 	angle_.y = 0.0f;
 }
@@ -200,7 +204,7 @@ float Stage::GetGroundHeight(const VECTOR& pos) const
 		return -1000.0f;
 	}
 
-	// レイ小野開始位置と終端位置を設定
+	// レイを飛ばす開始位置と終端位置を設定
 	VECTOR from = VGet(pos.x, collider_.yMax + 1000.0f, pos.z);
 	VECTOR to = VGet(pos.x, collider_.yMin - 5000.0f, pos.z);
 
@@ -215,7 +219,7 @@ float Stage::GetGroundHeight(const VECTOR& pos) const
 	}
 	else
 	{
-		// 衝突していなければ非常に低い値を返す
+		// 衝突していなければ小さい値を返す
 		return collider_.yMin - 1000.0f;
 	}
 }

@@ -1,10 +1,12 @@
-#include "Player.h"
-#include "../../Utility/MatrixUtility.h"
-#include "../../Utility/AsoUtility.h"
-#include "../../Manager/InputManager.h"
-#include "../Stage/Stage.h"
-#include "Control/InputController.h"
 #include <DxLib.h>
+#include "../Control/InputController.h"
+#include "../../Stage/Stage.h"
+#include "../../../Utility/MatrixUtility.h"
+#include "../../../Utility/AsoUtility.h"
+#include "../../../Manager/InputManager.h"
+#include "../../AttackObj/Common/AttackObj.h"
+#include "PlayerManager.h"
+#include "Player.h"
 
 
 // 静的メンバ
@@ -38,59 +40,96 @@ void Player::Init()
 
 void Player::Update()
 {
-	// 生存状態が偽なら更新しない
-	if (!isAlive_)
+	// 生存していない場合は処理しない
+	if (!isAlive_ )
 	{
+		pos_.y -= 5.0f; // 死亡後の落下アニメーション
 		return;
 	}
 
-	Move();
 
-	// ステージの地面に合わせてY座標を補正
-	ApplyStageGround(Stage::GetInstance());
+	Stage& stage = Stage::GetInstance();
 
-	// 死亡判定: Y座標が-100以下なら死亡
-	if (pos_.y < -100.0f)
+	// --- ステージ外チェック ---
+	VECTOR stageCenter = stage.GetPos();          // ステージ中心座標
+	float stageRadius = stage.GetCollider().radius; // ステージ半径
+
+	float dx = pos_.x - stageCenter.x;
+	float dz = pos_.z - stageCenter.z;
+	float distanceXZ = sqrtf(dx * dx + dz * dz);
+
+	// --- ステージ外に出た瞬間に落下モードへ ---
+	if (!isFalling_ && distanceXZ > stageRadius)
 	{
-		Die();
+		isFalling_ = true;
+		moveVec_ = { 0.0f, 0.0f, 0.0f }; // 水平速度リセット
 	}
 
-	// ステージの傾き取得
-	VECTOR tilt = Stage::GetInstance().GetAngle();
+	// --- 落下中処理 ---
+	if (isFalling_)
+	{
+		// 重力で落下
+		moveVec_.y -= 0.98f;  // 落下加速度
+		pos_ = VAdd(pos_, moveVec_);
 
-	// 傾きをX,Z成分で取得（ラジアン）
-	float tiltX = tilt.x; // 前後方向の傾き
-	float tiltZ = tilt.z; // 左右方向の傾き
+		// モデル反映
+		MV1SetPosition(modelId_, pos_);
 
-	// 重力加速度の大きさ（調整用）
+		// 一定高さまで落ちたら死亡
+		if (pos_.y < -100.0f)
+		{
+			Die();
+		}
+
+		return; // 通常処理はスキップ
+	}
+
+	// --- 通常移動処理 ---
+	Move();
+
+	// 地面の高さに合わせて補正
+	ApplyStageGround(stage);
+
+	// ステージ傾き取得
+	VECTOR tilt = stage.GetAngle();
+	float tiltX = tilt.x;
+	float tiltZ = tilt.z;
+
+	// 重力加速度（坂滑り）
 	const float gravityAccel = 0.3f;
-
-	// ステージの傾きに基づく加速度方向を算出
-	// X軸が前後方向、Z軸が左右方向として、
-	// ステージの傾きに応じて滑るベクトルを計算
 	VECTOR slopeAccel = VGet(
-		sinf(tiltZ) * gravityAccel,  // Z軸の傾きでX方向に加速
+		sinf(tiltZ) * gravityAccel,  // Z軸傾きでX方向に加速
 		0.0f,
-		-sinf(tiltX) * gravityAccel  // X軸の傾きでZ方向に加速
+		-sinf(tiltX) * gravityAccel  // X軸傾きでZ方向に加速
 	);
 
-	// プレイヤーの速度に傾き分を加える
+	// 傾きに基づく速度を加算
 	moveVec_ = VAdd(moveVec_, slopeAccel);
 
-	// 摩擦（減速）
+	// 摩擦
 	moveVec_ = VScale(moveVec_, param_.friction);
 
 	// 最大速度制限
 	float len = VSize(moveVec_);
-	if (len > param_.maxSpeed) {
+	if (len > param_.maxSpeed)
+	{
 		moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
 	}
+
+	// 攻撃（任意の実装がある場合）
+	Attack();
 
 	// 位置更新
 	pos_ = VAdd(pos_, moveVec_);
 
-	// モデル座標に反映
+	// モデル反映
 	MV1SetPosition(modelId_, pos_);
+
+	// --- 落下死亡チェック ---
+	if (pos_.y < -1000.0f)
+	{
+		Die();
+	}
 }
 
 void Player::Draw()
@@ -108,6 +147,7 @@ void Player::Draw()
 
 	MV1SetRotationXYZ(modelId_, rot);
 
+	if(pos_.y  >= -1000.0f)
 	MV1DrawModel(modelId_);
 
 	// デバッグ表示
@@ -234,20 +274,22 @@ void Player::Move()
 	}
 }
 
-
-
 void Player::ApplyStageGround(const Stage& stage)
 {
 	// ステージの地面の高さを取得
 	float groundY = stage.GetGroundHeight(pos_);
 
+	// 地面が存在しない場合（非常に低い値が返ってきた場合）は補正しない
+	if (groundY < -500.0f) {
+		// 地面がないので補正せず、そのまま落下させる
+		return;
+	}
+
 	// 地面よりも下にいると判断するY座標のしきい値
-	// groundY + (PlayerH / 2.0f)
 	float requiredY = groundY + (MODEL_CENTER_TO_FEET / 2.0f);
 
 	// プレイヤーが地面よりもめり込んでいたら強制的にPlayerの位置を補正
-	if (pos_.y < groundY)
-	{
+	if (pos_.y < requiredY) {
 		// Y座標を強制的に地面へ合わせる
 		pos_.y = requiredY;
 
@@ -255,6 +297,7 @@ void Player::ApplyStageGround(const Stage& stage)
 		moveVec_.y = 0.0f;
 	}
 }
+
 
 void Player::Die()
 {
@@ -266,4 +309,39 @@ void Player::Die()
 
 	// 死亡順序を設定
 	deathOrder_ = nextDeathOrder_++;
+}
+
+void Player::Attack()
+{
+	// Fキー攻撃
+	if (attackCooldown_ > 0)
+	{
+		attackCooldown_--;
+	}
+
+	// InputMnagerからキー入力取得
+	InputManager& ins = InputManager::GetInstance();
+
+	// Fキー入力とクールダウンチェック
+	if (attackCooldown_ == 0 && ins.IsNew(KEY_INPUT_F))
+	{
+		attackCooldown_ = 30;
+
+		VECTOR startPos = VAdd(pos_, VScale(inputVecNor_, 50.0f));
+
+		float attackSpeed = 40.0f;
+		AttackObj* newAttack = new BulletAttack(id_, startPos, inputVecNor_, attackSpeed);
+
+		// 4. PlayerManagerに登録
+		PlayerManager::GetInstance().AddAttackObject(newAttack);
+	}
+}
+
+void Player::Release()
+{
+	if (modelId_ != -1)
+	{
+		MV1DeleteModel(modelId_);
+		modelId_ = -1;
+	}
 }

@@ -1,6 +1,6 @@
 #pragma once
-#include "Player.h"
-#include "Control/InputController.h"
+#include "../Common/Player.h"
+#include "../Control/InputController.h"
 #include <DxLib.h>
 
 class Player_2 : public Player

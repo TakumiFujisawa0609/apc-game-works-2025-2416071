@@ -2,7 +2,8 @@
 #include <vector>
 #include <memory>
 #include "Player.h"
-#include "../Stage/Stage.h"
+#include "../../Stage/Stage.h"
+#include "../../AttackObj/Common/AttackObj.h"
 
 // Playerの識別
 enum class PlayerType
@@ -62,6 +63,9 @@ public:
 
 	void Reset();
 
+	// AddAttackObject
+	void AddAttackObject(AttackObj* attackObj);
+
 private:
 
 	PlayerManager();
@@ -75,5 +79,8 @@ private:
 
 	// 勝者ID (-1: 未決定, 0, 1...: プレイヤーID)
 	int winnerID_ = -1;
+
+	// 攻撃オブジェクト配列
+	std::vector<std::unique_ptr<AttackObj>> attackObjects_;
 
 };

@@ -1,7 +1,9 @@
 #pragma once
 #include <DxLib.h>
 #include <memory>
-#include "../Stage/Stage.h"
+#include "../../Stage/Stage.h"
+#include "../../AttackObj/BulletAttack.h"
+
 
 class InputController;
 
@@ -19,7 +21,7 @@ class Player
 private:
 
 	// プレイヤーモデルの中心から足元までの距離
-	static constexpr float MODEL_CENTER_TO_FEET = 50.0f;
+	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;
 
 	// 死亡順序を管理するための静的カウンタ
 	static int nextDeathOrder_;
@@ -32,6 +34,9 @@ protected:
 
 	// 死亡時の処理をまとめる
 	void Die();
+
+	// 攻撃処理 (派生クラスで実装)
+virtual	void Attack();
 
 public:
 
@@ -54,7 +59,7 @@ public:
 	virtual void Draw();
 
 	// 解放は派生クラスで実装
-	virtual void Release() {};
+	virtual void Release();
 
 	// ID取得
 	int GetID() const { return id_; }
@@ -103,4 +108,10 @@ protected:
 
 
 	std::unique_ptr<InputController> controller_;
+
+	// 攻撃クールダウン
+	float attackCooldown_ = 0.0f;
+
+	// 落下フラグ
+	bool isFalling_ = false;
 };

@@ -1,4 +1,10 @@
 #include "Player_2.h"
+#include <DxLib.h>
+#include "../../../Utility/MatrixUtility.h"	// Lerp—p
+#include "../../../Manager/InputManager.h"
+#include "../../../Utility/AsoUtility.h"
+#include "../Control/InputController.h"
+
 
 void Player_2::Init(void)
 {
