@@ -111,7 +111,7 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_2:
-		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_2>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_3:
 		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
@@ -281,10 +281,8 @@ void PlayerManager::CheckPlayerCollisions()
 				float totalInvMass = inMv1 + inMv2;
 
 				// 押し出しベクトル計算
-				VECTOR pushDirFlat = pushDir;
-				pushDirFlat.y = 0.0f;
-				VECTOR pVec1 = VScale(pushDirFlat, overlap * (inMv1 / totalInvMass));
-				VECTOR pVec2 = VScale(pushDirFlat, overlap * (inMv2 / totalInvMass));
+				VECTOR pVec1 = VScale(pushDir, overlap * (inMv1 / totalInvMass));
+				VECTOR pVec2 = VScale(pushDir, overlap * (inMv2 / totalInvMass));
 
 				// 位置更新
 				p1->SetPos(VAdd(p1->GetPos(), pVec1));

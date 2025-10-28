@@ -3,29 +3,33 @@
 #include "../Player/Common/PlayerManager.h"
 #include "../../Utility/AsoUtility.h"
 #include <cmath>
-#include <float.h>
-#include <algorithm>
 
-// 静的メンバ変数の定義
+// 静的メンバ変数の初期化
 Stage* Stage::instance_ = nullptr;
 
-// コンストラクタ・デストラクタ
-Stage::Stage() {}
-Stage::~Stage() {}
+// コンストラクタ
+Stage::Stage(){}
 
-// インスタンス管理
-void Stage::CreateInstance() 
+// デストラクタ
+Stage::~Stage(){}
+
+// インスタンス生成
+void Stage::CreateInstance()
 {
-	if (instance_ == nullptr) instance_ = new Stage();
+	if (instance_ == nullptr)
+	{
+		instance_ = new Stage();
+	}
 }
 
+// インスタンス取得
 Stage& Stage::GetInstance()
 {
 	if (!instance_) Stage::CreateInstance();
 	return *instance_;
 }
 
-// 基本処理
+// 初期化
 void Stage::Init()
 {
 	// モデルの読み込み
@@ -39,24 +43,24 @@ void Stage::Init()
 	// コライダーの設定
 	collider_.center = pos_;
 	collider_.radius = 600.0f;
-	collider_.yMin = pos_.y;			// ステージの下端
+	collider_.yMin = pos_.y; // ステージの下端
 	collider_.yMax = pos_.y + 50000.0f; // ステージの上端
 
 	// 物理制御の初期化
 	angularVelocity_ = AsoUtility::VECTOR_ZERO;
-	momentOfInertia_ = (float)24000;		// 慣性
-	dampingFactor_ = 0.4f;					// 角速度の減衰率
-	restitutionFactor_ = 3000.0f;			// 反発
+	momentOfInertia_ = (float)24000; // 慣性モーメント（適当な値）
+	dampingFactor_ = 0.4f; // 角速度の減衰率（適当な値）
+	restitutionFactor_ = 3000.0f; // 反発係数（適当な値）
 
-	// 衝突情報の初期化
-	MV1SetupCollInfo(modelId_, -1, 32, 32, 32);
 }
 
+// 更新
 void Stage::Update()
 {
 }
 
-void Stage::Draw(const VECTOR& pos)
+// 描画
+void Stage::Draw()
 {
 	// モデルの描画
 	MV1SetPosition(modelId_, pos_);
@@ -67,12 +71,14 @@ void Stage::Draw(const VECTOR& pos)
 	// デバッグ用に角度を表示
 	DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
 	DrawSphere3D(collider_.center, collider_.radius, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), FALSE);
+
 }
 
+// 解放
 void Stage::Release()
 {
-	// モデルの解放
-	if (modelId_ != -1) {
+	if (modelId_ != -1)
+	{
 		MV1DeleteModel(modelId_);
 		modelId_ = -1;
 	}
@@ -189,43 +195,34 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	angle_.y = 0.0f;
 }
 
-float Stage::GetGroundHeight(const VECTOR& pos, float capsuleRadius, float capsuleHalfHeight) const
+// 指定位置の地面の高さを取得
+float Stage::GetGroundHeight(const VECTOR& pos) const
 {
-	VECTOR p1 = VGet(pos.x, pos.y + capsuleHalfHeight, pos.z);
-	VECTOR p2 = VGet(pos.x, pos.y - capsuleHalfHeight, pos.z);
-
-	MV1_COLL_RESULT_POLY_DIM result = MV1CollCheck_Capsule(modelId_, -1, p1, p2, capsuleRadius);
-
-	float maxY = -FLT_MAX;
-
-	if (result.HitNum > 0 && result.Dim != nullptr)
+	// ステージのY範囲外なら非常に低い値を返す
+	if (pos.y < collider_.yMin || pos.y > collider_.yMax)
 	{
-			// result.Dim[i] がポインタ配列の場合に備えて -> に修正
-		for (int i = 0; i < result.HitNum; i++)
-		{
-			if (result.Dim[i].HitFlag)
-			{
-				float hitY = result.Dim[i].Position->y;
-				if (hitY > maxY)
-				{
-					maxY = hitY;
-				}
-			}
-		}
+		return -1000.0f;
 	}
 
-	MV1CollResultPolyDimTerminate(result);
+	// レイを飛ばす開始位置と終端位置を設定
+	VECTOR from = VGet(pos.x, collider_.yMax + 1000.0f, pos.z);
+	VECTOR to = VGet(pos.x, collider_.yMin - 5000.0f, pos.z);
 
-	if (maxY == -FLT_MAX)
+	// MV1CollCheck_Lineでステージモデルとレイ交差を確認
+	MV1_COLL_RESULT_POLY result{};
+	result = MV1CollCheck_Line(modelId_,-1, from, to);
+
+	// 衝突していれば衝突位置のY座標を返す
+	if (result.HitFlag)
 	{
-		return -9999.0f;
+		return result.HitPosition.y;
 	}
-
-	return maxY;
+	else
+	{
+		// 衝突していなければ小さい値を返す
+		return collider_.yMin - 1000.0f;
+	}
 }
-
-
-
 
 bool Stage::IsPlayerOnStage(const VECTOR& playerPos) const
 {
