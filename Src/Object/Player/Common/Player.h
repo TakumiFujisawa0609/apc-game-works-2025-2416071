@@ -22,11 +22,24 @@ private:
 
 	// プレイヤーモデルの中心から足元までの距離
 	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;
+	static constexpr float GRAVITY_ACCEL = 0.98f;
 
 	// 死亡順序を管理するための静的カウンタ
 	static int nextDeathOrder_;
 
 	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
+
+	// 水平方向を計算してmoveVec_に反映する
+	void CalcHorizontalVel(const Stage& stage);
+
+	// ステージの傾きに応じて、入力速度と最大速度を調整する
+	float GetSlopeAdjustedMultiplier(const VECTOR& stageAngle, const VECTOR& inputVecNor)const;
+
+	// 摩擦と最大速度制限を適用する
+	void ApplyFrictionAndMaxSpeed();
+
+	// ジャンプ処理
+	void Jump();
 
 protected:
 	// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
