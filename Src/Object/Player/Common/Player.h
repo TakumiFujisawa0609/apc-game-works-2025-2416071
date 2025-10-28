@@ -1,55 +1,64 @@
 #pragma once
-#include <DxLib.h>
-#include <memory>
 #include "../../Stage/Stage.h"
 #include "../../AttackObj/BulletAttack.h"
+#include <DxLib.h>
+#include <memory>
 
-
+// 前方宣言
 class InputController;
 
+// プレイヤーパラメータ構造体
 struct PlayerParam
 {
-	float weight = 10.0f;	// 重さ
-	float speed = 5.0f;		// 移動速度
-	float jumpPower = 5.0f;	// ジャンプ力
-	float friction = 0.85f;	// 摩擦係数
-	float maxSpeed = 15.0f;	// 最大速度
+	float weight;    // 重さ
+	float speed;     // 速度
+	float jumpPower; // ジャンプ力
+	float friction;  // 摩擦力
+	float maxSpeed;  // 最大速度
 };
 
 class Player
 {
 private:
 
-	// プレイヤーモデルの中心から足元までの距離
+	// 定数宣言
+
+	// プレイヤーモデルの足元から中心までの距離
 	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;
 
-	// 死亡順序を管理するための静的カウンタ
+	// 死亡順序を管理する静的メンバ変数
 	static int nextDeathOrder_;
 
-	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
+	VECTOR inputVecNor_; // 入力方向の正規化ベクトル
+
+	// カプセルの高さ
+	static constexpr float CAPSULE_HEIGHT = 217.0f;
 
 protected:
-	// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
+
+	// 死亡順序		(0は誰も4んでない)
 	int deathOrder_ = 0;
 
-	// 死亡時の処理をまとめる
+	// 死亡時の処理
 	void Die();
 
-	// 攻撃処理 (派生クラスで実装)
-virtual	void Attack();
+	// 攻撃処理
+	virtual void Attack();
 
 public:
 
-	static constexpr float GRAVITY = 9.81f;
-	static constexpr float SLIDE_FACTOR = 0.5f;
-	static constexpr float PLAYER_FRICTION = 0.85f;
-	static constexpr float MAX_SPEED = 15.0f;
-	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;
+	// 定数
+	static constexpr float GRAVITY = 0.98f;			// 重力加速度
+	static constexpr float SLIDE_FACTOR = 0.5f;			// 滑り係数
+	static constexpr float PLAYER_FRICTION = 0.85f;		// 地面摩擦
+	static constexpr float MAX_SPEED = 15.0f;			// 最大速度
+	static constexpr float INPUT_ACCEL_FACTOR = 15.0f;
 
-	// 外部から静的カウンタをリセットするためのメソッド
+	// 外部から静的カウンタをリセットする
 	static void ResetDeathCounter() { nextDeathOrder_ = 1; }
 
-	// コンストラクタ: 固有ID, 重さ, InputControllerを受け取る
+	// コンストラクタ
+	// ID,重さ,InpurtController
 	Player(int id, const PlayerParam& param, std::unique_ptr<InputController> controller);
 	virtual ~Player();
 
@@ -57,9 +66,7 @@ public:
 	virtual void Init();
 	virtual void Update();
 	virtual void Draw();
-
-	// 解放は派生クラスで実装
-	virtual void Release();
+	virtual void Release() ;
 
 	// ID取得
 	int GetID() const { return id_; }
@@ -67,51 +74,48 @@ public:
 	// 重さ取得
 	float GetWeight() const { return param_.weight; }
 
-	// 座標取得
+	// 位置取得・設定
 	const VECTOR& GetPos() const { return pos_; }
+	void SetPos(const VECTOR& pos) { pos_ = pos; }
 
-	// 座標設定
-	void SetPos(const VECTOR& newPos) { pos_ = newPos; }
-
-	// 生存状態取得
+	// 生存状態
 	bool IsAlive() const { return isAlive_; }
 
-	// 死亡順序取得
+	// 死亡順序
 	int GetDeathOrder() const { return deathOrder_; }
 
-	// 当たり判定用の半径取得
+	// 当たり判定用半径取得
 	float GetCollisionRadius() const { return collisionRadius_; }
 
+	// カプセルの高さ取得
+	float GetCapsuleHeight() const { return CAPSULE_HEIGHT; }
 
 protected:
 
-	// プレイヤーの動き
+	// プレイヤーの移動
 	virtual void Move();
-	VECTOR pos_;
-	// 座標補正
+	VECTOR pos_;             
+
+	// 位置補正
 	void ApplyStageGround(const Stage& stage);
 
-	int id_;
-	PlayerParam param_;
-	
-	VECTOR moveVec_;
-	int modelId_;
+	int id_;				// プレイヤーID
+	PlayerParam param_;		// プレイヤーパラメータ
+	VECTOR moveVec_;		// 移動ベクトル
+	int modelId_;			// モデルID
 
 	// プレイヤーの向き
 	VECTOR angle_ = { 0.0f, 0.0f, 0.0f };
 
-
 	// プレイヤーの生存状態
-	bool isAlive_ = true;
-
-	float collisionRadius_ = 70.0f;	// 当たり判定用の半径
-
-
-	std::unique_ptr<InputController> controller_;
+	bool isAlive_ = true;								// true: 生存中, false: 死亡
+	float collisionRadius_ = 30.0f;						// 当たり判定用半径
+	std::unique_ptr<InputController> controller_;		// 入力コントローラー
 
 	// 攻撃クールダウン
-	float attackCooldown_ = 0.0f;
+	int attackCooldown_ = 0;
 
-	// 落下フラグ
-	bool isFalling_ = false;
+	// 落下状態
+	bool isFalling_ = false;							// true: 落下中, false: 地面上
+
 };

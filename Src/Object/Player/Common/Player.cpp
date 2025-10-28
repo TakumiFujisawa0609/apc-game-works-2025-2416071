@@ -8,16 +8,14 @@
 #include "PlayerManager.h"
 #include "Player.h"
 
-
-// 静的メンバ
+// 静的メンバ変数の定義
 int Player::nextDeathOrder_ = 1;
 
 // コンストラクタ
 Player::Player(int id, const PlayerParam& param, std::unique_ptr<InputController> controller)
-	: id_(id),
-	param_(param),
-	controller_(std::move(controller))
+	:id_(id), param_(param), controller_(std::move(controller))
 {
+
 }
 
 Player::~Player()
@@ -26,84 +24,80 @@ Player::~Player()
 
 void Player::Init()
 {
-	// モデルの読み込みは派生クラスで実装
+	// モデルの読み込みは派生クラスで実施
 
-	// 変数の初期化 (リセット可能な状態をInitで設定)
-	pos_ = { 0.0f, 0.0f, 0.0f }; // 初期座標を設定
-	moveVec_ = { 0.0f,0.0f,0.0f };
+	// 変数の初期化　リセット可能な状態をここで設定
+	pos_ = { 0.0f,0.0f,0.0f };
+	moveVec_ = AsoUtility::VECTOR_ZERO;
 	param_.speed = 15.0f;
-	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f}; // 初期向きはZ+方向}
-	modelId_ = -1; // Initでロードしない場合は-1で初期化
-
-	inputVecNor_ = {0.0f, 0.0f, 1.0f };
+	angle_ = { 0.0f,AsoUtility::Deg2RadF(180.0f),1.0f };
+	modelId_ = -1;
+	inputVecNor_ = AsoUtility::VECTOR_ZERO;
 }
 
 void Player::Update()
 {
-	// 生存していない場合は処理しない
-	if (!isAlive_ )
+	// 生存していない場合は更新しない
+	if (!isAlive_)
 	{
-		pos_.y -= 5.0f; // 死亡後の落下アニメーション
+		// プレイヤーを落としていく
+		pos_.y -= GRAVITY;
 		return;
 	}
 
-
+	// ステージのインスタンス取得
 	Stage& stage = Stage::GetInstance();
 
-	// --- ステージ外チェック ---
-	VECTOR stageCenter = stage.GetPos();          // ステージ中心座標
-	float stageRadius = stage.GetCollider().radius; // ステージ半径
-
-	float dx = pos_.x - stageCenter.x;
-	float dz = pos_.z - stageCenter.z;
-	float distanceXZ = sqrtf(dx * dx + dz * dz);
-
-	// --- ステージ外に出た瞬間に落下モードへ ---
-	if (!isFalling_ && distanceXZ > stageRadius)
+	// ステージの外にいるかどうかを判定
+	if (!isFalling_ && !stage.IsPlayerOnStage(pos_))
 	{
+		// 落下開始
 		isFalling_ = true;
-		moveVec_ = { 0.0f, 0.0f, 0.0f }; // 水平速度リセット
+		// 水平速度を初期化
+		moveVec_ = AsoUtility::VECTOR_ZERO;
 	}
 
-	// --- 落下中処理 ---
+	// 落下中の処理
 	if (isFalling_)
 	{
 		// 重力で落下
-		moveVec_.y -= 0.98f;  // 落下加速度
-		pos_ = VAdd(pos_, moveVec_);
+		moveVec_.y -= GRAVITY;
 
-		// モデル反映
+		// モデルを反映
 		MV1SetPosition(modelId_, pos_);
 
-		// 一定高さまで落ちたら死亡
-		if (pos_.y < -100.0f)
+		// 一定の高さ以下に来たら死亡扱いにする
+		if (pos_.y < stage.GetPos().y - 5000.0f)
 		{
+			// 死亡処理
 			Die();
 		}
+		// それ以外の処理は行わない
+		return;
 
-		return; // 通常処理はスキップ
 	}
 
-	// --- 通常移動処理 ---
+	// 通常の移動処理
 	Move();
 
-	// 地面の高さに合わせて補正
+	// 地面の高さに合わせて位置を補正
+	// レイではなく、カプセルで判定する
 	ApplyStageGround(stage);
 
-	// ステージ傾き取得
+	// ステージの傾きを取得
 	VECTOR tilt = stage.GetAngle();
 	float tiltX = tilt.x;
 	float tiltZ = tilt.z;
 
-	// 重力加速度（坂滑り）
+	// 重力加速度(坂滑り)
 	const float gravityAccel = 0.3f;
 	VECTOR slopeAccel = VGet(
-		sinf(tiltZ) * gravityAccel,  // Z軸傾きでX方向に加速
+		sinf(tiltZ) * gravityAccel,
 		0.0f,
-		-sinf(tiltX) * gravityAccel  // X軸傾きでZ方向に加速
+		sinf(tiltX) * gravityAccel
 	);
 
-	// 傾きに基づく速度を加算
+	// 傾きに基づいて速度を計算
 	moveVec_ = VAdd(moveVec_, slopeAccel);
 
 	// 摩擦
@@ -116,20 +110,19 @@ void Player::Update()
 		moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
 	}
 
-	// 攻撃（任意の実装がある場合）
+	// 攻撃処理
 	Attack();
 
-	// 位置更新
+	// モデルの位置更新
 	pos_ = VAdd(pos_, moveVec_);
 
-	// モデル反映
-	MV1SetPosition(modelId_, pos_);
-
-	// --- 落下死亡チェック ---
-	if (pos_.y < -1000.0f)
+	// 落下死確認
+	if (pos_.y < stage.GetPos().y - 5000.0f)
 	{
+		// 死亡処理
 		Die();
 	}
+	
 }
 
 void Player::Draw()
@@ -137,23 +130,33 @@ void Player::Draw()
 	MV1SetPosition(modelId_, pos_);
 
 	// 向きの設定
-	//float rotY = atan2f(-angle_.x, -angle_.z); // XZ平面での角度を計算
-	//VECTOR rot = { 0.0f, rotY, 0.0f };
+	// float rotY = atan2f(inputVecNor_.x, inputVecNor_.z);
+	// VECTOR rot = VGet(0.0f, rotY + AsoUtility::Deg2RadF(180.0f), 0.0f);	
 
-	float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z); // XZ平面での角度を計算
-	VECTOR rot = { 0.0f, rotY, 0.0f };
-
-
+	// XZ平面での角度を計算
+	float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z);
+	VECTOR rot = VGet(0.0f, rotY, 0.0f);
 
 	MV1SetRotationXYZ(modelId_, rot);
 
-	if(pos_.y  >= -1000.0f)
-	MV1DrawModel(modelId_);
+	// モデルの描画
+	if(pos_.y >= -5000.0f)
+		MV1DrawModel(modelId_);
 
+	// デバッグ
 	// デバッグ表示
 	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
 	DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
 	DrawFormatString(0, 0 + id_ * 20, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
+
+	// ★ カプセルデバッグ描画
+	VECTOR p1 = pos_;
+	VECTOR p2 = pos_;
+	float halfHeight = CAPSULE_HEIGHT / 2.0f;
+	p1.y += halfHeight;
+	p2.y -= halfHeight;
+	DrawCapsule3D(p1, p2, collisionRadius_, 16, GetColor(0, 0, 255), GetColor(0, 0, 255), FALSE);
+
 
 	if (isAlive_) {
 		// 生存時の表示
@@ -164,19 +167,10 @@ void Player::Draw()
 		DrawFormatString(850, 600 + id_ * 20, GetColor(255, 0, 0), "Player %d: Dead", id_ + 1);
 	}
 
-	// 1Pには赤色、2Pには青色、3Pには緑色、4Pには黄色の球体を表示
-	DrawSphere3D(pos_, 50.0f, 16, GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), TRUE);
-
-
-
-
 
 	// プレイヤーのパラメータを表示
-	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f",id_, param_.weight, param_.speed, param_.jumpPower);
-
-
+	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f", id_, param_.weight, param_.speed, param_.jumpPower);
 }
-
 
 void Player::Move()
 {
@@ -264,6 +258,7 @@ void Player::Move()
 
 	// ジャンプ
 	if (controller_->IsJumpTrigger()) {
+		// 地面にいる時のみジャンプ可能にする判定は、ApplyStageGroundのmoveVec_.y = 0.0f;に依存する
 		moveVec_.y += param_.jumpPower;
 	}
 
@@ -276,27 +271,39 @@ void Player::Move()
 
 void Player::ApplyStageGround(const Stage& stage)
 {
-	// ステージの地面の高さを取得
-	float groundY = stage.GetGroundHeight(pos_);
+    const float capsuleRadius = collisionRadius_;
+    const float capsuleHalfHeight = CAPSULE_HEIGHT / 2.0f;
 
-	// 地面が存在しない場合（非常に低い値が返ってきた場合）は補正しない
-	if (groundY < -500.0f) {
-		// 地面がないので補正せず、そのまま落下させる
-		return;
-	}
+	float groundY = 0.0f;
+    // 地面の高さ取得
+    groundY = stage.GetGroundHeight(pos_, capsuleRadius, capsuleHalfHeight);
 
-	// 地面よりも下にいると判断するY座標のしきい値
-	float requiredY = groundY + (MODEL_CENTER_TO_FEET / 2.0f);
+    // --- 異常値対策 ---
+    if (!std::isfinite(groundY) || groundY < -10000.0f || groundY > 10000.0f)
+    {
+        // 無効値なら重力のみ適用
+        isFalling_ = true;
+        moveVec_.y -= GRAVITY;
+        return;
+    }
 
-	// プレイヤーが地面よりもめり込んでいたら強制的にPlayerの位置を補正
-	if (pos_.y < requiredY) {
-		// Y座標を強制的に地面へ合わせる
-		pos_.y = requiredY;
-
-		// Y方向の速度をリセット
-		moveVec_.y = 0.0f;
-	}
+    float feetY = pos_.y - capsuleHalfHeight;
+	
+    if (feetY <= groundY)
+    {
+        // 地面に接地している or めり込んでいる
+        pos_.y = groundY + capsuleHalfHeight;
+        moveVec_.y = 0.0f;
+        isFalling_ = false;
+    }
+    else
+    {
+        // 空中 → 落下
+        isFalling_ = true;
+        moveVec_.y -= GRAVITY;
+    }
 }
+
 
 
 void Player::Die()

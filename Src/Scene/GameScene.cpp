@@ -49,10 +49,10 @@ void GameScene::Init()
 		PlayerParam param; 
 
 		// IDやタイプによって調整
-		if (i == (int)PlayerType::Player_1) { param.weight = 10.0f; param.speed = 100.0f; param.jumpPower = 7.0f; }
-		if (i == (int)PlayerType::Player_2) { param.weight = 20.0f; param.speed = 4.0f; param.jumpPower = 5.0f; }
-		if (i == (int)PlayerType::Player_3) { param.weight = 50.0f; param.speed = 4.0f; param.jumpPower = 2.0f; }
-		if (i == (int)PlayerType::Player_4) { param.weight = 50.0f; param.speed = 4.0f; param.jumpPower = 2.0f; }
+		if (i == (int)PlayerType::Player_1) { param.weight = 10.0f; param.speed = 40.0f; param.jumpPower = 7.0f; }
+		if (i == (int)PlayerType::Player_2) { param.weight = 10.0f; param.speed = 40.0f; param.jumpPower = 5.0f; }
+		if (i == (int)PlayerType::Player_3) { param.weight = 10.0f; param.speed = 40.0f; param.jumpPower = 2.0f; }
+		if (i == (int)PlayerType::Player_4) { param.weight = 10.0f; param.speed = 40.0f; param.jumpPower = 2.0f; }
 
 		playerManager_->CreatePlayer(type, i, param);
 	}
@@ -87,7 +87,7 @@ void GameScene::Draw()
 	grid_->Draw();
 
 	// ステージ描画
-	Stage::GetInstance().Draw();
+	Stage::GetInstance().Draw(stage_.GetPos());
 
 	// プレイヤー描画
 	playerManager_->DrawPlayers();
