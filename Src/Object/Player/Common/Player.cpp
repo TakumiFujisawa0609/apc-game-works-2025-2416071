@@ -161,12 +161,12 @@ void Player::Move()
 
 		// 基本の速度と最大速度を減速分に合わせて調整
 		moveSpeed *= speedMultiplier;
-		maxSpeed *= speedMultiplier; // maxSpeedの調整はUpdateの制限で利用
+		maxSpeed *= speedMultiplier;			// maxSpeedの調整はUpdateの制限で利用
 	}
 	// 下り坂の時(加速)
 	else if (slopeFactor < -0.01f)
 	{
-		const float maxDownhillBoost = 0.4f; // 最大加速率
+		const float maxDownhillBoost = 0.4f;	// 最大加速率
 		float factor = fabsf(slopeFactor) * 2.0f;
 		if (factor > 1.0f) factor = 1.0f;
 
@@ -174,7 +174,7 @@ void Player::Move()
 
 		// 基本速度と最大速度を加速分に合わせて調整
 		moveSpeed *= speedMultiplier;
-		maxSpeed *= speedMultiplier; // maxSpeedの調整はUpdateの制限で利用
+		maxSpeed *= speedMultiplier;			// maxSpeedの調整はUpdateの制限で利用
 	}
 
 	// 1. 入力による加速度計算

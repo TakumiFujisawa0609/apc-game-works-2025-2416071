@@ -94,7 +94,6 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	if (players.empty()) return;
 
 	// プレイヤーの重さを
-
 	// プレイヤーの平均位置を計算
 	float totalWeight = 0.0f;
 	float weightedX = 0.0f;
