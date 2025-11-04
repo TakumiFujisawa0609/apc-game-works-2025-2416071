@@ -1,39 +1,47 @@
 #pragma once
 #include <DxLib.h>
 
-// 前方クラス宣言
 class Player;
 
-// 攻撃オブジェクト基底クラス
-class AttackObj
+class Attackobj
 {
 public:
 
 	// コンストラクタ
-	// デフォルトコンストラクタではないので、各自派生クラスで呼びだし
-	AttackObj(int ownerId, const VECTOR& startPos, const VECTOR& direction, float speed);
+	Attackobj(int ownerId, const VECTOR& pos, float speed)
+		: ownerId_(ownerId), pos_(pos), speed_(speed), isAlive_(true), modelId_(-1) {}
 
-	// デストラクタ
-	virtual ~AttackObj() = default;
+	virtual ~Attackobj() = default;
 
-	// 基本処理
-	// 純粋仮想関数で実装するので、派生クラスで必ず実装すること
-	virtual void Init();
+	// 毎フレーム更新
+	// 純粋仮想関数
 	virtual void Update() = 0;
+
+	// 描画
 	virtual void Draw() = 0;
 
-	// 衝突時の処理(共通処理)
-	virtual void OnCollision(Player& player) = 0;
+	// プレイヤーに当たった時の処理
+	virtual void OnHitPlayer(Player& player) = 0;
+
+	// 解放
+	virtual void Release() {};
+
+	// 座標取得
+	const VECTOR& GetPos() const { return pos_; }
+
+	// 生存状態取得
+	bool IsAlive() const { return isAlive_; }
+
+	// 所有者ID取得
+	int GetOwnerID() const { return ownerId_; }
 
 protected:
 
-	VECTOR pos_;         // 位置
-	VECTOR moveVec_;    // 移動ベクトル
-	float radius_;    // 当たり判定用の半径
-	int damage_;     // 与えるダメージ量
-	int knockback_; // ノックバック力
-	int ownerId_;   // 攻撃オブジェクトの所有者ID
-	bool isActive_; // 有効状態
+	int ownerId_;		// 所有者のプレイヤーID
+	VECTOR pos_;		// 座標
+	float speed_;		// 速度
+	bool isAlive_;		// 生存状態
+	int modelId_;		// モデルID
+
 
 };
-

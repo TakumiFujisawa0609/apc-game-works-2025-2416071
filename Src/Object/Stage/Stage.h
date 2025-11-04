@@ -5,22 +5,28 @@
 
 class Player;
 
+// シリンダー型コライダー
 struct CylinderCollider
 {
 	VECTOR center;	// 中心位置
 	float radius;	// 半径
-	float yMin;     // Yの最小値
+	float yMin;		// Yの最小値
 	float yMax;		// Yの最大値
 };
 
 class Stage
 {
-public: 
+public:
 
-	// 定数 
-	static constexpr VECTOR DEFAULT_POS = { 0.0f,-750.f,0.0f };
+	// 定数
+	static constexpr VECTOR DEFAULT_POS = { 0.0f, -1500.0f, 0.0f };			// ステージの初期位置
+	static constexpr VECTOR DEFAULT_SCALE = { 2.0f, 2.0f, 2.0f };			// ステージの初期スケール
+	static constexpr float COLLIDER_RADIUS = 1000.0f;						// コライダーの半径
+	static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;					// コライダーのY最大値オフセット
+	static constexpr float MOMENT_OF_INERTIA = 2000.0f;						// プレイヤーに対してステージの反発力(値が大きいほど傾きにくい)
+	static constexpr float DAMPING_FACTOR = 0.05f;							// プレイヤーの方向に傾く速さ
 
-	
+	// インスタンス
 	static void CreateInstance();
 	static Stage& GetInstance();
 
@@ -30,45 +36,48 @@ public:
 	void Draw();
 	void Release();
 
-	// モデルID
-	int GetModelId() const { return modelId_; }
+	// モデルUD
+	int GetModelID() const { return modelId_; }
 
-	// ステージの位置・角度・スケール
+	// ステージの位置・角度・スケール取得
 	const VECTOR& GetPos() const { return pos_; }
 	const VECTOR& GetAngle() const { return angle_; }
 	const VECTOR& GetScale() const { return scale_; }
 
-	// ステージの傾き更新（プレイヤーの位置に応じて傾く）
-	const CylinderCollider& GetCollider() const { return collider_; }
+	// ステージの傾き更新
+	const CylinderCollider& GetCollider() const {return collider_;}
 
+	// プレイヤーの位置に応じてステージを傾ける
 	void UpdateTilt(const std::vector<Player*>& players);
-	float GetGroundHeight(const VECTOR& pos) const;
 
-	// playerがステージ内にいるか判定
+	// playerがステージ内にいるかどうか確認
 	bool IsPlayerOnStage(const VECTOR& playerPos) const;
 
 private:
 
-	// コンストラクタ・デストラクタ
-	Stage();
-	~Stage();
+	// コンストラクタ
+	Stage() = default;
+	~Stage() = default;
 
+	// インスタンス
 	static Stage* instance_;
 
-	int modelId_;			// ステージのモデルID
-	VECTOR pos_;			// ステージの位置
-	VECTOR angle_;			// ステージの角度
-	VECTOR scale_;			// ステージのスケール
-	CylinderCollider collider_; // ステージの当たり判定（円柱）
+	// モデルID
+	int modelId_ = -1;
+	// 位置・角度・スケール
+	VECTOR pos_;
+	VECTOR angle_;
+	VECTOR scale_;
 
+	// コライダー
+	CylinderCollider collider_;
 
-	// 物理的な制御用関数
-	VECTOR angularVelocity_; // 角速度
-	float momentOfInertia_; // 慣性モーメント
-	float dampingFactor_; // 減衰係数
-	float restitutionFactor_; // 反発係数
+	// 物理制御用変数
+	VECTOR angularVelocity_;
+	float momentOfInertia_;
+	float dampingFactor_;
+	float restitutionFactor_;
 
-	float maxStageRange_ = 10000.f; // ステージの最大範囲
-
+	float maxStageRange_ = 600.0f;
 
 };

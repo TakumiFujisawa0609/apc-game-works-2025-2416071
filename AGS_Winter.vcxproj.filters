@@ -96,9 +96,6 @@
     <ClCompile Include="Src\Object\Player\Player\Player_4.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Object\AttackObj\Common\AttackObj.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Src\Object\AttackObj\BulletAttack.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>

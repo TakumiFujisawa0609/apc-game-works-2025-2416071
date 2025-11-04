@@ -32,10 +32,10 @@ void Player::Init()
 	pos_ = { 0.0f, 0.0f, 0.0f }; // 初期座標を設定
 	moveVec_ = { 0.0f,0.0f,0.0f };
 	param_.speed = 15.0f;
-	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f}; // 初期向きはZ+方向}
+	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f }; // 初期向きはZ+方向}
 	modelId_ = -1; // Initでロードしない場合は-1で初期化
 
-	inputVecNor_ = {0.0f, 0.0f, 1.0f };
+	inputVecNor_ = { 0.0f, 0.0f, 1.0f };
 }
 
 void Player::Update()
@@ -76,8 +76,7 @@ void Player::Update()
 		if (distXZ <= stageRadius)
 		{
 			isFalling_ = false;
-			// Y位置をステージの地面に合わせる
-			ApplyStageGround(stage);
+			// Y位置を地面に合わせる処理は、下の衝突判定で代替する
 			// Y速度をリセット
 			moveVec_.y = 0.0f;
 		}
@@ -90,27 +89,76 @@ void Player::Update()
 	// 2. 重力
 	moveVec_.y -= GRAVITY_ACCEL;		// 常に重力を加算する
 
-	// 3. 地面の高さに合わせて位置補正
-	ApplyStageGround(stage);
-
-	// 4. 摩擦処理 (Moveから移動)
-	const float PLAYER_FRICTION = 0.85f; // Move()から定数を移動
+	// 3. 摩擦処理
+	const float PLAYER_FRICTION = 0.85f;
 	moveVec_ = VScale(moveVec_, PLAYER_FRICTION);
 
-	// 5. 最大速度制限 (Moveから移動)
+	// 4. 最大速度制限
 	float len = VSize(moveVec_);
 	if (len > param_.maxSpeed)
 	{
 		moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
 	}
 
-	// 6. 攻撃
+	// 5. 攻撃
 	Attack();
 
-	// 7. 位置更新
+	// 6. 位置更新（この時点ではめり込んでいる可能性がある）
 	pos_ = VAdd(pos_, moveVec_);
 
-	//モデルに反映
+	// プレイヤーの球体コライダー情報
+	VECTOR center = pos_;
+	float radius = collisionRadius_;
+
+	MV1_COLL_RESULT_POLY_DIM result = MV1CollCheck_Sphere(stage.GetModelID(), -1, center, radius);
+
+	// 衝突しているポリゴンが1つ以上ある場合
+	if (result.HitNum > 0)
+	{
+		for (int i = 0; i < result.HitNum; ++i)
+		{
+			const MV1_COLL_RESULT_POLY& poly = result.Dim[i];
+
+			// 衝突点から法線方向にプレイヤーの中心までのベクトル
+			VECTOR vToCenter = VSub(center, poly.HitPosition);
+
+			// 法線との内積からめり込み深さを求める
+			float currentDist = VDot(vToCenter, poly.Normal);
+			float depth = radius - currentDist;
+
+			// めり込み深さが正（めり込んでいる）の場合
+			if (depth > 0.0f)
+			{
+				// 法線方向にめり込み分だけ押し戻すベクトルを計算
+				VECTOR push = VScale(poly.Normal, depth);
+
+				// プレイヤーの位置を補正
+				pos_ = VAdd(pos_, push);
+
+				// 押し戻しによって中心位置が変わったので、次のループのためにcenterを更新
+				center = pos_;
+
+				// 地面とみなせる（法線のY成分が上向き）衝突の場合、Y速度をリセット
+				if (poly.Normal.y > PUSHBACK_THRESHOLD_Y) // 地面判定のしきい値
+				{
+					moveVec_.y = 0.0f;
+				}
+				// 壁（法線が横向き）の場合、速度を反射させる
+				else if (poly.Normal.y < 0.1f) // ほぼ横向きと判断
+				{
+					// 移動ベクトルから法線方向の成分を引いて、跳ね返りのような動きにする
+					float speedOnNormal = VDot(moveVec_, poly.Normal);
+					if (speedOnNormal < 0) { // 壁に向かっている場合のみ
+						// 弾性衝突ではなく、壁に沿った動きをシミュレート
+						VECTOR projection = VScale(poly.Normal, speedOnNormal);
+						moveVec_ = VSub(moveVec_, projection);
+					}
+				}
+			}
+		}
+	}
+
+	// 8.モデルに反映
 	MV1SetPosition(modelId_, pos_);
 }
 
@@ -207,9 +255,10 @@ void Player::Move()
 	if (controller_->IsJumpTrigger())
 	{
 		// 地面にいる場合のみジャンプ可能
-		float groundY = stage.GetGroundHeight(pos_);
-		float requiredY = groundY + (MODEL_CENTER_TO_FEET / 2.0f); // MODEL_CENTER_TO_FEETは別途定義
-		if (pos_.y <= requiredY + 1.0f) // 少しの誤差を許容
+		// 地面にいるかの判定は、ApplyStageGround()が削除されたため、別の判定が必要。
+		// MV1CollCheck_Sphere()による衝突結果で、地面法線との接触があるかチェックするのが正確だが、
+		// 処理の複雑化を防ぐため、ここでは単純にY速度が非常に小さいかで仮判定する。
+		if (moveVec_.y <= 0.1f) // 浮いていないか、または着地直後
 		{
 			moveVec_.y = param_.jumpPower;
 		}
@@ -241,8 +290,8 @@ void Player::Draw()
 
 	MV1SetRotationXYZ(modelId_, rot);
 
-	if(pos_.y  >= -1000.0f)
-	MV1DrawModel(modelId_);
+	if (pos_.y >= -1000.0f)
+		MV1DrawModel(modelId_);
 
 	// デバッグ表示
 	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
@@ -262,12 +311,13 @@ void Player::Draw()
 	DrawSphere3D(pos_, 50.0f, 16, GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), TRUE);
 
 	// プレイヤーのパラメータを表示
-	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f",id_, param_.weight, param_.speed, param_.jumpPower);
+	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f", id_, param_.weight, param_.speed, param_.jumpPower);
 
 }
 
 void Player::ApplyStageGround(const Stage& stage)
 {
+	/*
 	// ステージの地面の高さを取得
 	float groundY = stage.GetGroundHeight(pos_);
 
@@ -288,6 +338,24 @@ void Player::ApplyStageGround(const Stage& stage)
 		// Y方向の速度をリセット
 		moveVec_.y = 0.0f;
 	}
+	*/
+}
+
+void Player::CalcHorizontalVel(const Stage& stage)
+{
+}
+
+float Player::GetSlopeAdjustedMultiplier(const VECTOR& stageAngle, const VECTOR& inputVecNor) const
+{
+	return 0.0f;
+}
+
+void Player::ApplyFrictionAndMaxSpeed()
+{
+}
+
+void Player::Jump()
+{
 }
 
 void Player::Die()

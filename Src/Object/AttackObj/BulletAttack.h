@@ -1,21 +1,23 @@
 #pragma once
 #include "Common/AttackObj.h"
 
-// 弾丸攻撃オブジェクトクラス
-class BulletAttack : public AttackObj
+class BulletAttack : public Attackobj
 {
 public:
 
 	// コンストラクタ
 	BulletAttack(int ownerId, const VECTOR& startPos, const VECTOR& direction, float speed);
 
-	// 基底クラスの仮想関数をオーバーライド
-	void Update() override;
-	void Draw() override;
+	// AttackObjの仮想関数の実装
+	virtual void Update() override;
+	virtual void Draw() override;
+	virtual void OnHitPlayer(Player& player) override;
+	virtual void Release() override;
 
-	// 衝突時の処理
-	void OnCollision(Player& player) override;
+private:
 
-	// 解放
-	void Release();
+	VECTOR dir_;			// 進行方向
+	int lifeTime_ = 120;	// 弾の寿命（フレーム数）
+	float radius_ = 20.0f;	// 弾の当たり判定用半径
 };
+

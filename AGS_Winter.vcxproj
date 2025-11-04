@@ -138,7 +138,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Src\Object\AttackObj\BulletAttack.cpp" />
-    <ClCompile Include="Src\Object\AttackObj\Common\AttackObj.cpp" />
     <ClCompile Include="Src\Object\Player\Control\Controller.cpp" />
     <ClCompile Include="Src\Object\Player\Player\Player_3.cpp" />
     <ClCompile Include="Src\Object\Player\Player\Player_4.cpp" />
