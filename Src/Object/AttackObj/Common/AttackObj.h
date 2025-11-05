@@ -3,15 +3,15 @@
 
 class Player;
 
-class Attackobj
+class AttackObj
 {
 public:
 
 	// コンストラクタ
-	Attackobj(int ownerId, const VECTOR& pos, float speed)
+	AttackObj(int ownerId, const VECTOR& pos, float speed)
 		: ownerId_(ownerId), pos_(pos), speed_(speed), isAlive_(true), modelId_(-1) {}
 
-	virtual ~Attackobj() = default;
+	virtual ~AttackObj() = default;
 
 	// 毎フレーム更新
 	// 純粋仮想関数
@@ -35,6 +35,8 @@ public:
 	// 所有者ID取得
 	int GetOwnerID() const { return ownerId_; }
 
+	const float GetCollisionRadius() const { return radius_; } // 仮の当たり判定用半径
+
 protected:
 
 	int ownerId_;		// 所有者のプレイヤーID
@@ -42,6 +44,7 @@ protected:
 	float speed_;		// 速度
 	bool isAlive_;		// 生存状態
 	int modelId_;		// モデルID
+	float radius_ = 20.0f; // 仮の当たり判定用半径
 
 
 };

@@ -1,10 +1,11 @@
 #include <DxLib.h>
 #include "../Control/InputController.h"
 #include "../../Stage/Stage.h"
+#include "../../AttackObj/Common/AttackObj.h"
 #include "../../../Utility/MatrixUtility.h"
 #include "../../../Utility/AsoUtility.h"
 #include "../../../Manager/InputManager.h"
-#include "../../AttackObj/Common/AttackObj.h"
+#include "../../AttackObj/BulletAttack.h"
 #include "PlayerManager.h"
 #include "Player.h"
 
@@ -163,7 +164,8 @@ void Player::Update()
 }
 
 void Player::Move()
-{// ステージのインスタンスを取得
+{
+	// ステージのインスタンスを取得
 	Stage& stage = Stage::GetInstance();
 	// 角度を取得
 	VECTOR stageAngle = stage.GetAngle();
@@ -176,22 +178,23 @@ void Player::Move()
 
 	// 入力ベクトルの取得
 	VECTOR worldInputVec = controller_->GetMoveInputVector();
+
 	// 入力ベクトルを正規化　0除算対策
 	float inputLen = VSize(worldInputVec);
+
+	// ★★★ 修正箇所 ★★★
+	// 入力がある場合のみ inputVecNor_ を更新する。
 	if (worldInputVec.x != 0.0f || worldInputVec.z != 0.0f)
 	{
 		inputVecNor_ = VNorm(worldInputVec); // 入力方向の正規化
 	}
-	else
-	{
-		// セーフティ
-		inputVecNor_ = { 0.0f, 0.0f, 1.0f }; // デフォルトの向き
-	}
+	// 修正前はここで else {} ブロックがあり、inputVecNor_ = { 0.0f, 0.0f, 1.0f }; とリセットされていた。
+	// 修正後: elseブロックを削除し、静止時には最後の有効な inputVecNor_ の値を保持する。
 
 	// 上り坂の判定に使用するベクトル（XZ平面での傾き方向）
 	// ステージ傾きを基に坂の方向ベクトルを算出
 	VECTOR slopeDir = VGet(sinf(stageAngle.z), 0.0f, sinf(stageAngle.x));
-	// slopeFactor: 入力ベクトルと坂の向きの内積
+	// slopeFactor: inputVecNor_と坂の向きの内積
 	float slopeFactor = VDot(inputVecNor_, slopeDir);
 
 	// 基本の速度と最大速度を初期化
@@ -255,9 +258,6 @@ void Player::Move()
 	if (controller_->IsJumpTrigger())
 	{
 		// 地面にいる場合のみジャンプ可能
-		// 地面にいるかの判定は、ApplyStageGround()が削除されたため、別の判定が必要。
-		// MV1CollCheck_Sphere()による衝突結果で、地面法線との接触があるかチェックするのが正確だが、
-		// 処理の複雑化を防ぐため、ここでは単純にY速度が非常に小さいかで仮判定する。
 		if (moveVec_.y <= 0.1f) // 浮いていないか、または着地直後
 		{
 			moveVec_.y = param_.jumpPower;
@@ -265,6 +265,9 @@ void Player::Move()
 	}
 
 	// 4. 向き更新
+	// ★★★ 修正箇所：このロジックはinputVecNor_が向きを担うため不要/非推奨 ★★★
+	// inputVecNor_が既に正しい向きを保持しているので、この処理は不要。
+	/*
 	if (worldInputVec.x != 0.0f || worldInputVec.z != 0.0f)
 	{
 		// 移動後の速度ベクトルから向きを計算
@@ -273,6 +276,7 @@ void Player::Move()
 			angle_ = VNorm(flatMoveDir);
 		}
 	}
+	*/
 }
 
 void Player::Draw()
@@ -381,17 +385,20 @@ void Player::Attack()
 	// InputMnagerからキー入力取得
 	InputManager& ins = InputManager::GetInstance();
 
-	// Fキー入力とクールダウンチェック
-	if (attackCooldown_ == 0 && ins.IsNew(KEY_INPUT_F))
+	// Fキー または Zキー が押され、かつクールダウンが0の場合に発動
+	if (attackCooldown_ == 0 && (ins.IsNew(KEY_INPUT_F) || ins.IsNew(KEY_INPUT_Z))) // ★ 括弧を追加して優先順位を修正
 	{
 		attackCooldown_ = 30;
 
+		// プレイヤーの前方50.0fの位置から発射
 		VECTOR startPos = VAdd(pos_, VScale(inputVecNor_, 50.0f));
 
 		float attackSpeed = 40.0f;
+
+		// 1. AttackObj* として BulletAttack を new で生成
 		AttackObj* newAttack = new BulletAttack(id_, startPos, inputVecNor_, attackSpeed);
 
-		// 4. PlayerManagerに登録
+		// 2. PlayerManagerに登録（Managerが所有権を持つ）
 		PlayerManager::GetInstance().AddAttackObject(newAttack);
 	}
 }

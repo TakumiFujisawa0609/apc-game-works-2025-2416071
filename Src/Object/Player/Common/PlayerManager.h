@@ -61,10 +61,13 @@ public:
 	// プレイヤー同士の衝突判定
 	void CheckPlayerCollisions();
 
+	// 敵と弾の衝突判定
+	void CheckAttackCollisions();
+
 	void Reset();
 
 	// AddAttackObject
-	void AddAttackObject(AttackObj* attackObj);
+	void AddAttackObject(AttackObj* attack);
 
 private:
 
@@ -81,6 +84,6 @@ private:
 	int winnerID_ = -1;
 
 	// 攻撃オブジェクト配列
-	std::vector<std::unique_ptr<AttackObj>> attackObjects_;
+	std::vector<std::unique_ptr<AttackObj>> attacks_;
 
 };

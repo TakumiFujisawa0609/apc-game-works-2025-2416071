@@ -16,6 +16,8 @@ void Player_1::Init()
 
 	pos_ = { -60.0f, 0.0f, 0.0f };
 
+	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), AsoUtility::Deg2RadF(180.0f) }; // 初期向きはZ+方向
+
 	param_.jumpPower = 7.0f;
 
 }
@@ -23,9 +25,4 @@ void Player_1::Init()
 void Player_1::Release()
 {
 	MV1DeleteModel(modelId_);
-}
-
-void Player_1::Attack()
-{
-    
 }

@@ -6,6 +6,8 @@
 #include "../Player/Player_4.h"
 #include "../Control/InputController.h"
 #include "../Control/Controller.h"
+#include "../../AttackObj/BulletAttack.h"
+#include "../../../Utility/AsoUtility.h"
 #include <DxLib.h>
 #include <memory>
 #include <algorithm> 
@@ -14,9 +16,6 @@
 PlayerManager* PlayerManager::instance_ = nullptr;
 
 // --- コンストラクタ / デストラクタ ---
-
-
-
 PlayerManager::PlayerManager() {}
 
 PlayerManager::~PlayerManager() {}
@@ -41,6 +40,9 @@ void PlayerManager::Init()
 {
 	// プレイヤー配列クリア
 	players_.clear();
+
+	// 攻撃オブジェクト配列クリア
+	attacks_.clear();
 
 	// Playerの死亡順序カウンタとManager側の状態をリセット
 	Player::ResetDeathCounter();
@@ -148,10 +150,29 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 		player->Update();
 	}
 
+	// 攻撃オブジェクト更新
+	for (auto& attack : attacks_)
+	{
+		attack->Update();
+	}
+	
+	// 攻撃オブジェクトとプレイヤーの当たり判定
+	CheckAttackCollisions();
+
 	// プレイヤー同士の当たり判定
 	CheckPlayerCollisions();
 
 	CheckGameResult();
+
+	attacks_.erase(std::remove_if(attacks_.begin(), attacks_.end(),
+		// ラムダの引数を unique_ptr の参照にする
+		[](std::unique_ptr<AttackObj>& a) {
+			if (!a->IsAlive()) {
+				a->Release();	// DxLibのモデル解放など
+				return true;	// 削除対象
+			}
+			return false;
+		}), attacks_.end());
 }
 
 void PlayerManager::DrawPlayers()
@@ -178,12 +199,69 @@ void PlayerManager::DrawPlayers()
 		DrawFormatString(300, 280, color, "===================");
 	}
 
+	// デバッグ
+	// プレイヤー同士が当たっているかいないか
+	for (size_t i = 0; i < players_.size(); i++)
+	{
+		for (size_t j = i + 1; j < players_.size(); ++j)
+		{
+			Player* p1 = players_[i].get();
+			Player* p2 = players_[j].get();
+			// 距離計算
+			VECTOR diff = VSub(p1->GetPos(), p2->GetPos());
+			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+			float radSum = p1->GetCollisionRadius() + p2->GetCollisionRadius();
+			// 衝突しているかチェック
+			if (distSq < radSum * radSum)
+			{
+				// 衝突しているときは赤線で結ぶ
+				DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(255, 0, 0));
+				// 文字でも表示
+				VECTOR midPos = VScale(VAdd(p1->GetPos(), p2->GetPos()), 0.5f);
+				DrawFormatString(midPos.x, midPos.y, GetColor(255, 0, 0), "当たっている");
+			}
+			else
+			{
+				// 衝突していないときは緑線で結ぶ
+				DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(0, 255, 0));
+
+			}
+		}
+	}
+
+	// 弾が当たっているかどうか
+	// デバッグ表示
+	for (auto& attack : attacks_) {
+		for (auto& player : players_) {
+			VECTOR diff = VSub(player->GetPos(), attack->GetPos());
+			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+			float radSum = player->GetCollisionRadius() + attack->GetCollisionRadius();
+			if (distSq < radSum * radSum) {
+				// 当たっているときは赤線で結ぶ
+				DrawLine3D(player->GetPos(), attack->GetPos(), GetColor(255, 0, 0));
+				VECTOR midPos = VScale(VAdd(player->GetPos(), attack->GetPos()), 0.5f);
+				DrawFormatString(midPos.x, midPos.y, GetColor(255, 0, 0), "弾ヒット");
+			}
+			else {
+				// 当たっていないときは緑線
+				DrawLine3D(player->GetPos(), attack->GetPos(), GetColor(0, 255, 0));
+			}
+		}
+	}
+	
+
+
 	for (auto& player : players_)
 	{
 		player->Draw();
 	}
 
-	
+	// 攻撃オブジェクト描画
+	for (auto& attack : attacks_)
+	{
+		attack->Draw();
+	}
+
 }
 
 // 勝敗判定
@@ -293,6 +371,31 @@ void PlayerManager::CheckPlayerCollisions()
 	}
 }
 
+void PlayerManager::CheckAttackCollisions()
+{
+	// プレイヤーと攻撃オブジェクトの当たり判定
+	const auto& rawPlayers = GetPlayerRawPlayers();
+	for (auto& attack : attacks_)
+	{
+		for (auto& player : rawPlayers)
+		{
+			// 生存している場合にのみ当たり判定を実施
+			if (!player->IsAlive()) continue;
+			// 当たり判定
+			// 距離計算
+			VECTOR diff = VSub(player->GetPos(), attack->GetPos());
+			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+			float radSum = player->GetCollisionRadius() + attack->GetCollisionRadius();
+			// 衝突しているかチェック
+			if (distSq < radSum * radSum)
+			{
+				// 衝突処理
+				attack->OnHitPlayer(*player);
+			}
+		}
+	}
+}
+
 void PlayerManager::Reset()
 {
 	ClearPlayers();
@@ -302,5 +405,5 @@ void PlayerManager::Reset()
 void PlayerManager::AddAttackObject(AttackObj* attackObj)  
 {  
    // std::unique_ptrに変換してからpush_backする  
-   attackObjects_.push_back(std::unique_ptr<AttackObj>(attackObj));  
+   attacks_.push_back(std::unique_ptr<AttackObj>(attackObj));  
 }

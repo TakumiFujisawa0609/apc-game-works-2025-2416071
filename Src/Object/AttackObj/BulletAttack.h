@@ -1,7 +1,7 @@
 #pragma once
 #include "Common/AttackObj.h"
 
-class BulletAttack : public Attackobj
+class BulletAttack : public AttackObj
 {
 public:
 
@@ -14,10 +14,13 @@ public:
 	virtual void OnHitPlayer(Player& player) override;
 	virtual void Release() override;
 
+	// 弾の当たり判定用半径を取得
+	float GetRadius() const { return radius_; }
+
 private:
 
 	VECTOR dir_;			// 進行方向
-	int lifeTime_ = 120;	// 弾の寿命（フレーム数）
+	int lifeTimer_ = 120;	// 弾の寿命（フレーム数）
 	float radius_ = 20.0f;	// 弾の当たり判定用半径
 };
 

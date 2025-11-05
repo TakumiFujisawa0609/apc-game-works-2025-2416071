@@ -21,6 +21,6 @@ public:
 	void Release() override;
 
 	// UŒ‚ˆ—
-	void Attack() override;
+	//void Attack() override;
 
 };
