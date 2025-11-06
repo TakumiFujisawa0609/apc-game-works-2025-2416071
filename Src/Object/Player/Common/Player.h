@@ -30,18 +30,6 @@ private:
 
 	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
 
-	// 水平方向を計算してmoveVec_に反映する
-	void CalcHorizontalVel(const Stage& stage); // 使っていないので削除可能
-
-	// ステージの傾きに応じて、入力速度と最大速度を調整する
-	float GetSlopeAdjustedMultiplier(const VECTOR& stageAngle, const VECTOR& inputVecNor)const; // 使っていないので削除可能
-
-	// 摩擦と最大速度制限を適用する
-	void ApplyFrictionAndMaxSpeed(); // 使っていないので削除可能
-
-	// ジャンプ処理
-	void Jump(); // 使っていないので削除可能
-
 protected:
 	// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
 	int deathOrder_ = 0;
@@ -102,9 +90,6 @@ protected:
 	// プレイヤーの動き
 	virtual void Move();
 	VECTOR pos_;
-	// 座標補正
-	void ApplyStageGround(const Stage& stage); // 廃止予定の関数
-
 	int id_;
 	PlayerParam param_;
 

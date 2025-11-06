@@ -201,32 +201,6 @@ void Player::Move()
 	float moveSpeed = param_.speed;
 	float maxSpeed = param_.maxSpeed;
 
-	// 上り坂の時(減速)
-	if (slopeFactor > 0.01f)
-	{
-		const float maxUphillSlow = 0.5f; // 最大減速率
-		float factor = slopeFactor * 2.0f;
-		if (factor > 1.0f) factor = 1.0f;
-
-		float speedMultiplier = 1.0f - (maxUphillSlow * factor);
-
-		// 基本の速度と最大速度を減速分に合わせて調整
-		moveSpeed *= speedMultiplier;
-		maxSpeed *= speedMultiplier;			// maxSpeedの調整はUpdateの制限で利用
-	}
-	// 下り坂の時(加速)
-	else if (slopeFactor < -0.01f)
-	{
-		const float maxDownhillBoost = 0.4f;	// 最大加速率
-		float factor = fabsf(slopeFactor) * 2.0f;
-		if (factor > 1.0f) factor = 1.0f;
-
-		float speedMultiplier = 1.0f + maxDownhillBoost * factor;
-
-		// 基本速度と最大速度を加速分に合わせて調整
-		moveSpeed *= speedMultiplier;
-		maxSpeed *= speedMultiplier;			// maxSpeedの調整はUpdateの制限で利用
-	}
 
 	// 1. 入力による加速度計算
 	VECTOR inputAcc = AsoUtility::VECTOR_ZERO;
@@ -264,28 +238,11 @@ void Player::Move()
 		}
 	}
 
-	// 4. 向き更新
-	// ★★★ 修正箇所：このロジックはinputVecNor_が向きを担うため不要/非推奨 ★★★
-	// inputVecNor_が既に正しい向きを保持しているので、この処理は不要。
-	/*
-	if (worldInputVec.x != 0.0f || worldInputVec.z != 0.0f)
-	{
-		// 移動後の速度ベクトルから向きを計算
-		VECTOR flatMoveDir = { moveVec_.x,0.0f,moveVec_.z };
-		if (VSize(flatMoveDir) > 0.0f) {
-			angle_ = VNorm(flatMoveDir);
-		}
-	}
-	*/
 }
 
 void Player::Draw()
 {
 	MV1SetPosition(modelId_, pos_);
-
-	// 向きの設定
-	//float rotY = atan2f(-angle_.x, -angle_.z); // XZ平面での角度を計算
-	//VECTOR rot = { 0.0f, rotY, 0.0f };
 
 	float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z); // XZ平面での角度を計算
 	VECTOR rot = { 0.0f, rotY, 0.0f };
@@ -317,49 +274,6 @@ void Player::Draw()
 	// プレイヤーのパラメータを表示
 	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f", id_, param_.weight, param_.speed, param_.jumpPower);
 
-}
-
-void Player::ApplyStageGround(const Stage& stage)
-{
-	/*
-	// ステージの地面の高さを取得
-	float groundY = stage.GetGroundHeight(pos_);
-
-	// 地面が存在しない場合（非常に低い値が返ってきた場合）は補正しない
-	if (groundY < -500.0f) {
-		// 地面がないので補正せず、そのまま落下させる
-		return;
-	}
-
-	// 地面よりも下にいると判断するY座標のしきい値
-	float requiredY = groundY + (MODEL_CENTER_TO_FEET / 2.0f);
-
-	// プレイヤーが地面よりもめり込んでいたら強制的にPlayerの位置を補正
-	if (pos_.y < requiredY) {
-		// Y座標を強制的に地面へ合わせる
-		pos_.y = requiredY;
-
-		// Y方向の速度をリセット
-		moveVec_.y = 0.0f;
-	}
-	*/
-}
-
-void Player::CalcHorizontalVel(const Stage& stage)
-{
-}
-
-float Player::GetSlopeAdjustedMultiplier(const VECTOR& stageAngle, const VECTOR& inputVecNor) const
-{
-	return 0.0f;
-}
-
-void Player::ApplyFrictionAndMaxSpeed()
-{
-}
-
-void Player::Jump()
-{
 }
 
 void Player::Die()
