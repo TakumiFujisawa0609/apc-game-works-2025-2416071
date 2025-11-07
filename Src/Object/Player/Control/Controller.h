@@ -15,6 +15,9 @@ public:
 	// ジャンプトリガーを取得
 	bool IsJumpTrigger() const override;
 
+	// 攻撃トリガーを取得
+	bool IsAttackTrigger() const override;
+
 private:
 
 	// このコントローラーが使うキー設定を保持

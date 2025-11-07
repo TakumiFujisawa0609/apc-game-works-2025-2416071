@@ -48,3 +48,23 @@ bool Controller::IsJumpTrigger() const
 
     return false;
 }
+
+bool Controller::IsAttackTrigger() const
+{
+	InputManager& ins = InputManager::GetInstance();
+
+	// キーボード攻撃
+	if (ins.IsTrgDown(config_.attack)) // config_.attack キーを使用
+		return true;
+
+	// Pad攻撃（例: DOWNボタンを攻撃に割り当て）
+	if (GetJoypadNum() > 0) {
+		// ここでは例として DOWN ボタンを使用するが、
+		// R_TRIGGERや他のボタンも選択肢として考えられる
+		if (ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::DOWN)) {
+			return true;
+		}
+	}
+
+	return false;
+}

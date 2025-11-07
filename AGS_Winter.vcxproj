@@ -137,7 +137,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Src\Object\AttackObj\BulletAttack.cpp" />
+    <ClCompile Include="Src\Object\Bullet\BulletManager.cpp" />
+    <ClCompile Include="Src\Object\Bullet\Bullet.cpp" />
     <ClCompile Include="Src\Object\Player\Control\Controller.cpp" />
     <ClCompile Include="Src\Object\Player\Player\Player_3.cpp" />
     <ClCompile Include="Src\Object\Player\Player\Player_4.cpp" />
@@ -167,8 +168,8 @@
     <ClCompile Include="Src\Object\Stage\Stage.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Src\Object\AttackObj\BulletAttack.h" />
-    <ClInclude Include="Src\Object\AttackObj\Common\AttackObj.h" />
+    <ClInclude Include="Src\Object\Bullet\BulletManager.h" />
+    <ClInclude Include="Src\Object\Bullet\Bullet.h" />
     <ClInclude Include="Src\Object\Player\Control\Controller.h" />
     <ClInclude Include="Src\Object\Player\Control\InputController.h" />
     <ClInclude Include="Src\Object\Player\Player\Player_3.h" />

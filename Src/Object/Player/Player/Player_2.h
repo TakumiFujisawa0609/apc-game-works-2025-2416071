@@ -1,6 +1,7 @@
 #pragma once
 #include "../Common/Player.h"
 #include "../Control/InputController.h"
+#include "../Common/PlayerManager.h"
 #include <DxLib.h>
 
 class Player_2 : public Player
@@ -14,6 +15,11 @@ public:
 
 	// 基底クラスの仮想関数をオーバーライド
 	void Init(void) override;
-	void Release(void) ;
+	void Update() override;
+	void Release(void) override;
+
+	
+
+
 };
 

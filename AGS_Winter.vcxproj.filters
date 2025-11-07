@@ -96,7 +96,10 @@
     <ClCompile Include="Src\Object\Player\Player\Player_4.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Object\AttackObj\BulletAttack.cpp">
+    <ClCompile Include="Src\Object\Bullet\Bullet.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Src\Object\Bullet\BulletManager.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -182,10 +185,10 @@
     <ClInclude Include="Src\Object\Player\Player\Player_4.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Object\AttackObj\Common\AttackObj.h">
+    <ClInclude Include="Src\Object\Bullet\Bullet.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Object\AttackObj\BulletAttack.h">
+    <ClInclude Include="Src\Object\Bullet\BulletManager.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

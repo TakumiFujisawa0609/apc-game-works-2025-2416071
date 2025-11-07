@@ -1,6 +1,5 @@
 #include "Player_2.h"
 #include <DxLib.h>
-#include "../../../Utility/MatrixUtility.h"	// Lerp用
 #include "../../../Manager/InputManager.h"
 #include "../../../Utility/AsoUtility.h"
 #include "../Control/InputController.h"
@@ -21,4 +20,16 @@ void Player_2::Init(void)
 void Player_2::Release(void)
 {
 	MV1DeleteModel(modelId_);
+}
+
+void Player_2::Update()
+{
+	// 親クラスの更新処理
+	Player::Update();
+
+	// 入力で攻撃処理
+	if (controller_->IsAttackTrigger())
+	{
+		Shot();
+	}
 }

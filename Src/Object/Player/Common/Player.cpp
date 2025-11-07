@@ -1,11 +1,10 @@
 #include <DxLib.h>
 #include "../Control/InputController.h"
 #include "../../Stage/Stage.h"
-#include "../../AttackObj/Common/AttackObj.h"
 #include "../../../Utility/MatrixUtility.h"
 #include "../../../Utility/AsoUtility.h"
 #include "../../../Manager/InputManager.h"
-#include "../../AttackObj/BulletAttack.h"
+#include "../../Bullet/BulletManager.h"
 #include "PlayerManager.h"
 #include "Player.h"
 
@@ -37,6 +36,8 @@ void Player::Init()
 	modelId_ = -1; // Initでロードしない場合は-1で初期化
 
 	inputVecNor_ = { 0.0f, 0.0f, 1.0f };
+
+
 }
 
 void Player::Update()
@@ -101,8 +102,14 @@ void Player::Update()
 		moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
 	}
 
-	// 5. 攻撃
-	Attack();
+	if (attackCooldown_ > 0.0f)
+	{
+		attackCooldown_ -= 1.0f; // フレームごとに減少
+		if (attackCooldown_ < 0.0f)
+			attackCooldown_ = 0.0f;
+	}
+
+	
 
 	// 6. 位置更新（この時点ではめり込んでいる可能性がある）
 	pos_ = VAdd(pos_, moveVec_);
@@ -159,6 +166,9 @@ void Player::Update()
 		}
 	}
 
+	// 弾の更新処理
+	BulletManager::GetInstance().Update();
+
 	// 8.モデルに反映
 	MV1SetPosition(modelId_, pos_);
 }
@@ -182,14 +192,11 @@ void Player::Move()
 	// 入力ベクトルを正規化　0除算対策
 	float inputLen = VSize(worldInputVec);
 
-	// ★★★ 修正箇所 ★★★
 	// 入力がある場合のみ inputVecNor_ を更新する。
 	if (worldInputVec.x != 0.0f || worldInputVec.z != 0.0f)
 	{
 		inputVecNor_ = VNorm(worldInputVec); // 入力方向の正規化
 	}
-	// 修正前はここで else {} ブロックがあり、inputVecNor_ = { 0.0f, 0.0f, 1.0f }; とリセットされていた。
-	// 修正後: elseブロックを削除し、静止時には最後の有効な inputVecNor_ の値を保持する。
 
 	// 上り坂の判定に使用するベクトル（XZ平面での傾き方向）
 	// ステージ傾きを基に坂の方向ベクトルを算出
@@ -240,6 +247,26 @@ void Player::Move()
 
 }
 
+void Player::Shot()
+{
+	// プレイヤーの向きを基に回転行列を作成
+	float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z);
+	MATRIX rotMat = MGetRotY(rotY);
+
+	// 発射方向（プレイヤーの前方向）
+	VECTOR shootDir = VGet(0.0f, 0.0f, -1.0f);
+	shootDir = VTransform(shootDir, rotMat); // 向きに合わせて変換
+
+	// 発射位置（プレイヤー位置 + 前方向オフセット）
+	VECTOR muzzlePos = VAdd(pos_, VScale(shootDir, 20.0f));
+
+	// 弾速
+	float bulletSpeed = 20.0f;
+
+	// 弾を生成
+	BulletManager::GetInstance().AddBullet(muzzlePos, shootDir, bulletSpeed);
+}
+
 void Player::Draw()
 {
 	MV1SetPosition(modelId_, pos_);
@@ -253,6 +280,11 @@ void Player::Draw()
 
 	if (pos_.y >= -1000.0f)
 		MV1DrawModel(modelId_);
+
+	// 弾の描画処理
+	BulletManager::GetInstance().Draw();
+
+	
 
 	// デバッグ表示
 	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
@@ -274,7 +306,20 @@ void Player::Draw()
 	// プレイヤーのパラメータを表示
 	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f", id_, param_.weight, param_.speed, param_.jumpPower);
 
+
+	// 弾が発射可能かどうかを表示
+	if (attackCooldown_ <= 0.0f)
+	{
+		DrawFormatString(500, 580 + id_ * 20, GetColor(0, 255, 0), "Player %d: Can Shoot", id_ + 1);
+	}
+	else
+	{
+		DrawFormatString(500, 580 + id_ * 20, GetColor(255, 0, 0), "Player %d: Cooldown %.2f", id_ + 1, attackCooldown_);
+	}
+
 }
+
+
 
 void Player::Die()
 {
@@ -286,35 +331,6 @@ void Player::Die()
 
 	// 死亡順序を設定
 	deathOrder_ = nextDeathOrder_++;
-}
-
-void Player::Attack()
-{
-	// Fキー攻撃
-	if (attackCooldown_ > 0)
-	{
-		attackCooldown_--;
-	}
-
-	// InputMnagerからキー入力取得
-	InputManager& ins = InputManager::GetInstance();
-
-	// Fキー または Zキー が押され、かつクールダウンが0の場合に発動
-	if (attackCooldown_ == 0 && (ins.IsNew(KEY_INPUT_F) || ins.IsNew(KEY_INPUT_Z))) // ★ 括弧を追加して優先順位を修正
-	{
-		attackCooldown_ = 30;
-
-		// プレイヤーの前方50.0fの位置から発射
-		VECTOR startPos = VAdd(pos_, VScale(inputVecNor_, 50.0f));
-
-		float attackSpeed = 40.0f;
-
-		// 1. AttackObj* として BulletAttack を new で生成
-		AttackObj* newAttack = new BulletAttack(id_, startPos, inputVecNor_, attackSpeed);
-
-		// 2. PlayerManagerに登録（Managerが所有権を持つ）
-		PlayerManager::GetInstance().AddAttackObject(newAttack);
-	}
 }
 
 void Player::Release()

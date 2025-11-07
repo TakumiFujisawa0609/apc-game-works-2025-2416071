@@ -3,7 +3,6 @@
 #include <memory>
 #include "Player.h"
 #include "../../Stage/Stage.h"
-#include "../../AttackObj/Common/AttackObj.h"
 
 // Playerの識別
 enum class PlayerType
@@ -61,13 +60,12 @@ public:
 	// プレイヤー同士の衝突判定
 	void CheckPlayerCollisions();
 
-	// 敵と弾の衝突判定
-	void CheckAttackCollisions();
+	// 弾との衝突判定
+	void CheckBulletCollisions();
+
+
 
 	void Reset();
-
-	// AddAttackObject
-	void AddAttackObject(AttackObj* attack);
 
 private:
 
@@ -82,8 +80,5 @@ private:
 
 	// 勝者ID (-1: 未決定, 0, 1...: プレイヤーID)
 	int winnerID_ = -1;
-
-	// 攻撃オブジェクト配列
-	std::vector<std::unique_ptr<AttackObj>> attacks_;
 
 };

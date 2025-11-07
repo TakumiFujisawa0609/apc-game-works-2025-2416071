@@ -2,7 +2,6 @@
 #include <DxLib.h>
 #include <memory>
 #include "../../Stage/Stage.h"
-#include "../../AttackObj/BulletAttack.h"
 
 
 class InputController;
@@ -18,30 +17,12 @@ struct PlayerParam
 
 class Player
 {
-private:
+public:
 
 	// プレイヤーモデルの中心から足元までの距離
 	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;
 	static constexpr float GRAVITY_ACCEL = 0.98f;
 	static constexpr float PUSHBACK_THRESHOLD_Y = 0.5f; // 地面と判断する法線のY成分のしきい値
-
-	// 死亡順序を管理するための静的カウンタ
-	static int nextDeathOrder_;
-
-	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
-
-protected:
-	// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
-	int deathOrder_ = 0;
-
-	// 死亡時の処理をまとめる
-	void Die();
-
-	// 攻撃処理 (派生クラスで実装)
-	virtual	void Attack();
-
-public:
-
 	static constexpr float GRAVITY = 9.81f;
 	static constexpr float SLIDE_FACTOR = 0.5f;
 	static constexpr float PLAYER_FRICTION = 0.85f;
@@ -84,33 +65,37 @@ public:
 	// 当たり判定用の半径取得
 	float GetCollisionRadius() const { return collisionRadius_; }
 
-
 protected:
+
+	// 死亡時の処理をまとめる
+	void Die();
 
 	// プレイヤーの動き
 	virtual void Move();
-	VECTOR pos_;
-	int id_;
-	PlayerParam param_;
 
-	VECTOR moveVec_;
-	int modelId_;
+	// 共通の攻撃処理
+	void Shot();
 
-	// プレイヤーの向き
-	VECTOR angle_ = { 0.0f, 0.0f, 0.0f };
-
-
-	// プレイヤーの生存状態
-	bool isAlive_ = true;
+	
+	static int nextDeathOrder_;		// 死亡順序を管理するための静的カウンタ
+	
+	int deathOrder_ = 0;			// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
+	int id_;						// プレイヤー固有ID	
+	int modelId_ = -1;				// モデルID
 
 	float collisionRadius_ = 70.0f;	// 当たり判定用の半径
-
-
+	float attackCooldown_ = 0.0f;	// 攻撃クールダウンタイム
+	bool isAlive_ = true;			// 生存フラグ
+	bool isFalling_ = false;		// 落下中フラグ
+	
 	std::unique_ptr<InputController> controller_;
+	
 
-	// 攻撃クールダウン
-	float attackCooldown_ = 0.0f;
+	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
+	// プレイヤーの向き
+	VECTOR angle_ = { 0.0f, 0.0f, 0.0f };
+	VECTOR moveVec_;
+	VECTOR pos_;
 
-	// 落下フラグ
-	bool isFalling_ = false;
+	PlayerParam param_;
 };

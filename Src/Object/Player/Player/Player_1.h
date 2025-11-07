@@ -1,7 +1,7 @@
 #pragma once
 #include "../Common/Player.h"
 #include "../Control/InputController.h"
-#include "../../AttackObj/BulletAttack.h"
+//#include "../../AttackObj/BulletAttack.h"
 
 class Player_1 : public Player
 {
@@ -18,9 +18,8 @@ public:
 
 	// Šî–{ˆ—
 	void Init() override;
+	void Update() override;
 	void Release() override;
 
-	// UŒ‚ˆ—
-	//void Attack() override;
 
 };

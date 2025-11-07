@@ -40,7 +40,7 @@ void PlayerNumScene::Update(void)
 	if (ins.IsTrgDown(KEY_INPUT_A))
 	{
 		// 次のシーンへ
-		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::CHARASELECT);
+		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::GAME);
 		SceneManager::GetInstance().SetPlayerNum(selectNum_);
 	}
 }
@@ -51,19 +51,6 @@ void PlayerNumScene::Draw(void)
 	DrawFormatString2(100, 40, GetColor(255, 255, 255), -1, "プレイヤー人数選択画面");
 
 	DrawFormatString(100, 90, GetColor(255, 255, 255), "プレイヤー人数 %n",(int)(selectNum_));
-
-	// 点滅
-	int time = GetNowCount() / 500;
-	if (time % 2 == 0)
-	{
-		DrawFormatString2(300, 200, GetColor(255, 0, 0), -1, "試遊版はプレイヤー人数を3人以上登録可能ですが、\n 2人プレイまで対応しています");
-		// 警告　1人目は対応していないので、赤字で表示
-		DrawFormatString2(300, 240, GetColor(255, 0, 0), -1, "警告: 1人プレイはデバッグ用です。\n	選択しないでください");
-
-	}
-
-
-	
 
 	// 選択人数表示
 	for (int i = 0; i < SELECT::SELECT_MAX; i++)

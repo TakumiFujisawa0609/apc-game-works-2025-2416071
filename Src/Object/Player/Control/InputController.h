@@ -9,6 +9,7 @@ struct KeyConfig
 	int left;	// 左移動
 	int right;	// 右移動
 	int jump;	// ジャンプ
+	int attack;	// 攻撃
 };
 
 class InputController
@@ -22,6 +23,9 @@ public:
 
 	// ジャンプトリガーを取得する純粋仮想関数を定義
 	virtual bool IsJumpTrigger() const = 0;
+
+	// 攻撃トリガーを取得する純粋仮想関数を定義
+	virtual bool IsAttackTrigger() const = 0;
 };
 
 

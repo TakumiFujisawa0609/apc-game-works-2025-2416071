@@ -6,8 +6,8 @@
 #include "../Player/Player_4.h"
 #include "../Control/InputController.h"
 #include "../Control/Controller.h"
-#include "../../AttackObj/BulletAttack.h"
 #include "../../../Utility/AsoUtility.h"
+#include "../../Bullet/BulletManager.h"
 #include <DxLib.h>
 #include <memory>
 #include <algorithm> 
@@ -41,11 +41,11 @@ void PlayerManager::Init()
 	// プレイヤー配列クリア
 	players_.clear();
 
-	// 攻撃オブジェクト配列クリア
-	attacks_.clear();
 
 	// Playerの死亡順序カウンタとManager側の状態をリセット
 	Player::ResetDeathCounter();
+
+
 
 	isGameOver_ = false;
 	winnerID_ = -1;
@@ -58,6 +58,9 @@ void PlayerManager::InitAllPlayers()
 	{
 		player->Init();
 	}
+
+	// 弾を全削除
+	//AttackManager::GetInstance().Init();
 }
 
 void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& param)
@@ -76,13 +79,13 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 	InputManager::JOYPAD_NO padNo = static_cast<InputManager::JOYPAD_NO>(0);
 
 	if (id == 0) {
-		keyConfig = { KEY_INPUT_W, KEY_INPUT_S, KEY_INPUT_A, KEY_INPUT_D, KEY_INPUT_SPACE };
+		keyConfig = { KEY_INPUT_W, KEY_INPUT_S, KEY_INPUT_A, KEY_INPUT_D, KEY_INPUT_SPACE,KEY_INPUT_F };
 		
 		// PAD1を割り当て
 		padNo = InputManager::JOYPAD_NO::PAD1;
 	}
 	else if (id == 1) {
-		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN };
+		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN,KEY_INPUT_LSHIFT };
 		
 		// PAD2を割り当て
 		padNo = InputManager::JOYPAD_NO::PAD2;
@@ -150,29 +153,19 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 		player->Update();
 	}
 
-	// 攻撃オブジェクト更新
-	for (auto& attack : attacks_)
-	{
-		attack->Update();
-	}
-	
-	// 攻撃オブジェクトとプレイヤーの当たり判定
-	CheckAttackCollisions();
+	// 攻撃
+	//AttackManager::GetInstance().Update();
 
-	// プレイヤー同士の当たり判定
+	// プレイヤー同士の
+
+
+
+
 	CheckPlayerCollisions();
 
+	// 勝敗判定
 	CheckGameResult();
 
-	attacks_.erase(std::remove_if(attacks_.begin(), attacks_.end(),
-		// ラムダの引数を unique_ptr の参照にする
-		[](std::unique_ptr<AttackObj>& a) {
-			if (!a->IsAlive()) {
-				a->Release();	// DxLibのモデル解放など
-				return true;	// 削除対象
-			}
-			return false;
-		}), attacks_.end());
 }
 
 void PlayerManager::DrawPlayers()
@@ -229,39 +222,14 @@ void PlayerManager::DrawPlayers()
 		}
 	}
 
-	// 弾が当たっているかどうか
-	// デバッグ表示
-	for (auto& attack : attacks_) {
-		for (auto& player : players_) {
-			VECTOR diff = VSub(player->GetPos(), attack->GetPos());
-			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-			float radSum = player->GetCollisionRadius() + attack->GetCollisionRadius();
-			if (distSq < radSum * radSum) {
-				// 当たっているときは赤線で結ぶ
-				DrawLine3D(player->GetPos(), attack->GetPos(), GetColor(255, 0, 0));
-				VECTOR midPos = VScale(VAdd(player->GetPos(), attack->GetPos()), 0.5f);
-				DrawFormatString(midPos.x, midPos.y, GetColor(255, 0, 0), "弾ヒット");
-			}
-			else {
-				// 当たっていないときは緑線
-				DrawLine3D(player->GetPos(), attack->GetPos(), GetColor(0, 255, 0));
-			}
-		}
-	}
-	
-
+	// 弾を描画
+	//AttackManager::GetInstance().Draw();
 
 	for (auto& player : players_)
 	{
 		player->Draw();
 	}
-
-	// 攻撃オブジェクト描画
-	for (auto& attack : attacks_)
-	{
-		attack->Draw();
-	}
-
+	
 }
 
 // 勝敗判定
@@ -317,7 +285,11 @@ std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 	return rawPlayers;
 }
 
-// プレイヤー同士の当たり判定
+// プレイヤー同士の
+
+
+
+
 void PlayerManager::CheckPlayerCollisions()
 {
 	// 生ポインタ配列取得
@@ -371,30 +343,16 @@ void PlayerManager::CheckPlayerCollisions()
 	}
 }
 
-void PlayerManager::CheckAttackCollisions()
+
+void PlayerManager::CheckBulletCollisions()
 {
-	// プレイヤーと攻撃オブジェクトの当たり判定
+	// 生ポインタ配列取得
 	const auto& rawPlayers = GetPlayerRawPlayers();
-	for (auto& attack : attacks_)
-	{
-		for (auto& player : rawPlayers)
-		{
-			// 生存している場合にのみ当たり判定を実施
-			if (!player->IsAlive()) continue;
-			// 当たり判定
-			// 距離計算
-			VECTOR diff = VSub(player->GetPos(), attack->GetPos());
-			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-			float radSum = player->GetCollisionRadius() + attack->GetCollisionRadius();
-			// 衝突しているかチェック
-			if (distSq < radSum * radSum)
-			{
-				// 衝突処理
-				attack->OnHitPlayer(*player);
-			}
-		}
-	}
+	// 弾の当たり判定処理
+	//AttackManager::GetInstance().CheckBulletCollisions(rawPlayers);
+
 }
+
 
 void PlayerManager::Reset()
 {
@@ -402,8 +360,3 @@ void PlayerManager::Reset()
 	Init();
 }
 
-void PlayerManager::AddAttackObject(AttackObj* attackObj)  
-{  
-   // std::unique_ptrに変換してからpush_backする  
-   attacks_.push_back(std::unique_ptr<AttackObj>(attackObj));  
-}

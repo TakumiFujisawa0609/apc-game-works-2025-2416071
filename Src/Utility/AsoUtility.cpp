@@ -422,7 +422,12 @@ bool AsoUtility::IsHitSphereCapsule(
         // ‚±‚±‚É‚«‚Ä‚Í‚¢‚¯‚È‚¢
     }
 
-    // ‹…‘Ì“¯Žm‚Ì“–‚½‚è”»’è
+    // ‹…‘Ì“¯Žm‚Ì
+
+
+
+
+
     if (AsoUtility::IsHitSpheres(centerPos, capRadius, sphPos, sphRadius))
     {
         ret = true;

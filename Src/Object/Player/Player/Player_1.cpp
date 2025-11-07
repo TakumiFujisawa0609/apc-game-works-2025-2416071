@@ -4,6 +4,7 @@
 #include "../../../Manager/InputManager.h"
 #include "../../../Utility/AsoUtility.h"
 #include "../Control/InputController.h"
+#include "../Common/PlayerManager.h"
 
 
 void Player_1::Init()
@@ -20,6 +21,18 @@ void Player_1::Init()
 
 	param_.jumpPower = 7.0f;
 
+}
+
+void Player_1::Update()
+{
+	// 親クラスの更新処理
+	Player::Update();
+
+	// 入力で攻撃処理
+	if (controller_->IsAttackTrigger())
+	{
+		Shot();
+	}
 }
 
 void Player_1::Release()
