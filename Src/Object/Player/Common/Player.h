@@ -1,7 +1,8 @@
 #pragma once
+#include "../../Stage/Stage.h"
 #include <DxLib.h>
 #include <memory>
-#include "../../Stage/Stage.h"
+
 
 
 class InputController;
@@ -19,15 +20,15 @@ class Player
 {
 public:
 
-	// プレイヤーモデルの中心から足元までの距離
-	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;
-	static constexpr float GRAVITY_ACCEL = 0.98f;
-	static constexpr float PUSHBACK_THRESHOLD_Y = 0.5f; // 地面と判断する法線のY成分のしきい値
-	static constexpr float GRAVITY = 9.81f;
-	static constexpr float SLIDE_FACTOR = 0.5f;
-	static constexpr float PLAYER_FRICTION = 0.85f;
-	static constexpr float MAX_SPEED = 15.0f;
-	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;
+	// 定数定義
+	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;		// モデルの中心から足元までの距離
+	static constexpr float GRAVITY_ACCEL = 0.98f;				// 重力加速度
+	static constexpr float PUSHBACK_THRESHOLD_Y = 0.5f;			// Y軸方向の押し出し判定しきい値 
+	static constexpr float GRAVITY = 9.81f;						// 重力定数
+	static constexpr float SLIDE_FACTOR = 0.5f;					// スライド係数
+	static constexpr float PLAYER_FRICTION = 0.85f;				// プレイヤーの摩擦係数
+	static constexpr float MAX_SPEED = 15.0f;					// プレイヤーの最大速度
+	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;	// 入力加速度係数
 
 	// 外部から静的カウンタをリセットするためのメソッド
 	static void ResetDeathCounter() { nextDeathOrder_ = 1; }
@@ -65,6 +66,9 @@ public:
 	// 当たり判定用の半径取得
 	float GetCollisionRadius() const { return collisionRadius_; }
 
+	// 当たり判定(衝突中の処理)
+	void ApplyHit();
+
 protected:
 
 	// 死亡時の処理をまとめる
@@ -76,9 +80,9 @@ protected:
 	// 共通の攻撃処理
 	void Shot();
 
-	
+
 	static int nextDeathOrder_;		// 死亡順序を管理するための静的カウンタ
-	
+
 	int deathOrder_ = 0;			// 死亡順序 (0: 未死亡, 1: 1番目に死亡, ...)
 	int id_;						// プレイヤー固有ID	
 	int modelId_ = -1;				// モデルID
@@ -87,15 +91,15 @@ protected:
 	float attackCooldown_ = 0.0f;	// 攻撃クールダウンタイム
 	bool isAlive_ = true;			// 生存フラグ
 	bool isFalling_ = false;		// 落下中フラグ
-	
-	std::unique_ptr<InputController> controller_;
-	
 
-	VECTOR inputVecNor_; // ワールド座標系での入力ベクトル
+	std::unique_ptr<InputController> controller_;		// 入力コントローラ
+
+
+	VECTOR inputVecNor_;								// ワールド座標系での入力ベクトル
 	// プレイヤーの向き
-	VECTOR angle_ = { 0.0f, 0.0f, 0.0f };
+	VECTOR angle_ = { 0.0f, 0.0f, 0.0f };				
 	VECTOR moveVec_;
 	VECTOR pos_;
 
-	PlayerParam param_;
+	PlayerParam param_;									//	プレイヤーパラメータ
 };

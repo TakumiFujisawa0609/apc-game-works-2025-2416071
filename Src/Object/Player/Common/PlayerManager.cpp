@@ -153,14 +153,11 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 		player->Update();
 	}
 
-	// 攻撃
-	//AttackManager::GetInstance().Update();
 
-	// プレイヤー同士の
+	// 弾との当たり判定
+	CheckBulletCollisions();
 
-
-
-
+	// プレイヤー同士の当たり判定
 	CheckPlayerCollisions();
 
 	// 勝敗判定
@@ -348,9 +345,53 @@ void PlayerManager::CheckBulletCollisions()
 {
 	// 生ポインタ配列取得
 	const auto& rawPlayers = GetPlayerRawPlayers();
-	// 弾の当たり判定処理
-	//AttackManager::GetInstance().CheckBulletCollisions(rawPlayers);
 
+	// 弾のすべての情報を取得
+	const auto& bullets = BulletManager::GetInstance().GetBullets();
+
+	// 各弾の当たり判定を確認
+	for (const auto& b : bullets)
+	{
+		// 死んでいる弾は処理しない
+		if (!b->IsAlive()) continue;
+
+		
+
+		// 弾の座標を取得
+		const VECTOR& bPos = b->GetPos();
+
+		// 当たり半径を取得
+		float bRad = b->GetCollRad();
+
+		// 各プレイヤーと当たり判定を確認
+		for (Player* p : rawPlayers)
+		{
+			// 死んでいるプレイヤーは処理しない
+			if (!p->IsAlive()) continue;
+
+			// 弾の所有者IDを取得
+			int ownerId = b->GetOwnerId();
+
+			// 弾の所有者は無視
+			if (p->GetID() == ownerId) continue;
+
+			// プレイヤーとの距離判定
+			VECTOR diff = VSub(bPos, p->GetPos());
+			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+			float radSum = bRad + p->GetCollisionRadius();
+
+			// 衝突しているかチェック
+			if (distSq < radSum * radSum)
+			{
+				// 衝突しているときはプレイヤーに当たり処理を適用
+				p->ApplyHit();
+				// 弾を消す
+				b->Kill();
+				// 1つの弾が複数のプレイヤーに当たることはないのでループを抜ける
+				break;
+			}
+		}
+	}
 }
 
 

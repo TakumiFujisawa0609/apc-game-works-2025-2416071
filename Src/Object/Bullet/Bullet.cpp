@@ -1,7 +1,7 @@
 #include "Bullet.h"
 
-Bullet::Bullet(const VECTOR& pos, const VECTOR& dir, float speed)
-	:pos_(pos), dir_(dir), speed_(speed), isAlive_(true)
+Bullet::Bullet(const VECTOR& pos, const VECTOR& dir, float speed, int ownerId)
+	:pos_(pos), dir_(dir), speed_(speed), isAlive_(true), ownerId_(ownerId)
 {
 }
 

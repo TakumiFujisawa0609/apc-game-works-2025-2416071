@@ -6,9 +6,9 @@ BulletManager& BulletManager::GetInstance()
 	return instance;
 }
 
-void BulletManager::AddBullet(const VECTOR& pos, const VECTOR& dir, float speed)
+void BulletManager::AddBullet(const VECTOR& pos, const VECTOR& dir, float speed, int ownerId)
 {
-	bullets_.push_back(std::make_shared<Bullet>(pos, dir, speed));
+	bullets_.push_back(std::make_shared<Bullet>(pos, dir, speed,ownerId));
 }
 
 void BulletManager::Update()

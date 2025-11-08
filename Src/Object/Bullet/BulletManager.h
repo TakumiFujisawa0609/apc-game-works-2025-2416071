@@ -9,9 +9,11 @@ class BulletManager
 {
 public:
 
+	// シングルトンインスタンス取得
+
 	static BulletManager& GetInstance();
 
-	void AddBullet(const VECTOR& pos, const VECTOR& dir, float speed);
+	void AddBullet(const VECTOR& pos, const VECTOR& dir, float speed, int ownerId = -1);
 
 	void Update();
 

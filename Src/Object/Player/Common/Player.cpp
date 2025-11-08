@@ -1,13 +1,12 @@
-#include <DxLib.h>
 #include "../Control/InputController.h"
+#include "../../Bullet/BulletManager.h"
 #include "../../Stage/Stage.h"
 #include "../../../Utility/MatrixUtility.h"
 #include "../../../Utility/AsoUtility.h"
 #include "../../../Manager/InputManager.h"
-#include "../../Bullet/BulletManager.h"
 #include "PlayerManager.h"
 #include "Player.h"
-
+#include <DxLib.h>
 
 // 静的メンバ
 int Player::nextDeathOrder_ = 1;
@@ -26,18 +25,15 @@ Player::~Player()
 
 void Player::Init()
 {
-	// モデルの読み込みは派生クラスで実装
-
 	// 変数の初期化 (リセット可能な状態をInitで設定)
-	pos_ = { 0.0f, 0.0f, 0.0f }; // 初期座標を設定
+	
+	pos_ = { 0.0f, 0.0f, 0.0f }; 
 	moveVec_ = { 0.0f,0.0f,0.0f };
 	param_.speed = 15.0f;
-	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f }; // 初期向きはZ+方向}
-	modelId_ = -1; // Initでロードしない場合は-1で初期化
+	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f };	// 初期向きはZ+方向
+	modelId_ = -1;											// Initでロードしない場合は-1で初期化
 
-	inputVecNor_ = { 0.0f, 0.0f, 1.0f };
-
-
+	inputVecNor_ = { 0.0f, 0.0f, 1.0f };					// 初期入力方向はZ+方向
 }
 
 void Player::Update()
@@ -48,6 +44,7 @@ void Player::Update()
 		Die();
 	}
 
+	// ステージのインスタンスを取得
 	Stage& stage = Stage::GetInstance();
 
 	// ステージ外にいるかどうか
@@ -71,31 +68,36 @@ void Player::Update()
 	if (isFalling_)
 	{
 		// 落下速度を加算
-		moveVec_.y -= GRAVITY_ACCEL; // GRAVITY_ACCELは別途定義
+		moveVec_.y -= GRAVITY_ACCEL; 
+
 		// 位置更新
 		pos_ = VAdd(pos_, moveVec_);
+
 		// ステージ内に戻ったら落下状態解除
 		if (distXZ <= stageRadius)
 		{
+			// 落下状態解除
 			isFalling_ = false;
-			// Y位置を地面に合わせる処理は、下の衝突判定で代替する
+			
+
 			// Y速度をリセット
 			moveVec_.y = 0.0f;
 		}
-		return; // 落下中は他の処理を行わない
+		return; 
+
 	}
 
-	// 1. 入力による移動処理と坂滑りの計算
+	// 移動処理
 	Move();
 
-	// 2. 重力
+	// 重力
 	moveVec_.y -= GRAVITY_ACCEL;		// 常に重力を加算する
 
-	// 3. 摩擦処理
+	// 摩擦処理
 	const float PLAYER_FRICTION = 0.85f;
 	moveVec_ = VScale(moveVec_, PLAYER_FRICTION);
 
-	// 4. 最大速度制限
+	// 最大速度制限
 	float len = VSize(moveVec_);
 	if (len > param_.maxSpeed)
 	{
@@ -111,13 +113,14 @@ void Player::Update()
 
 	
 
-	// 6. 位置更新（この時点ではめり込んでいる可能性がある）
+	// 位置更新
 	pos_ = VAdd(pos_, moveVec_);
 
 	// プレイヤーの球体コライダー情報
 	VECTOR center = pos_;
 	float radius = collisionRadius_;
 
+	// ステージとの衝突判定
 	MV1_COLL_RESULT_POLY_DIM result = MV1CollCheck_Sphere(stage.GetModelID(), -1, center, radius);
 
 	// 衝突しているポリゴンが1つ以上ある場合
@@ -156,6 +159,7 @@ void Player::Update()
 				{
 					// 移動ベクトルから法線方向の成分を引いて、跳ね返りのような動きにする
 					float speedOnNormal = VDot(moveVec_, poly.Normal);
+
 					if (speedOnNormal < 0) { // 壁に向かっている場合のみ
 						// 弾性衝突ではなく、壁に沿った動きをシミュレート
 						VECTOR projection = VScale(poly.Normal, speedOnNormal);
@@ -264,7 +268,7 @@ void Player::Shot()
 	float bulletSpeed = 20.0f;
 
 	// 弾を生成
-	BulletManager::GetInstance().AddBullet(muzzlePos, shootDir, bulletSpeed);
+	BulletManager::GetInstance().AddBullet(muzzlePos, shootDir, bulletSpeed, id_);
 }
 
 void Player::Draw()
@@ -320,6 +324,16 @@ void Player::Draw()
 }
 
 
+
+void Player::ApplyHit()
+{
+	// ダメージを受けたときの処理
+	// 今はとりあえず即死させる
+	if (isAlive_)
+	{
+		Die();
+	}
+}
 
 void Player::Die()
 {
