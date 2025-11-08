@@ -355,8 +355,6 @@ void PlayerManager::CheckBulletCollisions()
 		// 死んでいる弾は処理しない
 		if (!b->IsAlive()) continue;
 
-		
-
 		// 弾の座標を取得
 		const VECTOR& bPos = b->GetPos();
 
@@ -383,8 +381,21 @@ void PlayerManager::CheckBulletCollisions()
 			// 衝突しているかチェック
 			if (distSq < radSum * radSum)
 			{
-				// 衝突しているときはプレイヤーに当たり処理を適用
-				p->ApplyHit();
+				
+				// 衝突しているときの処理
+				// ノックバックベクトル計算
+				VECTOR playerPos = p->GetPos();
+				VECTOR dir = VSub(playerPos, bPos);
+				dir.y = 0.0f; // 水平方向のみ
+				float len = VSize(dir);
+				VECTOR knockBackDir = (len > 0.0f) ? VScale(dir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
+
+				VECTOR knockBack = VScale(knockBackDir, KNOCKBACK_FORCE);
+				knockBack.y += KNOCKBACK_UPWARD_FORCE; // 上方向成分追加
+
+				// プレイヤーにノックバックを適用
+				p->ApplyHit(knockBack);
+
 				// 弾を消す
 				b->Kill();
 				// 1つの弾が複数のプレイヤーに当たることはないのでループを抜ける
@@ -400,4 +411,15 @@ void PlayerManager::Reset()
 	ClearPlayers();
 	Init();
 }
+
+void PlayerManager::Release()
+{
+	// インスタンス解放
+	if (instance_ != nullptr) {
+		delete instance_;
+		instance_ = nullptr;
+	}
+}
+
+
 

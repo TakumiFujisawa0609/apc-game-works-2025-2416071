@@ -82,7 +82,7 @@ void Stage::Release()
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
 	// プレイヤーの機能実装まで傾けない
-	return;
+	//return;
 
 	// プレイヤーの情報がなければ傾けない
 	if (players.empty()) return;

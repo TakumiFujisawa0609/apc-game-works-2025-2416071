@@ -325,14 +325,13 @@ void Player::Draw()
 
 
 
-void Player::ApplyHit()
+void Player::ApplyHit(const VECTOR& knockBack)
 {
-	// ダメージを受けたときの処理
-	// 今はとりあえず即死させる
-	if (isAlive_)
-	{
-		Die();
-	}
+	// ノックバックを加算
+	moveVec_ = VAdd(moveVec_, knockBack);
+
+	// 少し浮かせる
+	moveVec_.y = max(moveVec_.y, knockBack.y);
 }
 
 void Player::Die()

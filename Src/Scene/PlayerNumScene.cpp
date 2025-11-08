@@ -40,7 +40,7 @@ void PlayerNumScene::Update(void)
 	if (ins.IsTrgDown(KEY_INPUT_A))
 	{
 		// Ÿ‚ÌƒV[ƒ“‚Ö
-		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::GAME);
+		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::CHARASELECT);
 		SceneManager::GetInstance().SetPlayerNum(selectNum_);
 	}
 }

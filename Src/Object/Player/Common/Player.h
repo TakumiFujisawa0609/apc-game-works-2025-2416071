@@ -66,8 +66,8 @@ public:
 	// 当たり判定用の半径取得
 	float GetCollisionRadius() const { return collisionRadius_; }
 
-	// 当たり判定(衝突中の処理)
-	void ApplyHit();
+	// 当たった時の処理(ノックバック)
+	void ApplyHit(const VECTOR& knockBack);
 
 protected:
 
