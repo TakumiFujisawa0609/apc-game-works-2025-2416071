@@ -165,10 +165,14 @@ void CharacterSelect::HandleInput()
 	{
 		ApplySelection();
 		finished_ = true;
+
+		// 全員確定したので、GameScene 側でプレイヤー生成を行う
+		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::GAME);
 	}
 
 	// prev 更新
 	memcpy(prevKeyState_, keyState, sizeof(keyState));
+
 }
 
 void CharacterSelect::Update()
@@ -240,24 +244,17 @@ void CharacterSelect::Draw()
 
 void CharacterSelect::ApplySelection()
 {
-	// PlayerManager にプレイヤーを生成
-	PlayerManager::CreateInstance();
-	PlayerManager& pm = PlayerManager::GetInstance();
-
-	PlayerParam param; // デフォルトパラメータ、必要に応じて調整／拡張
-
+	// 選択結果を SceneManager に反映
+	std::vector<int> types;
+	types.reserve(playerCount_);
 	for (int p = 0; p < playerCount_; ++p)
 	{
 		int typeIdx = selectedIndex_[p];
-		PlayerType type = PlayerType::Player_1;
-		if (typeIdx >= 0 && typeIdx < TYPE_COUNT) {
-			type = static_cast<PlayerType>(typeIdx);
-		}
-		else {
-			type = PlayerType::Player_1;
-		}
-		pm.CreatePlayer(type, p, param);
+		if (typeIdx < 0) typeIdx = 0;
+		if (typeIdx >= TYPE_COUNT) typeIdx = TYPE_COUNT - 1;
+		types.push_back(typeIdx);
 	}
+	SceneManager::GetInstance().SetSelectedPlayerNums(types);
 }
 
 void CharacterSelect::Release()

@@ -24,9 +24,11 @@ public:
 	// 選択が完了したか
 	bool IsFinished() const { return finished_; }
 
+	// 選択されたプレイヤータイプを反映
+	void ApplySelection();
+
 private:
 	void HandleInput();
-	void ApplySelection(); // PlayerManager に反映
 
 	int playerCount_;
 	std::vector<int> selectedIndex_; // Player ごとの選択インデックス (0..numTypes-1)

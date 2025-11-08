@@ -1,5 +1,6 @@
 #pragma once
 #include <chrono>
+#include <vector>
 class SceneBase;
 class Fader;
 class Camera;
@@ -112,8 +113,15 @@ private:
 	// プレイヤー数
 	int playerNum_;
 
+	// キャラ選択で決まった各プレイヤー数をセット・ゲットする
+	std::vector<int> selectedPlayerNums_;
+
 	public:
 		void SetPlayerNum(int num) { playerNum_ = num; }
 		int GetPlayerNum(void) const { return playerNum_; }
+
+		// 選択タイプの保存と取得
+		void SetSelectedPlayerNums(const std::vector<int>& types) { selectedPlayerNums_ = types; }
+		const std::vector<int>& GetSelectedPlayerNums() const { return selectedPlayerNums_; }
 
 };

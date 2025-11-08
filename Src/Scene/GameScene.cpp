@@ -39,25 +39,48 @@ void GameScene::Init()
 	playerManager_ = &PlayerManager::GetInstance();
 	playerManager_->Reset();
 
+	// CharacterSelect で選択されたタイプを取得
+	const auto& selected = SceneManager::GetInstance().GetSelectedPlayerNums();
 
-	// プレイヤー生成（デバッグ用を含め、ID:0 から生成）
+	if (!selected.empty())
+	{
+		playerNum_ = static_cast<int>(selected.size());
+		if (playerNum_ < 1) playerNum_ = 1;
+		if (playerNum_ > 4) playerNum_ = 4;
+	}
+
+	// プレイヤー生成
 	for (int i = 0; i < playerNum_; ++i)
 	{
+		// タイプ決定
+		PlayerType type;
+		if (!selected.empty())
+		{
+			int ti = selected[i];
+			if (ti < 0) ti = 0;
+			if (ti > 3) ti = 3;
+			type = static_cast<PlayerType>(ti);
+		}
+		else
+		{
+			type = static_cast<PlayerType>(i); // 従来の挙動
+		}
 
-		PlayerType type = static_cast<PlayerType>(i);
-
-		PlayerParam param; 
-
-		// IDやタイプによって調整
-		if (i == (int)PlayerType::Player_1) { param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 7.0f; }
-		if (i == (int)PlayerType::Player_2) { param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; }
-		if (i == (int)PlayerType::Player_3) { param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; }
-		if (i == (int)PlayerType::Player_4) { param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; }
+		// タイプに応じてパラメータを設定
+		PlayerParam param;
+		switch (type) 
+		{
+			case PlayerType::Player_1: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 7.0f; break;
+			case PlayerType::Player_2: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
+			case PlayerType::Player_3: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
+			case PlayerType::Player_4: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
+			default:				   param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
+		}
 
 		playerManager_->CreatePlayer(type, i, param);
 	}
 
-	// プレイヤー初期化
+	// 初期化
 	playerManager_->InitAllPlayers();
 }
 
