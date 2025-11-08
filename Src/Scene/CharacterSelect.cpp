@@ -1,7 +1,6 @@
 #include "CharacterSelect.h"
 #include "../Object/Player/Common/PlayerManager.h"
 #include "../Object/Player/Common/Player.h"
-#include "../Object/Player/Common/Player.h" // PlayerParam
 #include "../Manager/SceneManager.h"
 #include <algorithm>
 
