@@ -1,5 +1,6 @@
 #include "../Manager/InputManager.h"
 #include "../Manager/SceneManager.h"
+#include "../Object/UIInput.h"
 #include "PlayerNumScene.h"
 
 PlayerNumScene::PlayerNumScene(void)
@@ -17,9 +18,11 @@ void PlayerNumScene::Init(void)
 
 void PlayerNumScene::Update(void)
 {
-	// 人数選択
-	InputManager& ins = InputManager::GetInstance();
-	if (ins.IsTrgDown(KEY_INPUT_UP))
+	// キー + PAD1 の入力を統合
+	auto pi = UIInput::GetPlayerNumInput();
+
+	// 左 / 右 で選択移動
+	if (pi.left)
 	{
 		selectNum_--;
 		if (selectNum_ < SELECT::SELECT_1P)
@@ -27,7 +30,7 @@ void PlayerNumScene::Update(void)
 			selectNum_ = SELECT::SELECT_MAX - 1;
 		}
 	}
-	else if (ins.IsTrgDown(KEY_INPUT_DOWN))
+	else if (pi.right)
 	{
 		selectNum_++;
 		if (selectNum_ >= SELECT::SELECT_MAX)
@@ -37,37 +40,55 @@ void PlayerNumScene::Update(void)
 	}
 
 	// 決定
-	if (ins.IsTrgDown(KEY_INPUT_A))
+	if (pi.decide)
 	{
-		// 次のシーンへ
+		SceneManager::GetInstance().SetPlayerNum(GetSelectNum());
 		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::CHARASELECT);
-		SceneManager::GetInstance().SetPlayerNum(selectNum_);
+		return;
+	}
+
+	// 戻る（タイトルへ）
+	if (pi.back)
+	{
+		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
+		return;
 	}
 }
 
 void PlayerNumScene::Draw(void)
 {
-	// タイトル表示
+	// タイトル
 	DrawFormatString2(100, 40, GetColor(255, 255, 255), -1, "プレイヤー人数選択画面");
 
-	DrawFormatString(100, 90, GetColor(255, 255, 255), "プレイヤー人数 %n",(int)(selectNum_));
+	auto pi = UIInput::GetPlayerNumInput();
 
-	// 選択人数表示
+	// PAD1 未接続なら注意（ただしキーボードは使用可能）
+	if (!pi.pad1Connected)
+	{
+		DrawFormatString2(100, 90, GetColor(255, 180, 120), -1, "注意: PAD1 未接続。キーボードで操作できます。");
+	}
+
+	// 現在人数
+	DrawFormatString(100, 120, GetColor(255, 255, 255), "プレイヤー人数: %d", GetSelectNum());
+
+	// 選択肢表示
 	for (int i = 0; i < SELECT::SELECT_MAX; i++)
 	{
-		if (i == selectNum_)
+		const bool isCur = (i == selectNum_);
+		unsigned int col = isCur ? GetColor(255, 255, 0) : GetColor(255, 255, 255);
+		if (isCur)
 		{
-			// 選択中
-			DrawFormatString2(100, 140 + i * 40, GetColor(255, 255, 0), -1, "> %d Player", i + 1);
+			DrawFormatString2(100, 170 + i * 40, col, -1, "> %d Player", i + 1);
 		}
 		else
 		{
-			// 選択していない
-			DrawFormatString2(100, 140 + i * 40, GetColor(255, 255, 255), -1, "  %d Player", i + 1);
+			DrawFormatString2(100, 170 + i * 40, col, -1, "  %d Player", i + 1);
 		}
 	}
 
-	// 背景色の水色は絶対に見せてはならないので、背景画像は描画必須
+	// 操作ガイド
+	DrawFormatString2(500, 170, GetColor(180, 180, 255), -1, "PAD1: X=左 / B=右 / A=決定 / Y=戻る");
+	DrawFormatString2(500, 210, GetColor(180, 180, 255), -1, "KEY : ←/A/↑/W=左, →/D/↓/S=右, Enter/Space=決定, B=戻る");
 }
 
 void PlayerNumScene::Release(void)

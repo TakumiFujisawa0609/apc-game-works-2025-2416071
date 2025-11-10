@@ -13,7 +13,18 @@ void Player_4::Init()
 
 	param_.speed = 6.0f;
 	param_.jumpPower = 7.0f;
+}
 
+void Player_4::Update()
+{
+	// 親クラスの更新処理
+	Player::Update();
+
+	// 入力で攻撃処理
+	if (controller_->IsAttackTrigger())
+	{
+		Shot();
+	}
 }
 
 void Player_4::Release()

@@ -3,6 +3,7 @@
 #include "../Manager/InputManager.h"
 #include "../Manager/SceneManager.h"
 #include "../Object/Grid.h"
+#include "../Object/UIInput.h"
 #include "../Manager/Camera.h"
 #include "TitleScene.h"
 
@@ -36,19 +37,21 @@ void TitleScene::Update(void)
 	InputManager& ins = InputManager::GetInstance();
 	SceneManager& scene = SceneManager::GetInstance();
 
-	if (ins.IsTrgDown(KEY_INPUT_B))
-	{
-		// 実装後にデバッグをすること。
-		// 例外スロー起きます
-		scene.ChangeScene(SceneManager::SCENE_ID::MANUAL);
-	}
-	else if  (ins.IsTrgDown(KEY_INPUT_A))
-	{
-		scene.ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
-	}
-	else if(ins.IsTrgDown(KEY_INPUT_0))
+	if(ins.IsTrgDown(KEY_INPUT_0))
 	{
 		scene.ChangeScene(SceneManager::SCENE_ID::GAME);
+	}
+
+	auto ti = UIInput::GetTitleInput();
+
+	// 遷移判定 (PAD or Keyboard)
+	if (ti.goPlayerSelect || ti.keyboardGoPlayerSelect) {
+		scene.ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
+		return;
+	}
+	if (ti.goHowToPlay || ti.keyboardGoHowToPlay) {
+		scene.ChangeScene(SceneManager::SCENE_ID::MANUAL);
+		return;
 	}
 
 }
@@ -58,11 +61,15 @@ void TitleScene::Draw(void)
 	// グリッド描画
 	grid_->Draw();
 
-	// タイトル表示
-	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "タイトルシーン");
-	DrawFormatString2(100, 140, GetColor(255, 255, 255), -1, "Aキーでプレイヤー人数選択(ここから始めるのを推奨します)");
-	DrawFormatString2(100, 170, GetColor(255, 255, 255), -1, "Bキーで操作説明(遷移はできますが、操作説明はありません)");
-	DrawFormatString2(100, 200, GetColor(255, 255, 255), -1, "0 DebugMode");
+	// ガイド表示
+	int y = 50;
+	DrawFormatString(100, y, GetColor(255, 255, 255), "タイトル");
+	y += 40;
+	DrawFormatString(100, y, GetColor(200, 200, 200), "Enterキー(Bボタン) : 人数選択");
+	y += 20;
+	DrawFormatString(100, y, GetColor(200, 200, 200), "Spaceキー(Aボタン) : 操作説明");
+	y += 20;
+	DrawFormatString2(100, y, GetColor(255, 255, 255), -1, "0 : デバッグモード");
 
 	// 背景色の水色は絶対に見せてはならないので、背景画像は描画必須
 

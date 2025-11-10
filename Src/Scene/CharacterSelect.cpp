@@ -1,263 +1,285 @@
 #include "CharacterSelect.h"
-#include "../Object/Player/Common/PlayerManager.h"
-#include "../Object/Player/Common/Player.h"
+#include "../Object/UIInput.h"
 #include "../Manager/SceneManager.h"
-#include <algorithm>
-
-// 常に用意するタイプ数
-static const int TYPE_COUNT = 4;
 
 CharacterSelect::CharacterSelect(int playerCount)
-	: currentPlayer_(0),
-	finished_(false),
-	playerCount_(playerCount)
+	: playerCount_(playerCount)
+	, currentPlayer_(0)
+	, finished_(false)
+	, duplicateBlock_(false)
 {
-	// 引数が未指定または範囲外なら SceneManager から人数を取得
-	if (playerCount_ <= 0 || playerCount_ > MAX_PLAYERS)
-	{
-		// SceneManager は PlayerNumScene で 0-based の selectNum_ を保存しているため +1
-		int smVal = SceneManager::GetInstance().GetPlayerNum();
-		playerCount_ = smVal + 1;
-	}
-
-	// 安全に 1..MAX_PLAYERS に丸める
-	if (playerCount_ < 1) playerCount_ = 1;
-	if (playerCount_ > MAX_PLAYERS) playerCount_ = MAX_PLAYERS;
-
-	Init();
 }
 
 CharacterSelect::~CharacterSelect()
 {
-	Release();
 }
 
 void CharacterSelect::Init()
 {
-	// 常に 4 タイプを用意
-	typeNames_.clear();
-	for (int i = 0; i < TYPE_COUNT; ++i) {
-		char buf[32];
-		std::snprintf(buf, sizeof(buf), "Type %d", i + 1);
-		typeNames_.push_back(std::string(buf));
+	// 人数取得 (引数 0 なら SceneManager から)
+	if (playerCount_ <= 0)
+	{
+		int num = 1;
+		try { num = SceneManager::GetInstance().GetPlayerNum(); }
+		catch (...) { num = 1; }
+		playerCount_ = num;
+	}
+	if (playerCount_ < 1) playerCount_ = 1;
+	if (playerCount_ > MAX_PLAYERS) playerCount_ = MAX_PLAYERS;
+
+	// キャラ名準備
+	characterNames_.clear();
+	for (int i = 0; i < MAX_CHARACTERS; ++i)
+	{
+		characterNames_.push_back("Character " + std::to_string(i + 1));
+	}
+
+	// 最低限、キャラ数 < 人数 の場合は後続で詰むため補正
+	if (static_cast<int>(characterNames_.size()) < playerCount_)
+	{
+		// 足りない分をダミー追加
+		for (int i = static_cast<int>(characterNames_.size()); i < playerCount_; ++i)
+		{
+			characterNames_.push_back("Character " + std::to_string(i + 1));
+		}
 	}
 
 	selectedIndex_.assign(playerCount_, 0);
 	confirmed_.assign(playerCount_, false);
 
-	for (int i = 0; i < 256; ++i) prevKeyState_[i] = 0;
-}
-
-
-// 指定タイプが別プレイヤーに確定されているか（excludePlayer は自分自身を除外する際に使用）
-static bool isTypeTaken(const std::vector<int>& selectedIndex, const std::vector<bool>& confirmed, int typeIdx, int excludePlayer = -1)
-{
-	for (size_t p = 0; p < confirmed.size(); ++p)
+	// 先頭から重複しない初期値 (0,1,2,...)
+	for (int p = 0; p < playerCount_; ++p)
 	{
-		if ((int)p == excludePlayer) continue;
-		if (!confirmed[p]) continue;
-		if (selectedIndex[p] == typeIdx) return true;
-	}
-	return false;
-}
-
-// 指定タイプの所有者（確定したプレイヤーID）、いなければ -1
-static int getTypeOwner(const std::vector<int>& selectedIndex, const std::vector<bool>& confirmed, int typeIdx)
-{
-	for (size_t p = 0; p < confirmed.size(); ++p)
-	{
-		if (confirmed[p] && selectedIndex[p] == typeIdx) return static_cast<int>(p);
-	}
-	return -1;
-}
-
-void CharacterSelect::HandleInput()
-{
-	unsigned char keyState[256];
-	GetHitKeyStateAll((char*)keyState);
-
-	auto isKeyDown = [&](int key) {
-		return keyState[key] != 0 && prevKeyState_[key] == 0;
-		};
-
-	// 左 / 右 でキャラを変更（確定済みタイプはスキップ）
-	if (isKeyDown(KEY_INPUT_LEFT) || isKeyDown(KEY_INPUT_RIGHT))
-	{
-		bool left = isKeyDown(KEY_INPUT_LEFT);
-		int curr = selectedIndex_[currentPlayer_];
-		int tries = 0;
-		while (++tries <= TYPE_COUNT)
-		{
-			// move
-			if (left) curr = (curr - 1 + TYPE_COUNT) % TYPE_COUNT;
-			else curr = (curr + 1) % TYPE_COUNT;
-
-			// 自分自身が既に確定しているタイプはそのま許可する（移動は不要だがここは安全対策）
-			if (isTypeTaken(selectedIndex_, confirmed_, curr, currentPlayer_)) continue;
-
-			// 選択可能なタイプを見つけたら設定
-			selectedIndex_[currentPlayer_] = curr;
-			break;
-		}
+		selectedIndex_[p] = p % static_cast<int>(characterNames_.size());
 	}
 
-	// Enter で確定（確定済みタイプが他に取られていたら別の空きタイプへ移す）
-	if (isKeyDown(KEY_INPUT_RETURN))
-	{
-		int want = selectedIndex_[currentPlayer_];
-		if (isTypeTaken(selectedIndex_, confirmed_, want, currentPlayer_))
-		{
-			// 既に他が確定していた -> 空きタイプを探して移動する
-			bool found = false;
-			for (int i = 0; i < TYPE_COUNT; ++i)
-			{
-				if (!isTypeTaken(selectedIndex_, confirmed_, i, currentPlayer_))
-				{
-					selectedIndex_[currentPlayer_] = i;
-					found = true;
-					break;
-				}
-			}
-			if (!found) {
-				// 全部取られている（理論上起きない）-> 確定拒否
-			}
-		}
-
-		// 最終確認（自分以外に取られていなければ確定）
-		if (!isTypeTaken(selectedIndex_, confirmed_, selectedIndex_[currentPlayer_], currentPlayer_))
-		{
-			confirmed_[currentPlayer_] = true;
-			// 次の未確定プレイヤーへ移動
-			for (int i = 0; i < playerCount_; ++i)
-			{
-				int next = (currentPlayer_ + 1 + i) % playerCount_;
-				if (!confirmed_[next]) { currentPlayer_ = next; break; }
-			}
-		}
-		// もし確定できなければ何もしない（UI上は TAKEN 表示される）
-	}
-
-	// Tab で操作中プレイヤーを切り替え
-	if (isKeyDown(KEY_INPUT_TAB))
-	{
-		currentPlayer_ = (currentPlayer_ + 1) % playerCount_;
-	}
-
-	// R でリセット（未確定に戻す）
-	if (isKeyDown(KEY_INPUT_R))
-	{
-		std::fill(confirmed_.begin(), confirmed_.end(), false);
-		currentPlayer_ = 0;
-		// 他プレイヤーに取られて自分の選択が既に使えなくなっている場合、利用可能なものへ補正
-		for (int p = 0; p < playerCount_; ++p) {
-			if (isTypeTaken(selectedIndex_, confirmed_, selectedIndex_[p], p)) {
-				// 空き候補に切り替え
-				for (int t = 0; t < TYPE_COUNT; ++t) {
-					if (!isTypeTaken(selectedIndex_, confirmed_, t, p)) { selectedIndex_[p] = t; break; }
-				}
-			}
-		}
-	}
-
-	// 全プレイヤーが確定したら ApplySelection を呼ぶ
-	bool all = std::all_of(confirmed_.begin(), confirmed_.end(), [](bool v) { return v; });
-	if (all && !finished_)
-	{
-		ApplySelection();
-		finished_ = true;
-
-		// 全員確定したので、GameScene 側でプレイヤー生成を行う
-		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::GAME);
-	}
-
-	// prev 更新
-	memcpy(prevKeyState_, keyState, sizeof(keyState));
-
+	currentPlayer_ = 0;
+	finished_ = false;
+	duplicateBlock_ = false;
 }
 
 void CharacterSelect::Update()
 {
-	if (finished_) return;
+	if (finished_)
+	{
+		ApplySelection();
+		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::GAME);
+		return;
+	}
+
 	HandleInput();
+}
+
+void CharacterSelect::HandleInput()
+{
+	auto in = UIInput::GetCharacterSelectInput(currentPlayer_);
+
+	// 戻る
+	if (in.back)
+	{
+		BackToPrevious();
+		return;
+	}
+
+	duplicateBlock_ = false;
+
+	// 未確定ならキャラ変更 (重複回避)
+	if (!confirmed_[currentPlayer_])
+	{
+		if (in.left)  ChangeCharacter(-1);
+		if (in.right) ChangeCharacter(+1);
+	}
+
+	// 決定 (重複している場合は ChangeCharacter で回避しているので基本成功)
+	if (in.decide && !confirmed_[currentPlayer_])
+	{
+		// セーフティ (万一重複なら確定不可)
+		if (IsTaken(selectedIndex_[currentPlayer_]))
+		{
+			duplicateBlock_ = true;
+			return;
+		}
+		DecideCurrent();
+		return;
+	}
+}
+
+void CharacterSelect::ChangeCharacter(int delta)
+{
+	int size = static_cast<int>(characterNames_.size());
+	if (size <= 0) return;
+
+	int current = selectedIndex_[currentPlayer_];
+	int dir = (delta < 0) ? -1 : 1;
+
+	// 探索開始位置
+	int start = (current + dir + size) % size;
+	int candidate = FindNextAvailable(start, dir);
+
+	if (candidate == current)
+	{
+		// 全て埋まっている (理論上 playerCount_ <= size なら起きない)
+		duplicateBlock_ = IsTaken(current);
+		return;
+	}
+
+	selectedIndex_[currentPlayer_] = candidate;
+	duplicateBlock_ = false;
+}
+
+bool CharacterSelect::IsTaken(int characterIdx) const
+{
+	for (int p = 0; p < playerCount_; ++p)
+	{
+		if (p == currentPlayer_) continue;
+		if (confirmed_[p] && selectedIndex_[p] == characterIdx)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+int CharacterSelect::FindNextAvailable(int start, int dir) const
+{
+	int size = static_cast<int>(characterNames_.size());
+	int current = selectedIndex_[currentPlayer_];
+
+	// 1周分探索
+	for (int i = 0; i < size; ++i)
+	{
+		int idx = (start + (dir * i) + size) % size;
+		if (idx == current) continue; // 現在選択はスキップ (別候補を探す)
+		if (!IsTaken(idx))
+		{
+			return idx;
+		}
+	}
+	// 見つからない場合は現状維持
+	return current;
+}
+
+void CharacterSelect::DecideCurrent()
+{
+	confirmed_[currentPlayer_] = true;
+	AdvancePlayer();
+}
+
+void CharacterSelect::BackToPrevious()
+{
+	if (currentPlayer_ == 0)
+	{
+		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
+		return;
+	}
+	RevertPlayer();
+}
+
+void CharacterSelect::AdvancePlayer()
+{
+	currentPlayer_++;
+	if (currentPlayer_ >= playerCount_)
+	{
+		CompleteSelection();
+	}
+}
+
+void CharacterSelect::RevertPlayer()
+{
+	currentPlayer_--;
+	if (currentPlayer_ < 0) currentPlayer_ = 0;
+	confirmed_[currentPlayer_] = false; // 再選択可能
+}
+
+void CharacterSelect::CompleteSelection()
+{
+	finished_ = true;
 }
 
 void CharacterSelect::Draw()
 {
-	ClearDrawScreen();
+	DrawFormatString2(60, 40, GetColor(255, 255, 255), -1, "キャラクター選択 (重複禁止 / 順番制)");
 
-	const int baseX = 60;
-	const int baseY = 80;
-	const int lineH = 28;
+	DrawPadWarning();
+	DrawPlayerEntries();
+	DrawGuide();
+	DrawDuplicateNotice();
+}
 
-	DrawFormatString(20, 20, GetColor(255, 255, 0), "CHARACTER SELECT");
-
-	for (int p = 0; p < playerCount_; p++)
+void CharacterSelect::DrawPadWarning()
+{
+	auto in = UIInput::GetCharacterSelectInput(currentPlayer_);
+	if (!in.activePadConnected)
 	{
-		int y = baseY + p * (lineH * 2);
-
-		// プレイヤー見出し
-		if (p == currentPlayer_)
-			DrawFormatString(baseX, y, GetColor(255, 255, 255), ">> Player %d <<", p + 1);
-		else
-			DrawFormatString(baseX, y, GetColor(180, 180, 180), "   Player %d   ", p + 1);
-
-		// 選択中のタイプ表示（選択不可なら TAKEN 表示）
-		int sel = selectedIndex_[p];
-		int owner = getTypeOwner(selectedIndex_, confirmed_, sel);
-		if (owner >= 0 && owner != p)
-		{
-			DrawFormatString(baseX, y + lineH, GetColor(255, 100, 100), "  %s  (TAKEN by P%d)", typeNames_[sel].c_str(), owner + 1);
-		}
-		else
-		{
-			DrawFormatString(baseX, y + lineH, GetColor(0, 255, 0), "  %s  %s", typeNames_[sel].c_str(), confirmed_[p] ? "(CONFIRMED)" : "");
-		}
-
-		// 簡易プレビュー球（最大4人を見やすく配置）
-		float previewX = 200.0f + (float)p * 120.0f - (playerCount_ > 2 ? (playerCount_ - 2) * 60.0f : 0.0f);
-		VECTOR pos = { previewX, 200.0f, 0.0f };
-		DrawSphere3D(pos, 40.0f, 16, GetColor(100 + p * 30, 100, 255 - p * 40), GetColor(100, 100, 255), TRUE);
+		DrawFormatString2(60, 70, GetColor(255, 180, 120), -1,
+			"注意: 現在の手番 P%d の PAD 未接続。キーボード操作可能。",
+			currentPlayer_ + 1);
 	}
+}
 
-	// 全タイプと誰が取っているかも表示（右側）
-	for (int t = 0; t < TYPE_COUNT; ++t)
+void CharacterSelect::DrawPlayerEntries()
+{
+	int y = 120;
+	for (int i = 0; i < playerCount_; ++i)
 	{
-		int y = 80 + t * 24;
-		int owner = getTypeOwner(selectedIndex_, confirmed_, t);
-		if (owner >= 0)
-			DrawFormatString(520, y, GetColor(255, 150, 0), "%s : TAKEN by P%d", typeNames_[t].c_str(), owner + 1);
-		else
-			DrawFormatString(520, y, GetColor(200, 200, 200), "%s : Available", typeNames_[t].c_str());
+		bool isActive = (i == currentPlayer_);
+		bool ok = confirmed_[i];
+		unsigned int col =
+			isActive ? GetColor(255, 255, 0) :
+			ok ? GetColor(120, 255, 120) :
+			GetColor(255, 255, 255);
+
+		int sel = selectedIndex_[i];
+		if (sel < 0 || sel >= static_cast<int>(characterNames_.size())) sel = 0;
+
+		DrawFormatString2(60, y, col, -1, "%s P%d : %s %s",
+			isActive ? ">" : " ",
+			i + 1,
+			characterNames_[sel].c_str(),
+			ok ? "[OK]" : "");
+		y += 32;
 	}
+}
 
-	// 操作説明
-	int yins = baseY + playerCount_ * (lineH * 2) + 20;
-	DrawFormatString(20, yins, GetColor(255, 255, 255), "LEFT / RIGHT : change character (skips taken)");
-	DrawFormatString(20, yins + lineH, GetColor(255, 255, 255), "TAB : switch player");
-	DrawFormatString(20, yins + lineH * 2, GetColor(255, 255, 255), "ENTER : confirm");
-	DrawFormatString(20, yins + lineH * 3, GetColor(255, 255, 255), "R : reset confirms");
-	if (finished_)
+void CharacterSelect::DrawGuide()
+{
+	DrawFormatString2(440, 120, GetColor(180, 180, 255), -1, "キャラ変更: ←/A / →/D / (PAD: X/B) 重複は自動スキップ");
+	DrawFormatString2(440, 152, GetColor(180, 180, 255), -1, "決定: Enter / Space / (PAD: A)");
+	DrawFormatString2(440, 184, GetColor(180, 180, 255), -1, "戻る: B / (PAD: Y) 前プレイヤーへ");
+	DrawFormatString2(440, 216, GetColor(180, 180, 255), -1, "黄=選択中 / 緑=確定済み");
+}
+
+void CharacterSelect::DrawDuplicateNotice()
+{
+	int cnt_ = 0;
+	if (duplicateBlock_)
 	{
-		DrawFormatString(20, yins + lineH * 5, GetColor(0, 255, 0), "All confirmed. Players created.");
+		
+		DrawFormatString2(60, 300, GetColor(255, 100, 100), -1,
+			"このキャラは既に他プレイヤーが確定しています。別キャラを選択してください。");
+		cnt_++;
+		if (cnt_ == 360) cnt_ = 0;
 	}
 }
 
 void CharacterSelect::ApplySelection()
 {
-	// 選択結果を SceneManager に反映
+	// 選択結果を SceneManager に反映 (重複はここまでで存在しない前提)
 	std::vector<int> types;
 	types.reserve(playerCount_);
 	for (int p = 0; p < playerCount_; ++p)
 	{
-		int typeIdx = selectedIndex_[p];
-		if (typeIdx < 0) typeIdx = 0;
-		if (typeIdx >= TYPE_COUNT) typeIdx = TYPE_COUNT - 1;
-		types.push_back(typeIdx);
+		int idx = selectedIndex_[p];
+		if (idx < 0) idx = 0;
+		if (idx >= static_cast<int>(characterNames_.size())) idx = static_cast<int>(characterNames_.size()) - 1;
+		types.push_back(idx);
 	}
 	SceneManager::GetInstance().SetSelectedPlayerNums(types);
 }
 
 void CharacterSelect::Release()
 {
-	// 特殊リソースなし
+	characterNames_.clear();
+	selectedIndex_.clear();
+	confirmed_.clear();
 }

@@ -137,6 +137,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Src\Object\UIInput.cpp" />
     <ClCompile Include="Src\Object\Bullet\BulletManager.cpp" />
     <ClCompile Include="Src\Object\Bullet\Bullet.cpp" />
     <ClCompile Include="Src\Object\Player\Control\Controller.cpp" />
@@ -168,6 +169,7 @@
     <ClCompile Include="Src\Object\Stage\Stage.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Src\Object\UIInput.h" />
     <ClInclude Include="Src\Object\Bullet\BulletManager.h" />
     <ClInclude Include="Src\Object\Bullet\Bullet.h" />
     <ClInclude Include="Src\Object\Player\Control\Controller.h" />

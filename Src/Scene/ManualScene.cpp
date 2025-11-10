@@ -1,5 +1,6 @@
 #include <DxLib.h>
 #include "../Manager/InputManager.h"
+#include "../Object/UIInput.h"
 #include "../Manager/SceneManager.h"
 #include "ManualScene.h"
 
@@ -13,29 +14,35 @@ ManualScene::~ManualScene(void)
 
 void ManualScene::Init(void)
 {
+	page_ = 0;
 }
 
 void ManualScene::Update(void)
 {
-	// シーン遷移
-	InputManager& ins = InputManager::GetInstance();
-	if (ins.IsTrgDown(KEY_INPUT_A))
-	{
-		// 実装後にデバッグをすること。
-		// 例外スロー起きます
-		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
-	}
-	else if (ins.IsTrgDown(KEY_INPUT_B))
-	{
-		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
-	}
+    auto mi = UIInput::GetManualInput();
+    auto& scene = SceneManager::GetInstance();
+
+    // ページ送り（任意）
+    if (mi.prevPage && page_ > 0) page_--;
+    if (mi.nextPage) page_++;
+
+    // 遷移
+    if (mi.backToTitle) {
+        scene.ChangeScene(SceneManager::SCENE_ID::TITLE);
+        return;
+    }
+    if (mi.goPlayerSelect) {
+        scene.ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
+        return;
+    }
 }
 
 void ManualScene::Draw(void)
 {
-	DrawFormatString(100, 100, GetColor(255, 255, 255), "操作説明画面");
-	DrawFormatString(100, 140, GetColor(255, 255, 255), "Aキーでプレイヤー人数選択");
-	DrawFormatString(100, 180, GetColor(255, 255, 255), "Bキーでタイトル");
+    DrawFormatString(80, 60, GetColor(255, 255, 255), "操作説明 (page=%d)", page_);
+    DrawFormatString(80, 100, GetColor(200, 200, 200), "A(Enter): 人数選択へ");
+    DrawFormatString(80, 120, GetColor(200, 200, 200), "B(Space): タイトルへ");
+    //DrawFormatString(80, 140, GetColor(200, 200, 200), "Y/→: 次ページ, X/←: 前ページ");
 }
 
 void ManualScene::Release(void)

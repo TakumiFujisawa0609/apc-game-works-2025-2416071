@@ -3,7 +3,6 @@
 #include "../../../Utility/AsoUtility.h"
 #include "../Control/InputController.h"
 
-
 void Player_3::Init()
 {
 	// 親クラスの初期化
@@ -14,7 +13,18 @@ void Player_3::Init()
 
 	param_.speed = 6.0f;
 	param_.jumpPower = 7.0f;
+}
 
+void Player_3::Update()
+{
+	// 親クラスの更新処理
+	Player::Update();
+
+	// 入力で攻撃処理
+	if (controller_->IsAttackTrigger())
+	{
+		Shot();
+	}
 }
 
 void Player_3::Release()

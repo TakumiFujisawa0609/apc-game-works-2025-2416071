@@ -85,7 +85,7 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		padNo = InputManager::JOYPAD_NO::PAD1;
 	}
 	else if (id == 1) {
-		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN,KEY_INPUT_LSHIFT };
+		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN,KEY_INPUT_Z};
 		
 		// PAD2ÇäÑÇËìñÇƒ
 		padNo = InputManager::JOYPAD_NO::PAD2;
@@ -93,13 +93,13 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 	else if (id == 2) {
 
 		// 3Pñ⁄ÇÕIJKL + RSHIFT
-		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_RSHIFT };
+		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_Q,KEY_INPUT_Q };
 		// PAD3ÇäÑÇËìñÇƒ
 		padNo = InputManager::JOYPAD_NO::PAD3;
 	}
 	else if (id == 3){
 		// 4Pñ⁄ÇÕÉeÉìÉLÅ[ + RCTRL
-		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_RCONTROL };
+		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_E,KEY_INPUT_E };
 		// PAD4ÇäÑÇËìñÇƒ
 		padNo = InputManager::JOYPAD_NO::PAD4;
 	}
