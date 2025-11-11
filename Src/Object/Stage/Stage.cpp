@@ -3,6 +3,7 @@
 #include "../Player/Common/PlayerManager.h"
 #include "Stage.h"
 #include <cmath>
+#include "../../Manager/InputManager.h"
 
 // 静的メンバ変数の初期化
 Stage* Stage::instance_ = nullptr;
@@ -52,6 +53,15 @@ void Stage::Init()
 // 更新
 void Stage::Update()
 {
+	// 物理的な傾きの更新
+	// 角速度に基づいて角度を更新
+	angle_.x += angularVelocity_.x;
+	angle_.y += angularVelocity_.y;
+	angle_.z += angularVelocity_.z;
+	// 減衰を適用して角速度を減少させる
+	angularVelocity_.x *= (1.0f - dampingFactor_);
+	angularVelocity_.y *= (1.0f - dampingFactor_);
+	angularVelocity_.z *= (1.0f - dampingFactor_);
 
 }
 
@@ -82,7 +92,17 @@ void Stage::Release()
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
 	// プレイヤーの機能実装まで傾けない
-	return;
+	//return;
+
+	// デバッグ用で特定のキーを押下したら傾けない
+	InputManager& ins = InputManager::GetInstance();
+
+	// F1キーで傾き無効化,もう一度押すと有効化
+	if (ins.IsNew(KEY_INPUT_F1))
+	{
+		return;
+	}
+
 
 	// プレイヤーの情報がなければ傾けない
 	if (players.empty()) return;

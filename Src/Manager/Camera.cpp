@@ -124,12 +124,12 @@ void Camera::DrawDebug(void)
 {
 	//#ifdef DEBUG
 		// デバッグ用描画
-	DrawFormatString(0, 600, GetColor(255, 255, 255),
-		"Camera Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);
+	/*DrawFormatString(0, 600, GetColor(255, 255, 255),
+		"Camera Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);*/
 
 	// 角度はラジアン表示
-	DrawFormatString(0, 620, GetColor(255, 255, 255),
-		"Camera Angles:(%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angles_.x), AsoUtility::Rad2DegF(angles_.y), AsoUtility::Rad2DegF(angles_.z));
+	/*DrawFormatString(0, 620, GetColor(255, 255, 255),
+		"Camera Angles:(%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angles_.x), AsoUtility::Rad2DegF(angles_.y), AsoUtility::Rad2DegF(angles_.z));*/
 
 	//#endif //DEBUG
 

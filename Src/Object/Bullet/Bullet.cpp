@@ -11,12 +11,14 @@ Bullet::~Bullet()
 
 void Bullet::Update()
 {
+	
+
 	pos_ = VAdd(pos_, VScale(dir_, speed_));
 
 	// âÊñ äOÇ…èoÇΩÇÁè¡ñ≈
-	if (pos_.x < -2000.0f || pos_.x > 2000.0f ||
-		pos_.y < -2000.0f || pos_.y > 2000.0f ||
-		pos_.z < -2000.0f || pos_.z > 2000.0f)
+	if (pos_.x < -BULLET_LIMIT || pos_.x > BULLET_LIMIT ||
+		pos_.y < -BULLET_LIMIT || pos_.y > BULLET_LIMIT ||
+		pos_.z < -BULLET_LIMIT || pos_.z > BULLET_LIMIT)
 	{
 		isAlive_ = false;
 	}

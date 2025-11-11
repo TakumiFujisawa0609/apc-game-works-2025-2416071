@@ -293,32 +293,32 @@ void Player::Draw()
 	// デバッグ表示
 	DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
 	DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
-	DrawFormatString(0, 0 + id_ * 20, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
+	//DrawFormatString(0, 0 + id_ * 20, GetColor(255, 255, 255), "Player %d Pos: (%.2f, %.2f, %.2f)", id_ + 1, pos_.x, pos_.y, pos_.z);
 
 	if (isAlive_) {
 		// 生存時の表示
-		DrawFormatString(850, 600 + id_ * 20, GetColor(0, 255, 0), "Player %d: Alive", id_ + 1);
+		//DrawFormatString(850, 600 + id_ * 20, GetColor(0, 255, 0), "Player %d: Alive", id_ + 1);
 	}
 	else {
 		// 死亡時の表示
-		DrawFormatString(850, 600 + id_ * 20, GetColor(255, 0, 0), "Player %d: Dead", id_ + 1);
+		//DrawFormatString(850, 600 + id_ * 20, GetColor(255, 0, 0), "Player %d: Dead", id_ + 1);
 	}
 
 	// 1Pには赤色、2Pには青色、3Pには緑色、4Pには黄色の球体を表示
 	DrawSphere3D(pos_, 50.0f, 16, GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), TRUE);
 
 	// プレイヤーのパラメータを表示
-	DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f", id_, param_.weight, param_.speed, param_.jumpPower);
+	//DrawFormatString(500, 540 + id_ * 20, GetColor(255, 0, 255), "PlayerID: %d Weight: %.2f Speed: %.2f JumpPower: %.2f", id_, param_.weight, param_.speed, param_.jumpPower);
 
 
 	// 弾が発射可能かどうかを表示
 	if (attackCooldown_ <= 0.0f)
 	{
-		DrawFormatString(500, 580 + id_ * 20, GetColor(0, 255, 0), "Player %d: Can Shoot", id_ + 1);
+		//DrawFormatString(500, 580 + id_ * 20, GetColor(0, 255, 0), "Player %d: Can Shoot", id_ + 1);
 	}
 	else
 	{
-		DrawFormatString(500, 580 + id_ * 20, GetColor(255, 0, 0), "Player %d: Cooldown %.2f", id_ + 1, attackCooldown_);
+		//DrawFormatString(500, 580 + id_ * 20, GetColor(255, 0, 0), "Player %d: Cooldown %.2f", id_ + 1, attackCooldown_);
 	}
 
 }

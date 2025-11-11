@@ -49,10 +49,10 @@ void TitleScene::Update(void)
 		scene.ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
 		return;
 	}
-	if (ti.goHowToPlay || ti.keyboardGoHowToPlay) {
+	/*if (ti.goHowToPlay || ti.keyboardGoHowToPlay) {
 		scene.ChangeScene(SceneManager::SCENE_ID::MANUAL);
 		return;
-	}
+	}*/
 
 }
 
@@ -67,7 +67,7 @@ void TitleScene::Draw(void)
 	y += 40;
 	DrawFormatString(100, y, GetColor(200, 200, 200), "Enterキー(Bボタン) : 人数選択");
 	y += 20;
-	DrawFormatString(100, y, GetColor(200, 200, 200), "Spaceキー(Aボタン) : 操作説明");
+	//DrawFormatString(100, y, GetColor(200, 200, 200), "Spaceキー(Aボタン) : 操作説明");
 	y += 20;
 	DrawFormatString2(100, y, GetColor(255, 255, 255), -1, "0 : デバッグモード");
 

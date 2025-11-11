@@ -21,14 +21,18 @@ class Player
 public:
 
 	// 定数定義
-	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;		// モデルの中心から足元までの距離
-	static constexpr float GRAVITY_ACCEL = 0.98f;				// 重力加速度
-	static constexpr float PUSHBACK_THRESHOLD_Y = 0.5f;			// Y軸方向の押し出し判定しきい値 
-	static constexpr float GRAVITY = 9.81f;						// 重力定数
-	static constexpr float SLIDE_FACTOR = 0.5f;					// スライド係数
-	static constexpr float PLAYER_FRICTION = 0.85f;				// プレイヤーの摩擦係数
-	static constexpr float MAX_SPEED = 15.0f;					// プレイヤーの最大速度
-	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;	// 入力加速度係数
+	static constexpr float MODEL_CENTER_TO_FEET = 20.0f;						// モデルの中心から足元までの距離
+	static constexpr float GRAVITY_ACCEL = 0.98f;								// 重力加速度
+	static constexpr float PUSHBACK_THRESHOLD_Y = 0.5f;							// Y軸方向の押し出し判定しきい値 
+	static constexpr float GRAVITY = 9.81f;										// 重力定数
+	static constexpr float SLIDE_FACTOR = 0.5f;									// スライド係数
+	static constexpr float PLAYER_FRICTION = 0.85f;								// プレイヤーの摩擦係数
+	static constexpr float MAX_SPEED = 15.0f;									// プレイヤーの最大速度
+	static constexpr float INPUT_ACCEL_FACTOR = 1.0f / 10.0f;					// 入力加速度係数
+	static constexpr VECTOR INIT_VEC_NOR = { 0.0f,0.0f,1.0f };					// 初期入力ベクトル正規化値
+	static constexpr float STAGE_LOWER_LIMIT_Y = -1000.0f;	
+	static constexpr float RESET_POS = 0.0f;// ステージの落下限界Y座標
+
 
 	// 外部から静的カウンタをリセットするためのメソッド
 	static void ResetDeathCounter() { nextDeathOrder_ = 1; }

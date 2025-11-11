@@ -53,6 +53,14 @@ void InputManager::Init(void)
 	InputManager::GetInstance().Add(KEY_INPUT_M);
 	InputManager::GetInstance().Add(KEY_INPUT_L);
 	InputManager::GetInstance().Add(KEY_INPUT_RETURN);
+	InputManager::GetInstance().Add(KEY_INPUT_NUMPAD8);
+	InputManager::GetInstance().Add(KEY_INPUT_NUMPAD5);
+	InputManager::GetInstance().Add(KEY_INPUT_NUMPAD4);
+	InputManager::GetInstance().Add(KEY_INPUT_NUMPAD6);
+	InputManager::GetInstance().Add(KEY_INPUT_NUMPAD7);
+	InputManager::GetInstance().Add(KEY_INPUT_RSHIFT);
+	InputManager::GetInstance().Add(KEY_INPUT_U);
+	InputManager::GetInstance().Add(KEY_INPUT_F1);
 
 
 

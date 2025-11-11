@@ -74,7 +74,7 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 	std::shared_ptr<Player> newPlayer = nullptr;
 	std::unique_ptr<InputController> controller = nullptr;
 
-	// 入力設定 (ID 0: WASD + SPACE, ID 1: 矢印キー + ENTER)
+	// 入力設定 (ID1~4:移動 + ID5:ジャンプ + ID6:攻撃)
 	KeyConfig keyConfig;
 	InputManager::JOYPAD_NO padNo = static_cast<InputManager::JOYPAD_NO>(0);
 
@@ -85,7 +85,7 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		padNo = InputManager::JOYPAD_NO::PAD1;
 	}
 	else if (id == 1) {
-		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN,KEY_INPUT_Z};
+		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN, KEY_INPUT_RSHIFT};
 		
 		// PAD2を割り当て
 		padNo = InputManager::JOYPAD_NO::PAD2;
@@ -93,13 +93,13 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 	else if (id == 2) {
 
 		// 3P目はIJKL + RSHIFT
-		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_Q,KEY_INPUT_Q };
+		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_Q,	KEY_INPUT_U };
 		// PAD3を割り当て
 		padNo = InputManager::JOYPAD_NO::PAD3;
 	}
 	else if (id == 3){
 		// 4P目はテンキー + RCTRL
-		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_E,KEY_INPUT_E };
+		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_E,KEY_INPUT_NUMPAD7 };
 		// PAD4を割り当て
 		padNo = InputManager::JOYPAD_NO::PAD4;
 	}
@@ -116,13 +116,13 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_2:
-		newPlayer = std::make_shared<Player_2>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_3:
-		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_4:
-		newPlayer = std::make_shared<Player_4>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	default:
 		break;
@@ -167,28 +167,6 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 
 void PlayerManager::DrawPlayers()
 {
-
-	// ゲームオーバー時のリザルト表示
-	if (isGameOver_) {
-		int color = GetColor(130, 130, 255); // 黄色
-
-		DrawFormatString(300, 200, color, "===================");
-
-		if (winnerID_ != -1) {
-			// 勝者がいる場合
-			DrawFormatString(300, 240, color, "WINNER IS PLAYER %d!", winnerID_ + 1);
-			// 操作説明(点滅)
-			int time = GetNowCount() / 500;
-			if (time % 2 == 0)
-				DrawFormatString2(300, 260, color, -1, "ENTERでタイトルに戻ります");
-		}
-		else {
-			// 例外的な決着
-			DrawFormatString(300, 240, color, "GAME OVER! DRAW!");
-		}
-		DrawFormatString(300, 280, color, "===================");
-	}
-
 	// デバッグ
 	// プレイヤー同士が当たっているかいないか
 	for (size_t i = 0; i < players_.size(); i++)
@@ -208,7 +186,7 @@ void PlayerManager::DrawPlayers()
 				DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(255, 0, 0));
 				// 文字でも表示
 				VECTOR midPos = VScale(VAdd(p1->GetPos(), p2->GetPos()), 0.5f);
-				DrawFormatString(midPos.x, midPos.y, GetColor(255, 0, 0), "当たっている");
+				//DrawFormatString(midPos.x, midPos.y, GetColor(255, 0, 0), "当たっている");
 			}
 			else
 			{

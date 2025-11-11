@@ -6,6 +6,9 @@ class Bullet
 {
 public:
 
+	// 定数
+	static constexpr float BULLET_LIMIT = 2000.0f;
+
 	// コンストラクタ
 	Bullet(const VECTOR& pos, const VECTOR& dir, float speed, int ownerId = -1);
 
@@ -41,4 +44,3 @@ private:
 	bool isAlive_;		// 弾の生存状態
 	int ownerId_;		// 発射者のプレイヤーID（-1=なし）
 };
-

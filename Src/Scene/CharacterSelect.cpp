@@ -2,6 +2,15 @@
 #include "../Object/UIInput.h"
 #include "../Manager/SceneManager.h"
 
+// キャラクターごとの色定義
+static const unsigned int CHARACTER_COLORS[] = {
+	GetColor(255, 80, 80),   // 1P: 赤
+	GetColor(80, 80, 255),   // 2P: 青
+	GetColor(80, 255, 80),   // 3P: 緑
+	GetColor(80, 80, 80),  // 4P: 黒
+	// 必要に応じて追加
+};
+
 CharacterSelect::CharacterSelect(int playerCount)
 	: playerCount_(playerCount)
 	, currentPlayer_(0)
@@ -224,13 +233,19 @@ void CharacterSelect::DrawPlayerEntries()
 	{
 		bool isActive = (i == currentPlayer_);
 		bool ok = confirmed_[i];
+		int sel = selectedIndex_[i];
+		if (sel < 0 || sel >= static_cast<int>(characterNames_.size())) sel = 0;
+
+		// プレイヤー番号で色を固定
+		unsigned int charColor = CHARACTER_COLORS[i % (sizeof(CHARACTER_COLORS) / sizeof(CHARACTER_COLORS[0]))];
+
 		unsigned int col =
 			isActive ? GetColor(255, 255, 0) :
 			ok ? GetColor(120, 255, 120) :
 			GetColor(255, 255, 255);
 
-		int sel = selectedIndex_[i];
-		if (sel < 0 || sel >= static_cast<int>(characterNames_.size())) sel = 0;
+		// キャラクター名の横に色付き四角を表示
+		DrawBox(30, y, 54, y + 24, charColor, TRUE);
 
 		DrawFormatString2(60, y, col, -1, "%s P%d : %s %s",
 			isActive ? ">" : " ",
@@ -239,6 +254,10 @@ void CharacterSelect::DrawPlayerEntries()
 			ok ? "[OK]" : "");
 		y += 32;
 	}
+
+	// 操作するプレイヤーの色を覚えてくださいと表示
+	DrawFormatString2(60, y + 20, GetColor(200, 200, 255), -1,
+		"※ 操作するプレイヤーの色を覚えてください。");
 }
 
 void CharacterSelect::DrawGuide()

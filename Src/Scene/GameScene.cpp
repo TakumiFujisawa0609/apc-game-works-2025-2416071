@@ -23,7 +23,7 @@ void GameScene::Init()
 {
 	// カメラを固定
 	Camera* camera = SceneManager::GetInstance().GetCamera();
-	camera->ChangeMode(Camera::MODE::FREE);
+	camera->ChangeMode(Camera::MODE::FIXED_POINT);
 
 	// プレイヤー人数取得
 	playerNum_ = SceneManager::GetInstance().GetPlayerNum() + 1;
@@ -68,13 +68,13 @@ void GameScene::Init()
 
 		// タイプに応じてパラメータを設定
 		PlayerParam param;
-		switch (type) 
+		switch (type)
 		{
-			case PlayerType::Player_1: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 7.0f; break;
-			case PlayerType::Player_2: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
-			case PlayerType::Player_3: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
-			case PlayerType::Player_4: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
-			default:				   param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
+		case PlayerType::Player_1: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 7.0f; break;
+		case PlayerType::Player_2: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
+		case PlayerType::Player_3: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
+		case PlayerType::Player_4: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
+		default:				   param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
 		}
 
 		playerManager_->CreatePlayer(type, i, param);
@@ -114,17 +114,37 @@ void GameScene::Draw()
 
 	// プレイヤー描画
 	playerManager_->DrawPlayers();
-	
 
-	DrawFormatString2(100, 100, GetColor(255, 255, 255), -1, "ゲームシーン");
-	
-	
-	DrawFormatString2(0, 180, GetColor(255, 130, 130), -1, "簡易操作説明→　P1: WASD + SPACE / P2: 矢印キー + ENTER");
+	// 操作説明
+	if (!playerManager_->GetIsGameOver())
+	{
+		DrawString(10, 90, " 操作説明", GetColor(255, 215, 0));
+		DrawString(10, 110, "  コントローラー操作時", GetColor(255, 215, 0));
+		DrawString(10, 130, "  移動 : 左スティック", GetColor(255, 215, 0));
+		DrawString(10, 150, "  攻撃 : Aボタン(下ボタン)", GetColor(255, 215, 0));
+		DrawString(10, 170, "  ジャンプ: 右トリガーボタン", GetColor(255, 215, 0));
 
-	DrawFormatString(0, 560, GetColor(255, 255, 255), "ステージ傾き X: %.2f Y: %.2f Z: %.2f",
-		Stage::GetInstance().GetAngle().x * 180.f / DX_PI_F,
-		Stage::GetInstance().GetAngle().y * 180.f / DX_PI_F,
-		Stage::GetInstance().GetAngle().z * 180.f / DX_PI_F);
+		DrawString(10, 210, "  キーボード操作時", GetColor(0, 215, 255));
+		DrawString(10, 230, "  1P移動 : W,A,S,Dキー (赤色のキャラクター)", GetColor(255, 0, 0));
+		DrawString(10, 250, "  1P攻撃 : Fキー(赤色のキャラクター)", GetColor(255, 0, 0));
+
+		DrawString(10, 270, "  2P移動 : 矢印キー(青色のキャラクター)", GetColor(0, 0, 255));
+		DrawString(10, 290, "  2P攻撃 : RSHIFTキー(青色のキャラクター)", GetColor(0, 0, 255));
+
+		DrawString(10, 330, "  3P移動 : I,J,K,Lキー(緑色のキャラクター)", GetColor(0, 255, 0));
+		DrawString(10, 350, "  3P攻撃 : Uキー(緑色のキャラクター)", GetColor(0, 255, 0));
+
+		DrawString(10, 390, "  4P移動 : テンキー8,4,5,6キー(黒色のキャラクター)", GetColor(0, 0, 0));
+		DrawString(10, 410, "  4P攻撃 : テンキー7キー(黒色のキャラクター)", GetColor(0, 0, 0));
+	}
+	else
+	{
+		int winnerID = playerManager_->GetWinnerID();
+		char buffer[128];
+		sprintf_s(buffer, "Player %d Wins!", winnerID + 1);
+		DrawString(300, 200, buffer, GetColor(255, 215, 0));
+		DrawString(250, 250, "Press Enter to Return to Title", GetColor(255, 255, 255));
+	}
 }
 
 void GameScene::Draw3D()

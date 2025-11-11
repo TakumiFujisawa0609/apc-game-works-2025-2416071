@@ -58,7 +58,7 @@ void PlayerNumScene::Update(void)
 void PlayerNumScene::Draw(void)
 {
 	// タイトル
-	DrawFormatString2(100, 40, GetColor(255, 255, 255), -1, "プレイヤー人数選択画面");
+	(100, 40, GetColor(255, 255, 255), -1, "プレイヤー人数選択画面");
 
 	auto pi = UIInput::GetPlayerNumInput();
 
