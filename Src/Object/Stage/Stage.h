@@ -19,11 +19,11 @@ class Stage
 public:
 
 	// 定数
-	static constexpr VECTOR DEFAULT_POS = { 0.0f, -1500.0f, 0.0f };			// ステージの初期位置
-	static constexpr VECTOR DEFAULT_SCALE = { 2.0f, 2.0f, 2.0f };			// ステージの初期スケール
+	static constexpr VECTOR DEFAULT_POS = { 0.0f, -2250.0f, 0.0f };			// ステージの初期位置
+	static constexpr VECTOR DEFAULT_SCALE = { 3.0f, 3.0f, 3.0f };			// ステージの初期スケール
 	static constexpr float COLLIDER_RADIUS = 1000.0f;						// コライダーの半径
 	static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;					// コライダーのY最大値オフセット
-	static constexpr float MOMENT_OF_INERTIA = 2000.0f;						// プレイヤーに対してステージの反発力(値が大きいほど傾きにくい)
+	static constexpr float MOMENT_OF_INERTIA = 10000.0f;						// プレイヤーに対してステージの反発力(値が大きいほど傾きにくい)
 	static constexpr float DAMPING_FACTOR = 0.05f;							// プレイヤーの方向に傾く速さ
 
 	// インスタンス

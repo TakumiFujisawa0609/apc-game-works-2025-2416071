@@ -80,7 +80,7 @@ void Application::Run(void)
 
 		// フレームレート数を表示
 		// 画面左上に表示
-		DrawFormatString(450, 620, GetColor(255, 255, 255), "FPS: %.5f", GetFPS());
+		DrawFormatString(450, 620, GetColor(255, 255, 255), "FPS: %.15f", GetFPS());
 
 		ScreenFlip();
 

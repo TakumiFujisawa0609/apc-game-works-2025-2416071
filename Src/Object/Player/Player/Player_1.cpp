@@ -37,5 +37,7 @@ void Player_1::Update()
 
 void Player_1::Release()
 {
+	// モデルの解放
 	MV1DeleteModel(modelId_);
+	modelId_ = -1;
 }

@@ -39,7 +39,7 @@ private:
 	int playerNum_;
 
 	// グリッド線
-	Grid* grid_;
+	//Grid* grid_;
 
 	// プレイヤーマネージャー
 	PlayerManager* playerManager_;
@@ -49,5 +49,8 @@ private:
 
 	// デバッグ　プレイヤー
 	Player_1* debugPlayer_;
+
+	// 遷移タイマー
+	int transitionTimer_;
 
 };

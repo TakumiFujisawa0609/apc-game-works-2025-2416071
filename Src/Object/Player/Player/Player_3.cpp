@@ -29,5 +29,7 @@ void Player_3::Update()
 
 void Player_3::Release()
 {
+	// ƒ‚ƒfƒ‹‚Ì‰ð•ú
 	MV1DeleteModel(modelId_);
+	modelId_ = -1;
 }

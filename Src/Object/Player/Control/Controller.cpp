@@ -22,7 +22,6 @@ VECTOR Controller::GetMoveInputVector() const
 	}
 	else
 	{
-
 		// 自分のプレイヤー番号に応じたパッド入力を取得
 		InputManager::JOYPAD_IN_STATE padState = ins.GetJPadInputState(padNo_);
 		worldInputVec = ins.GetDirXZAKey(padState.AKeyLX, padState.AKeyLY);

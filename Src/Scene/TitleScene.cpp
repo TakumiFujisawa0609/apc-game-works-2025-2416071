@@ -4,12 +4,13 @@
 #include "../Manager/SceneManager.h"
 #include "../Object/Grid.h"
 #include "../Object/UIInput.h"
+#include "../Object/Player/Common/PlayerManager.h"
 #include "../Manager/Camera.h"
 #include "TitleScene.h"
 
 TitleScene::TitleScene(void) : SceneBase()
 {
-	grid_ = nullptr;
+	//grid_ = nullptr;
 }
 
 TitleScene::~TitleScene(void)
@@ -22,16 +23,16 @@ void TitleScene::Init(void)
 	Camera* camera = SceneManager::GetInstance().GetCamera();
 	camera->ChangeMode(Camera::MODE::FREE);
 
-	// グリッド初期化
-	grid_ = new Grid();
-	grid_->Init();
+	// 再プレイ扱いになるので、PlayerManagerを初期化
+	PlayerManager::GetInstance().Init();
+
 
 }
 
 void TitleScene::Update(void)
 {
 	// グリッド更新
-	grid_->Update();
+	//grid_->Update();
 
 	// シーン遷移
 	InputManager& ins = InputManager::GetInstance();
@@ -59,7 +60,7 @@ void TitleScene::Update(void)
 void TitleScene::Draw(void)
 {
 	// グリッド描画
-	grid_->Draw();
+	//grid_->Draw();
 
 	// ガイド表示
 	int y = 50;
@@ -73,13 +74,14 @@ void TitleScene::Draw(void)
 
 	// 背景色の水色は絶対に見せてはならないので、背景画像は描画必須
 
-
 }
 
 void TitleScene::Release(void)
 {
 	// グリッド解放
-	grid_->Release();
+	/*grid_->Release();
 	delete grid_;
+	}
+}*/
 }
 

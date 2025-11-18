@@ -6,6 +6,7 @@
 #include "../Scene/ManualScene.h"
 #include "../Scene/PlayerNumScene.h"
 #include "../Scene/CharacterSelect.h"
+#include "../Scene/Result.h"
 #include "Camera.h"
 #include "SceneManager.h"
 
@@ -160,9 +161,6 @@ void SceneManager::Destroy(void)
 	camera_->Release();
 	delete camera_;
 
-	/*miniCamera_->Release();*/
-	/*delete miniCamera_;*/
-
 	// インスタンスのメモリ解放
 	delete instance_;
 
@@ -243,8 +241,12 @@ void SceneManager::DoChangeScene(SCENE_ID sceneId)
 		break;
 		// 成績発表(順位)シーン
 	case SCENE_ID::RANKING:
+		//scene_ = new RankingScene();
 		break;
 		// リザルトシーン
+	case SCENE_ID::RESULT:
+		scene_ = new Result();
+		break;
 	}
 
 	// 各シーンの初期化

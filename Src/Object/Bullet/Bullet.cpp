@@ -31,4 +31,5 @@ void Bullet::Draw() const
 
 void Bullet::Release()
 {
+	// “Á‚É‚È‚µ
 }

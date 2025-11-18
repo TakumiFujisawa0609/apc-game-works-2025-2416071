@@ -18,6 +18,7 @@ public:
 	// 攻撃トリガーを取得
 	bool IsAttackTrigger() const override;
 
+
 private:
 
 	// このコントローラーが使うキー設定を保持

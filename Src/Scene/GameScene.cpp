@@ -11,7 +11,7 @@
 
 GameScene::GameScene()
 {
-	grid_ = nullptr;
+	//grid_ = nullptr;
 	playerManager_ = nullptr;
 }
 
@@ -29,8 +29,8 @@ void GameScene::Init()
 	playerNum_ = SceneManager::GetInstance().GetPlayerNum() + 1;
 
 	// グリッド初期化
-	grid_ = new Grid();
-	grid_->Init();
+	/*grid_ = new Grid();
+	grid_->Init();*/
 
 	// ステージ初期化
 	Stage::GetInstance().Init();
@@ -82,6 +82,9 @@ void GameScene::Init()
 
 	// 初期化
 	playerManager_->InitAllPlayers();
+
+	// 遷移タイマーリセット
+	transitionTimer_ = 0;
 }
 
 void GameScene::Update()
@@ -89,7 +92,7 @@ void GameScene::Update()
 	InputManager& ins = InputManager::GetInstance();
 
 	// グリッド更新
-	grid_->Update();
+	//grid_->Update();
 	
 	// プレイヤー更新とステージ傾き更新を一本化
 	playerManager_->UpdatePlayers(Stage::GetInstance());
@@ -97,17 +100,23 @@ void GameScene::Update()
 	// ゲームオーバー状態を取得
 	bool isGameOver = playerManager_->GetIsGameOver();
 
-	// エンターキーでタイトルへ戻る
-	if (ins.IsTrgDown(KEY_INPUT_RETURN) && isGameOver)
+	// ゲームオーバー時、数秒後にリザルト画面へ遷移
+	if (isGameOver)
 	{
-		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
+		transitionTimer_++;
+
+		// 3秒後にリザルト画面へ遷移
+		if (transitionTimer_ > 180)
+		{
+			SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::RESULT);
+		}
 	}
 }
 
 void GameScene::Draw()
 {
 	// グリッド描画
-	grid_->Draw();
+	//grid_->Draw();
 
 	// ステージ描画
 	Stage::GetInstance().Draw();
@@ -118,7 +127,7 @@ void GameScene::Draw()
 	// 操作説明
 	if (!playerManager_->GetIsGameOver())
 	{
-		DrawString(10, 90, " 操作説明", GetColor(255, 215, 0));
+		/*DrawString(10, 90, " 操作説明", GetColor(255, 215, 0));
 		DrawString(10, 110, "  コントローラー操作時", GetColor(255, 215, 0));
 		DrawString(10, 130, "  移動 : 左スティック", GetColor(255, 215, 0));
 		DrawString(10, 150, "  攻撃 : Aボタン(下ボタン)", GetColor(255, 215, 0));
@@ -135,15 +144,15 @@ void GameScene::Draw()
 		DrawString(10, 350, "  3P攻撃 : Uキー(緑色のキャラクター)", GetColor(0, 255, 0));
 
 		DrawString(10, 390, "  4P移動 : テンキー8,4,5,6キー(黒色のキャラクター)", GetColor(0, 0, 0));
-		DrawString(10, 410, "  4P攻撃 : テンキー7キー(黒色のキャラクター)", GetColor(0, 0, 0));
+		DrawString(10, 410, "  4P攻撃 : テンキー7キー(黒色のキャラクター)", GetColor(0, 0, 0));*/
 	}
 	else
 	{
 		int winnerID = playerManager_->GetWinnerID();
 		char buffer[128];
 		sprintf_s(buffer, "Player %d Wins!", winnerID + 1);
-		DrawString(300, 200, buffer, GetColor(255, 215, 0));
-		DrawString(250, 250, "Press Enter to Return to Title", GetColor(255, 255, 255));
+		// PAD1の右ボタンまたはEnterキーでタイトルへ戻る 操作促し文字
+		DrawString(100, 200, "終了！！　自動で画面が変わります", GetColor(250, 130, 130));
 	}
 }
 
@@ -155,13 +164,6 @@ void GameScene::Draw3D()
 
 void GameScene::Release()
 {
-	if (grid_)
-	{
-		grid_->Release();
-		delete grid_;
-		grid_ = nullptr;
-	}
-
 	Stage::GetInstance().Release();
 
 	if (playerManager_)
@@ -169,5 +171,5 @@ void GameScene::Release()
 		playerManager_->ClearPlayers();
 		playerManager_ = nullptr;
 	}
-
 }
+

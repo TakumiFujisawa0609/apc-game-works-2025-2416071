@@ -51,6 +51,11 @@ public:
 		R_TRIGGER,
 		L_TRIGGER,
 		R_BUMPER,
+		// 十字キー
+		D_PAD_UP,
+		D_PAD_DOWN,
+		D_PAD_LEFT,
+		D_PAD_RIGHT,
 		MAX
 	};
 
@@ -129,6 +134,9 @@ public:
 	// アナログキーの入力値から方向を取得する
 	VECTOR GetDirXZAKey(int akeyX, int akeyY);
 
+	// 左スティックX軸の値
+
+
 private:
 
 	// キー情報
@@ -204,5 +212,7 @@ private:
 
 	// コントローラの入力情報を更新する
 	void SetJPadInState(JOYPAD_NO jpNo);
+
+
 
 };

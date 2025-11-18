@@ -1,6 +1,7 @@
 #pragma once
 #include "../Manager/InputManager.h"
 
+
 struct UINav
 {
     bool up = false;
@@ -64,5 +65,10 @@ public:
 private:
     static bool IsPadConnected(InputManager::JOYPAD_NO no);
     static bool PadBtn(InputManager::JOYPAD_NO no, InputManager::JOYPAD_BTN btn);
+    
+	// スティックの傾きを一定以上検出
+	static bool PadAKeyThreshold(InputManager::JOYPAD_NO no, float thresholdX, float thresholdY);
+
     static InputManager::JOYPAD_NO ToPadNo(int idx); // 0->PAD1 ...
+
 };

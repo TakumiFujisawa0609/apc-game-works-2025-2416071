@@ -41,14 +41,13 @@ void PlayerManager::Init()
 	// プレイヤー配列クリア
 	players_.clear();
 
-
 	// Playerの死亡順序カウンタとManager側の状態をリセット
 	Player::ResetDeathCounter();
 
-
-
 	isGameOver_ = false;
 	winnerID_ = -1;
+
+	Reset();
 }
 
 void PlayerManager::InitAllPlayers()
@@ -133,8 +132,14 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 
 void PlayerManager::ClearPlayers()
 {
-	// 全削除
+	// 各 Player::Release() を呼ぶ
+	for (auto& player : players_) {
+		player->Release();
+	}
+	// S全削除
 	players_.clear();
+	// e全削除
+	BulletManager::GetInstance().Release();
 }
 
 void PlayerManager::UpdatePlayers(Stage& stage)
@@ -252,6 +257,24 @@ void PlayerManager::CheckGameResult()
 	}
 }
 
+std::vector<int> PlayerManager::GetPlayerRanks() const
+{
+	// プレイヤーを死亡順序でソート
+	std::vector<Player*> sortedPlayers = GetPlayerRawPlayers();
+	std::sort(sortedPlayers.begin(), sortedPlayers.end(), [](const Player* a, const Player* b) {
+		// 死亡順序が0(未死亡)は後回し、それ以外は小さい順
+		if (a->GetDeathOrder() == 0) return false;
+		if (b->GetDeathOrder() == 0) return true;
+		return a->GetDeathOrder() < b->GetDeathOrder();
+		});
+	// ソートされた順にIDを取得
+	std::vector<int> ranks;
+	for (const auto& player : sortedPlayers) {
+		ranks.push_back(player->GetID());
+	}
+	return ranks;
+}
+
 // 生ポインタの配列を取得
 std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 {
@@ -260,14 +283,9 @@ std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 	return rawPlayers;
 }
 
-// プレイヤー同士の
-
-
-
-
+// プレイヤー同士の当たり判定
 void PlayerManager::CheckPlayerCollisions()
 {
-	// 生ポインタ配列取得
 	const auto& rawPlayers = GetPlayerRawPlayers();
 
 	for (size_t i = 0; i < rawPlayers.size(); i++)
@@ -277,42 +295,29 @@ void PlayerManager::CheckPlayerCollisions()
 			Player* p1 = rawPlayers[i];
 			Player* p2 = rawPlayers[j];
 
-			// 生存している場合にのみ当たり判定を実施
 			if (!p1->IsAlive() || !p2->IsAlive()) continue;
 
-			// 当たり判定
-			// 距離計算
 			VECTOR diff = VSub(p1->GetPos(), p2->GetPos());
 			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
 			float radSum = p1->GetCollisionRadius() + p2->GetCollisionRadius();
 
-			// 衝突しているかチェック
 			if (distSq < radSum * radSum)
 			{
-				// 衝突しているときはお互いを押し返す
 				float dist = sqrtf(distSq);
-
-				// 押し出し方向(0除算控除として　dist > 0.0f)
-				VECTOR pushDir = (dist > 0.0f) ? VScale(diff, 1.0f / dist) : VGet(1.0f, 0.0f, 0.0f);
-
-				// めり込み量
 				float overlap = radSum - dist;
 
-				// 重さを使って押し出す値方を計算する
-				float w1 = p1->GetWeight();
-				float w2 = p2->GetWeight();
-				float inMv1 = 1.0f / w1;
-				float inMv2 = 1.0f / w2;
-				float totalInvMass = inMv1 + inMv2;
+				// ノックバック方向
+				VECTOR knockBackDir = (dist > 0.0f) ? VScale(diff, 1.0f / dist) : VGet(1.0f, 0.0f, 0.0f);
 
-				// 押し出しベクトル計算
-				VECTOR pVec1 = VScale(pushDir, overlap * (inMv1 / totalInvMass));
-				VECTOR pVec2 = VScale(pushDir, overlap * (inMv2 / totalInvMass));
+				// ノックバック強さ（定数で調整可能）
+				constexpr float KNOCKBACK_FORCE = 10.0f;
 
-				// 位置更新
-				p1->SetPos(VAdd(p1->GetPos(), pVec1));
-				p2->SetPos(VSub(p2->GetPos(), pVec2));
+				VECTOR knockBack1 = VScale(knockBackDir, overlap * KNOCKBACK_FORCE);
+				VECTOR knockBack2 = VScale(knockBackDir, -overlap * KNOCKBACK_FORCE);
 
+				// プレイヤーにノックバックを適用
+				p1->ApplyHit(knockBack1);
+				p2->ApplyHit(knockBack2);
 			}
 		}
 	}
@@ -368,8 +373,8 @@ void PlayerManager::CheckBulletCollisions()
 				float len = VSize(dir);
 				VECTOR knockBackDir = (len > 0.0f) ? VScale(dir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
 
-				VECTOR knockBack = VScale(knockBackDir, KNOCKBACK_FORCE);
-				knockBack.y += KNOCKBACK_UPWARD_FORCE; // 上方向成分追加
+				VECTOR knockBack = VScale(knockBackDir, KNOCKBACK_FORCE + 120.0f);
+				knockBack.y += KNOCKBACK_UPWARD_FORCE + 10.0f; // 上方向成分追加
 
 				// プレイヤーにノックバックを適用
 				p->ApplyHit(knockBack);
@@ -386,14 +391,23 @@ void PlayerManager::CheckBulletCollisions()
 
 void PlayerManager::Reset()
 {
-	ClearPlayers();
-	Init();
+   ClearPlayers();
+   // 各プレイヤーの解放
+   for (auto& player : players_)
+   {
+	   player->Init();
+   }
 }
 
 void PlayerManager::Release()
 {
-	// インスタンス解放
-	if (instance_ != nullptr) {
+	if (instance_ != nullptr) 
+	{
+		// 先にプレイヤーたちの Release を呼ぶ
+		for (auto& player : players_)
+		{
+			player->Release();
+		}
 		delete instance_;
 		instance_ = nullptr;
 	}

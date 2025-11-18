@@ -29,6 +29,7 @@ public:
 		CHARASELECT,
 		GAME,
 		RANKING,
+		RESULT,
 	};
 
 	// インスタンスの生成

@@ -53,6 +53,9 @@ public:
 	// 勝敗判定を行う
 	void CheckGameResult();
 
+	// プレイヤーの順位を取得
+	std::vector<int> GetPlayerRanks() const;
+
 	// ゲームオーバー状態を取得
 	bool IsGameOver() const { return isGameOver_; }
 
@@ -87,5 +90,7 @@ private:
 
 	// 勝者ID (-1: 未決定, 0, 1...: プレイヤーID)
 	int winnerID_ = -1;
+
+	Player* player_;
 
 };

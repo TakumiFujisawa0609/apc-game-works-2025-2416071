@@ -47,7 +47,7 @@ public:
 	virtual void Draw();
 
 	// ‰ğ•ú‚Í”h¶ƒNƒ‰ƒX‚ÅÀ‘•
-	virtual void Release();
+	virtual void Release() = 0;
 
 	// IDæ“¾
 	int GetID() const { return id_; }

@@ -1,18 +1,13 @@
 #pragma once
 #include "SceneBase.h"
-class Grid;
-
-class TitleScene : public SceneBase
+class Result : public SceneBase
 {
-
 public:
-
 	// コンストラクタ
-	TitleScene(void);
+	Result(void);
 
 	// デストラクタ
-	~TitleScene(void) override;
-
+	~Result(void) override;
 	void Init(void) override;
 	void Update(void) override;
 	void Draw(void) override;
@@ -20,8 +15,8 @@ public:
 
 private:
 
-	// グリッド線
-	//Grid* grid_;
+	// ここにメンバ変数を追加していく
+	int playerWinID_;
+	int playerScores_[4];
 };
-
 

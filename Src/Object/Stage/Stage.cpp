@@ -74,8 +74,8 @@ void Stage::Draw()
 	MV1DrawModel(modelId_);
 
 	// デバッグ表示
-	DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
-	DrawSphere3D(collider_.center, collider_.radius, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), FALSE);
+	//DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
+	//DrawSphere3D(collider_.center, collider_.radius, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), FALSE);
 }
 
 // 解放
@@ -92,7 +92,7 @@ void Stage::Release()
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
 	// プレイヤーの機能実装まで傾けない
-	//return;
+	return;
 
 	// デバッグ用で特定のキーを押下したら傾けない
 	InputManager& ins = InputManager::GetInstance();
