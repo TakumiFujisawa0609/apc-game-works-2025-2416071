@@ -3,8 +3,6 @@
 #include <DxLib.h>
 #include <memory>
 
-
-
 class InputController;
 
 struct PlayerParam

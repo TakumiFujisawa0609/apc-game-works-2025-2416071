@@ -47,6 +47,7 @@ void PlayerNumScene::Update(void)
 		return;
 	}
 
+
 	// 戻る（タイトルへ）
 	if (pi.back)
 	{

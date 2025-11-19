@@ -62,6 +62,9 @@ void CharacterSelect::Init()
 		selectedIndex_[p] = p % static_cast<int>(characterNames_.size());
 	}
 
+	// もし、遊ぶ人数が1人だけなら1人プレイモードに設定
+
+
 	currentPlayer_ = 0;
 	finished_ = false;
 	duplicateBlock_ = false;
