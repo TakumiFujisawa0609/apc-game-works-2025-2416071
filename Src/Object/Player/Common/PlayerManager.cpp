@@ -115,13 +115,13 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_2:
-		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_2>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_3:
-		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
 		break;
 	case PlayerType::Player_4:
-		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
+		newPlayer = std::make_shared<Player_4>(id, param, std::move(controller));
 		break;
 	default:
 		break;
@@ -202,9 +202,8 @@ void PlayerManager::DrawPlayers()
 		}
 	}
 
-	// ’e‚ð•`‰æ
-	//AttackManager::GetInstance().Draw();
 
+	// ‘SƒvƒŒƒCƒ„[•`‰æ
 	for (auto& player : players_)
 	{
 		player->Draw();

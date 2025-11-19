@@ -42,6 +42,7 @@ void Player::Update()
 	if (pos_.y < -1000.0f)
 	{
 		Die();
+		pos_.y == -1000.0f; // 一応位置リセット
 	}
 
 	// ステージのインスタンスを取得
@@ -170,6 +171,8 @@ void Player::Update()
 		}
 	}
 
+	MV1CollResultPolyDimTerminate(result);
+
 	// 弾の更新処理
 	BulletManager::GetInstance().Update();
 
@@ -291,7 +294,16 @@ void Player::Draw()
 	DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
 
 	// 1Pには赤色、2Pには青色、3Pには緑色、4Pには黄色の球体を表示
-	DrawSphere3D(pos_, 50.0f, 16, GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), TRUE);
+	//DrawSphere3D(pos_, 50.0f, 16, GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), GetColor(255 * (id_ == 0), 255 * (id_ == 2), 255 * (id_ == 1)), TRUE);
+
+	// プレイヤーの重さを表示
+	char buffer[64];
+	sprintf_s(buffer, "P%d Weight: %.2f", id_ + 1, param_.weight);
+	DrawString(10, 30 + id_ * 20, buffer, GetColor(255, 255, 255));
+
+	// プレイヤーの速度を表示
+	sprintf_s(buffer, "P%d Speed: %.2f", id_ + 1, VSize(moveVec_));
+	DrawString(200, 30 + id_ * 20, buffer, GetColor(255, 255, 255));
 
 }
 

@@ -10,10 +10,10 @@ void Player_2::Init(void)
 	// 親クラスの初期化
 	Player::Init();
 	// モデルの読み込み
-	modelId_ = MV1LoadModel("Data/Model/Player/Capsule_15.mv1");
+	modelId_ = MV1LoadModel("Data/Model/Player/Body_AB_01.mv1");
 	pos_ = { 60.0f, 0.0f, 0.0f };
 	angle_ = { 0.0f, AsoUtility::Deg2RadF(0.0f), 1.0f }; // 初期向きはX+方向
-	param_.speed = 6.0f;
+	//param_.speed = 6.0f;
 	param_.jumpPower = 7.0f;
 }
 

@@ -13,13 +13,15 @@ void Player_1::Init()
 	Player::Init();
 
 	// モデルの読み込み
-	modelId_ = MV1LoadModel("Data/Model/Player/testModel.mv1");
+	modelId_ = MV1LoadModel("Data/Model/Player/Body_AA_01.mv1");
 
 	pos_ = { -60.0f, 0.0f, 0.0f };
 
 	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), AsoUtility::Deg2RadF(180.0f) }; // 初期向きはZ+方向
 
 	param_.jumpPower = 7.0f;
+
+	//param_.speed = 6.0f;
 
 }
 

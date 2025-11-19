@@ -125,28 +125,7 @@ void GameScene::Draw()
 	playerManager_->DrawPlayers();
 
 	// 操作説明
-	if (!playerManager_->GetIsGameOver())
-	{
-		/*DrawString(10, 90, " 操作説明", GetColor(255, 215, 0));
-		DrawString(10, 110, "  コントローラー操作時", GetColor(255, 215, 0));
-		DrawString(10, 130, "  移動 : 左スティック", GetColor(255, 215, 0));
-		DrawString(10, 150, "  攻撃 : Aボタン(下ボタン)", GetColor(255, 215, 0));
-		DrawString(10, 170, "  ジャンプ: 右トリガーボタン", GetColor(255, 215, 0));
-
-		DrawString(10, 210, "  キーボード操作時", GetColor(0, 215, 255));
-		DrawString(10, 230, "  1P移動 : W,A,S,Dキー (赤色のキャラクター)", GetColor(255, 0, 0));
-		DrawString(10, 250, "  1P攻撃 : Fキー(赤色のキャラクター)", GetColor(255, 0, 0));
-
-		DrawString(10, 270, "  2P移動 : 矢印キー(青色のキャラクター)", GetColor(0, 0, 255));
-		DrawString(10, 290, "  2P攻撃 : RSHIFTキー(青色のキャラクター)", GetColor(0, 0, 255));
-
-		DrawString(10, 330, "  3P移動 : I,J,K,Lキー(緑色のキャラクター)", GetColor(0, 255, 0));
-		DrawString(10, 350, "  3P攻撃 : Uキー(緑色のキャラクター)", GetColor(0, 255, 0));
-
-		DrawString(10, 390, "  4P移動 : テンキー8,4,5,6キー(黒色のキャラクター)", GetColor(0, 0, 0));
-		DrawString(10, 410, "  4P攻撃 : テンキー7キー(黒色のキャラクター)", GetColor(0, 0, 0));*/
-	}
-	else
+	if (playerManager_->GetIsGameOver())
 	{
 		int winnerID = playerManager_->GetWinnerID();
 		char buffer[128];
@@ -154,12 +133,23 @@ void GameScene::Draw()
 		// PAD1の右ボタンまたはEnterキーでタイトルへ戻る 操作促し文字
 		DrawString(100, 200, "終了！！　自動で画面が変わります", GetColor(250, 130, 130));
 	}
+
+	// デバッグ：プレイヤー人数表示
+	DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
+
+	// デバッグ：勝者表示
+	if (playerManager_->GetIsGameOver())
+	{
+		int winnerID = playerManager_->GetWinnerID();
+		DrawFormatString(10, 30, GetColor(255, 255, 0), "Winner: Player %d", winnerID + 1);
+	}
+
 }
 
 void GameScene::Draw3D()
 {
 	// 3D描画例（デバッグ）
-	DrawSphere3D({ 0.f, 100.f, 0.f }, 50.f, 32, GetColor(255, 0, 0), 0xFF00FF, FALSE);
+	//DrawSphere3D({ 0.f, 100.f, 0.f }, 50.f, 32, GetColor(255, 0, 0), 0xFF00FF, FALSE);
 }
 
 void GameScene::Release()

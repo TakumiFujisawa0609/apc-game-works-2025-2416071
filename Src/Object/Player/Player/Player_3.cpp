@@ -9,9 +9,9 @@ void Player_3::Init()
 	Player::Init();
 
 	// ƒ‚ƒfƒ‹‚Ì“Ç‚İ‚İ
-	modelId_ = MV1LoadModel("Data/Model/Player/testModel.mv1");
+	modelId_ = MV1LoadModel("Data/Model/Player/Body_AC_01.mv1");
 
-	param_.speed = 6.0f;
+	//param_.speed = 6.0f;
 	param_.jumpPower = 7.0f;
 }
 

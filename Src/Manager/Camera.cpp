@@ -124,7 +124,7 @@ void Camera::DrawDebug(void)
 {
 	//#ifdef DEBUG
 		// デバッグ用描画
-	DrawFormatString(0, 600, GetColor(255, 255, 255),
+	DrawFormatString(0, 600, GetColor(255, 0, 0),
 		"Camera Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);
 
 	// 角度はラジアン表示
