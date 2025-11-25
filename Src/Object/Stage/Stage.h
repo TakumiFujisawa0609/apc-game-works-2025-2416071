@@ -80,4 +80,12 @@ private:
 
 	float maxStageRange_ = 600.0f;
 
+
+	// スカイドームモデル
+	int skyModelId_ = -1;
+	// スカイドームの位置・スケール
+	VECTOR skyPos_;
+	VECTOR skyScale_;
+	VECTOR skyAngle_;
+
 };

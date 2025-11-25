@@ -53,4 +53,6 @@ private:
 	// 遷移タイマー
 	int transitionTimer_;
 
+
+
 };

@@ -20,8 +20,11 @@ public:
 
 private:
 
-	// グリッド線
-	//Grid* grid_;
+	// タイトル画像用変数
+	int titleImg_;
+
+	// Bボタン画像
+	int bButtonImg_;
 };
 
 

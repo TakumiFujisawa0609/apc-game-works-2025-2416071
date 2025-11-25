@@ -33,10 +33,18 @@ void Stage::Init()
 	// モデルの読み込み
 	modelId_ = MV1LoadModel("Data/Model/Stage/stage.mv1");
 
+	// スカイドームモデルの読み込み
+	skyModelId_ = MV1LoadModel("Data/Model/Stage/skydome.mv1");
+
 	// ステージの位置・角度・スケール初期化
 	pos_ = DEFAULT_POS;
 	angle_ = AsoUtility::VECTOR_ZERO;
 	scale_ = DEFAULT_SCALE;
+
+	// スカイドームモデルの初期化
+	skyPos_ = { 0.0f, 250.0f, 0.0f };
+	skyAngle_ = AsoUtility::VECTOR_ZERO;
+	skyScale_ = { 50.0f, 50.0f, 50.0f };
 
 	// コライダーの初期化	
 	collider_.center = pos_;						// コライダーの中心位置をステージの位置に設定
@@ -72,6 +80,13 @@ void Stage::Draw()
 	MV1SetRotationXYZ(modelId_, angle_);
 	MV1SetScale(modelId_, scale_);
 	MV1DrawModel(modelId_);
+
+	// スカイドームの描画
+	MV1SetPosition(skyModelId_, skyPos_);
+	MV1SetRotationXYZ(skyModelId_, skyAngle_);
+	MV1SetScale(skyModelId_, skyScale_);
+	MV1DrawModel(skyModelId_);
+
 
 	// デバッグ表示
 	//DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));

@@ -30,7 +30,19 @@ private:
 		SELECT_4P,
 		SELECT_MAX
 	};
+
+	SELECT currentSelect_;
+
 	// 選択中の番号
 	int selectNum_;
+
+	// 背景用画像
+	int bgImg_;
+
+	// 人数選択画像
+	int selectImg_[SELECT_MAX];
+
+	// 人数選択してね画像
+	int selectPromptImg_;
 };
 

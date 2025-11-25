@@ -21,7 +21,7 @@ void Player_1::Init()
 
 	param_.jumpPower = 7.0f;
 
-	//param_.speed = 6.0f;
+
 
 }
 
@@ -34,6 +34,12 @@ void Player_1::Update()
 	if (controller_->IsAttackTrigger())
 	{
 		Shot();
+	}
+
+	if (pos_.y == -1200.0f)
+	{
+		pos_.y = -1200.0f;
+		return;
 	}
 }
 

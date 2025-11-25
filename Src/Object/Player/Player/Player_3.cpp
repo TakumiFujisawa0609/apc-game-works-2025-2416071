@@ -20,6 +20,12 @@ void Player_3::Update()
 	// 親クラスの更新処理
 	Player::Update();
 
+	if (pos_.y == -1200.0f)
+	{
+		pos_.y = -1200.0f;
+		return;
+	}
+
 	// 入力で攻撃処理
 	if (controller_->IsAttackTrigger())
 	{

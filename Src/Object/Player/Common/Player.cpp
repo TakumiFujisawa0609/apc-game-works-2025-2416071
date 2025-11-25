@@ -264,8 +264,9 @@ void Player::Shot()
 	VECTOR shootDir = VGet(0.0f, 0.0f, -1.0f);
 	shootDir = VTransform(shootDir, rotMat); // 向きに合わせて変換
 
-	// 発射位置（プレイヤー位置 + 前方向オフセット）
-	VECTOR muzzlePos = VAdd(pos_, VScale(shootDir, 20.0f));
+	// 発射位置 プレイヤーの胴体から少し前方にオフセット
+	VECTOR muzzleOffset = VGet(0.0f, 1.0f, -1.0f); // 胴体の高さと前方オフセット
+	VECTOR muzzlePos = VAdd(pos_, VTransform(muzzleOffset, rotMat));
 
 	// 弾速
 	float bulletSpeed = 20.0f;

@@ -1,6 +1,7 @@
 #include "../Manager/InputManager.h"
 #include "../Manager/SceneManager.h"
 #include "../Object/UIInput.h"
+#include "../Application.h"
 #include "PlayerNumScene.h"
 
 PlayerNumScene::PlayerNumScene(void)
@@ -14,6 +15,18 @@ PlayerNumScene::~PlayerNumScene(void)
 void PlayerNumScene::Init(void)
 {
 	selectNum_ = SELECT::SELECT_1P;
+
+	// 背景画像読み込み
+	bgImg_ = LoadGraph("Data/Image/Background.png");
+
+	// 人数選択画像読み込み
+	selectImg_[SELECT::SELECT_1P] = LoadGraph("Data/Image/1.png");
+	selectImg_[SELECT::SELECT_2P] = LoadGraph("Data/Image/2.png");
+	selectImg_[SELECT::SELECT_3P] = LoadGraph("Data/Image/3.png");
+	selectImg_[SELECT::SELECT_4P] = LoadGraph("Data/Image/4.png");
+
+	// 人数選択してね画像読み込み
+	selectPromptImg_ = LoadGraph("Data/Image/PlayerNum.png");
 }
 
 void PlayerNumScene::Update(void)
@@ -58,6 +71,13 @@ void PlayerNumScene::Update(void)
 
 void PlayerNumScene::Draw(void)
 {
+
+	// 背景描画
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 0.75, 0.0, bgImg_, TRUE);
+
+	// 操作ガイド画像表示
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2 - 200, 0.25, 0.0, selectPromptImg_, TRUE);
+
 	// タイトル
 	(100, 40, GetColor(255, 255, 255), -1, "プレイヤー人数選択画面");
 
@@ -75,16 +95,33 @@ void PlayerNumScene::Draw(void)
 	// 選択肢表示
 	for (int i = 0; i < SELECT::SELECT_MAX; i++)
 	{
-		const bool isCur = (i == selectNum_);
-		unsigned int col = isCur ? GetColor(255, 255, 0) : GetColor(255, 255, 255);
-		if (isCur)
-		{
-			DrawFormatString2(100, 170 + i * 40, col, -1, "> %d Player", i + 1);
-		}
-		else
-		{
-			DrawFormatString2(100, 170 + i * 40, col, -1, "  %d Player", i + 1);
-		}
+		// ここに選択中の人数画像を表示する
+		int color = (i == selectNum_) ? GetColor(255, 255, 0) : GetColor(255, 255, 255);
+		DrawFormatString2(100, 160 + i * 30, color, -1, "%d 人", i + 1);
+	}
+
+	switch (selectNum_)
+	{
+	case PlayerNumScene::SELECT_1P:
+		// 人数選択画像表示
+		DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2 + 100, 2.0, 0.0, selectImg_[SELECT::SELECT_1P], TRUE);
+		break;
+	case PlayerNumScene::SELECT_2P:
+		// 人数選択画像表示
+		DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2 + 100, 2.0, 0.0, selectImg_[SELECT::SELECT_2P], TRUE);
+		break;
+	case PlayerNumScene::SELECT_3P:
+		// 人数選択画像表示
+		DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2 + 100, 2.0, 0.0, selectImg_[SELECT::SELECT_3P], TRUE);
+		break;
+	case PlayerNumScene::SELECT_4P:
+		// 人数選択画像表示
+		DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2 + 100, 2.0, 0.0, selectImg_[SELECT::SELECT_4P], TRUE);
+		break;
+	case PlayerNumScene::SELECT_MAX:
+		break;
+	default:
+		break;
 	}
 
 	// 操作ガイド

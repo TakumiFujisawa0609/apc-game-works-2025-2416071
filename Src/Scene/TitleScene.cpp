@@ -6,7 +6,9 @@
 #include "../Object/UIInput.h"
 #include "../Object/Player/Common/PlayerManager.h"
 #include "../Manager/Camera.h"
+#include "../Application.h"
 #include "TitleScene.h"
+
 
 TitleScene::TitleScene(void) : SceneBase()
 {
@@ -25,6 +27,13 @@ void TitleScene::Init(void)
 
 	// 再プレイ扱いになるので、PlayerManagerを初期化
 	PlayerManager::GetInstance().Init();
+
+	// タイトル画像(2D画像)の読み込み
+	titleImg_ = LoadGraph("Data/Image/Title.png");
+
+	// Bボタン画像の読み込み
+	bButtonImg_ = LoadGraph("Data/Image/Bpush.png");
+
 
 
 }
@@ -59,29 +68,20 @@ void TitleScene::Update(void)
 
 void TitleScene::Draw(void)
 {
-	// グリッド描画
-	//grid_->Draw();
 
-	// ガイド表示
-	int y = 50;
-	DrawFormatString(100, y, GetColor(255, 255, 255), "タイトル");
-	y += 40;
-	DrawFormatString(100, y, GetColor(200, 200, 200), "Enterキー(Bボタン) : 人数選択");
-	y += 20;
-	//DrawFormatString(100, y, GetColor(200, 200, 200), "Spaceキー(Aボタン) : 操作説明");
-	y += 20;
-	DrawFormatString2(100, y, GetColor(255, 255, 255), -1, "0 : デバッグモード");
+	// タイトル描画
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 0.75, 0.0, titleImg_, TRUE);
 
-	// 背景色の水色は絶対に見せてはならないので、背景画像は描画必須
+	// Bボタン描画
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2 + 25, 550, 0.15, 0.0, bButtonImg_, TRUE);
+
 
 }
 
 void TitleScene::Release(void)
 {
-	// グリッド解放
-	/*grid_->Release();
-	delete grid_;
-	}
-}*/
+	// 画像開放
+	DeleteGraph(titleImg_);
+	DeleteGraph(bButtonImg_);
 }
 
