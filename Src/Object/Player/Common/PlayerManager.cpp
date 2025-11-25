@@ -142,6 +142,7 @@ void PlayerManager::ClearPlayers()
 	BulletManager::GetInstance().Release();
 }
 
+
 void PlayerManager::UpdatePlayers(Stage& stage)
 {
 
@@ -158,6 +159,19 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 		player->Update();
 	}
 
+	std::vector<Player*> alive;
+	alive.reserve(players_.size());
+
+	for (auto& p : players_)
+	{
+		if (p->IsAlive())
+		{
+			alive.push_back(p.get());
+		}
+	}
+
+	//€–S‚ÍƒXƒe[ƒW‚ÌŒX‚«‰e‹¿‚ğó‚¯‚È‚¢‚æ‚¤‚É‚·‚é
+	stage.UpdateTilt(alive);
 
 	// ’e‚Æ‚Ì“–‚½‚è”»’è
 	CheckBulletCollisions();
@@ -281,6 +295,7 @@ std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 	for (auto& p : players_) rawPlayers.push_back(p.get());
 	return rawPlayers;
 }
+
 
 // ƒvƒŒƒCƒ„[“¯m‚Ì“–‚½‚è”»’è
 void PlayerManager::CheckPlayerCollisions()

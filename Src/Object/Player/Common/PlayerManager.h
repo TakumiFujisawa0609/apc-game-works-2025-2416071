@@ -47,6 +47,9 @@ public:
 	// 生データのプレイヤー配列を取得
 	std::vector<Player*> GetPlayerRawPlayers() const;
 
+	// 追加: 生存プレイヤー取得
+	//std::vector<Player*> GetAlivePlayerRawPlayers() const;
+
 	// 全削除
 	void ClearPlayers();
 
@@ -55,6 +58,8 @@ public:
 
 	// プレイヤーの順位を取得
 	std::vector<int> GetPlayerRanks() const;
+
+	
 
 	// ゲームオーバー状態を取得
 	bool IsGameOver() const { return isGameOver_; }
@@ -75,6 +80,8 @@ public:
 	void Reset();
 
 	void Release();
+
+
 
 
 private:

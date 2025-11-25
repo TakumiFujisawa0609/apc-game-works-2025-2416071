@@ -38,146 +38,126 @@ void Player::Init()
 
 void Player::Update()
 {
-	// 落下時死亡判定チェック
-	if (pos_.y < -1000.0f)
-	{
-		Die();
-		pos_.y == -1000.0f; // 一応位置リセット
-	}
-
-	// ステージのインスタンスを取得
+	// ステージインスタンス取得
 	Stage& stage = Stage::GetInstance();
 
-	// ステージ外にいるかどうか
-	VECTOR stageCenter = stage.GetPos();			// ステージの中心位置
-	float stageRadius = stage.GetCollider().radius; // ステージの半径
+	MATRIX rotX = MGetRotX(stage.GetAngle().x);
+	MATRIX rotZ = MGetRotZ(stage.GetAngle().z);
+	MATRIX stageRotMat = MMult(rotZ, rotX);
+	MATRIX invStageRotMat = MTranspose(stageRotMat); // ステージ回転の逆行列
 
-	// プレイヤーの座標からステージの中心までの距離を計算
-	float dx = pos_.x - stageCenter.x;
-	float dz = pos_.z - stageCenter.z;
-	float distXZ = sqrtf(dx * dx + dz * dz);
+	VECTOR stageCenter = stage.GetPos();
+	float stageRadius = stage.GetCollider().radius;
 
-	// ステージ外に出たら落下する
-	if (!isFalling_ && distXZ > stageRadius)
+	// 1. プレイヤー位置をステージローカルへ変換し半径内か判定
+	VECTOR rel = VSub(pos_, stageCenter);
+	VECTOR local = VTransform(rel, invStageRotMat); // 傾き補正後のローカル座標
+	float distLocalXZ = sqrtf(local.x * local.x + local.z * local.z);
+	bool insideLocalRadius = (distLocalXZ <= stageRadius);
+
+	// 2. 物理更新 or 落下挙動
+	if (!isFalling_)
 	{
-		isFalling_ = true;
-		// 水平速度をリセット
-		moveVec_.x = 0.0f;
-	}
+		// 通常移動
+		Move();
 
-	// 落下中の処理
-	if (isFalling_)
-	{
-		// 落下速度を加算
-		moveVec_.y -= GRAVITY_ACCEL; 
+		// 重力
+		moveVec_.y -= GRAVITY_ACCEL;
 
-		// 位置更新
-		pos_ = VAdd(pos_, moveVec_);
+		// 摩擦
+		moveVec_ = VScale(moveVec_, PLAYER_FRICTION);
 
-		// ステージ内に戻ったら落下状態解除
-		if (distXZ <= stageRadius)
+		// 最大速度制限
+		float len = VSize(moveVec_);
+		if (len > param_.maxSpeed)
 		{
-			// 落下状態解除
-			isFalling_ = false;
-			
-
-			// Y速度をリセット
-			moveVec_.y = 0.0f;
+			moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
 		}
-		return; 
-
 	}
-
-	// 移動処理
-	Move();
-
-	// 重力
-	moveVec_.y -= GRAVITY_ACCEL;		// 常に重力を加算する
-
-	// 摩擦処理
-	const float PLAYER_FRICTION = 0.85f;
-	moveVec_ = VScale(moveVec_, PLAYER_FRICTION);
-
-	// 最大速度制限
-	float len = VSize(moveVec_);
-	if (len > param_.maxSpeed)
+	else
 	{
-		moveVec_ = VScale(moveVec_, param_.maxSpeed / len);
+		// 落下中
+		moveVec_.y -= GRAVITY_ACCEL;
 	}
 
-	if (attackCooldown_ > 0.0f)
-	{
-		attackCooldown_ -= 1.0f; // フレームごとに減少
-		if (attackCooldown_ < 0.0f)
-			attackCooldown_ = 0.0f;
-	}
-
-	
-
-	// 位置更新
+	// 3. 位置更新（まず移動）
 	pos_ = VAdd(pos_, moveVec_);
 
-	// プレイヤーの球体コライダー情報
-	VECTOR center = pos_;
-	float radius = collisionRadius_;
-
-	// ステージとの衝突判定
-	MV1_COLL_RESULT_POLY_DIM result = MV1CollCheck_Sphere(stage.GetModelID(), -1, center, radius);
-
-	// 衝突しているポリゴンが1つ以上ある場合
-	if (result.HitNum > 0)
+	// 4. 衝突解決（複数回試行でめり込み軽減）
+	const int MAX_SOLVE = 3;
+	bool grounded = false;
+	for (int iter = 0; iter < MAX_SOLVE; ++iter)
 	{
+		MV1_COLL_RESULT_POLY_DIM result =
+			MV1CollCheck_Sphere(stage.GetModelID(), -1, pos_, collisionRadius_);
+
+		if (result.HitNum == 0) break;
+
+		bool anyAdjust = false;
 		for (int i = 0; i < result.HitNum; ++i)
 		{
-			const MV1_COLL_RESULT_POLY& poly = result.Dim[i];
+			const auto& poly = result.Dim[i];
+			// 中心からポリゴン接触点へのベクトル
+			VECTOR toCenter = VSub(pos_, poly.HitPosition);
+			float penetration = VDot(toCenter, poly.Normal);
+			float depth = collisionRadius_ - penetration;
 
-			// 衝突点から法線方向にプレイヤーの中心までのベクトル
-			VECTOR vToCenter = VSub(center, poly.HitPosition);
-
-			// 法線との内積からめり込み深さを求める
-			float currentDist = VDot(vToCenter, poly.Normal);
-			float depth = radius - currentDist;
-
-			// めり込み深さが正（めり込んでいる）の場合
 			if (depth > 0.0f)
 			{
-				// 法線方向にめり込み分だけ押し戻すベクトルを計算
+				// 押し戻し
 				VECTOR push = VScale(poly.Normal, depth);
-
-				// プレイヤーの位置を補正
 				pos_ = VAdd(pos_, push);
+				anyAdjust = true;
 
-				// 押し戻しによって中心位置が変わったので、次のループのためにcenterを更新
-				center = pos_;
-
-				// 地面とみなせる（法線のY成分が上向き）衝突の場合、Y速度をリセット
-				if (poly.Normal.y > PUSHBACK_THRESHOLD_Y) // 地面判定のしきい値
+				// 接地判定
+				if (poly.Normal.y > PUSHBACK_THRESHOLD_Y)
 				{
-					moveVec_.y = 0.0f;
+					grounded = true;
+					// 垂直速度リセット
+					if (moveVec_.y < 0.0f) moveVec_.y = 0.0f;
 				}
-				// 壁（法線が横向き）の場合、速度を反射させる
-				else if (poly.Normal.y < 0.1f) // ほぼ横向きと判断
+				else if (poly.Normal.y < 0.1f)
 				{
-					// 移動ベクトルから法線方向の成分を引いて、跳ね返りのような動きにする
+					// 斜面滑り補正：法線方向への食い込み速度を除去
 					float speedOnNormal = VDot(moveVec_, poly.Normal);
-
-					if (speedOnNormal < 0) { // 壁に向かっている場合のみ
-						// 弾性衝突ではなく、壁に沿った動きをシミュレート
-						VECTOR projection = VScale(poly.Normal, speedOnNormal);
-						moveVec_ = VSub(moveVec_, projection);
+					if (speedOnNormal < 0.0f)
+					{
+						VECTOR proj = VScale(poly.Normal, speedOnNormal);
+						moveVec_ = VSub(moveVec_, proj);
 					}
 				}
 			}
 		}
+
+		if (!anyAdjust) break;
 	}
 
-	MV1CollResultPolyDimTerminate(result);
+	// 5. 半径外 + 接地していない → 落下開始
+	if (!grounded && !insideLocalRadius)
+	{
+		isFalling_ = true;
+	}
+	else if (grounded)
+	{
+		isFalling_ = false;
+	}
 
-	// 弾の更新処理
+	// 6. 死亡判定（一定以下）
+	if (pos_.y < -1000.0f)
+	{
+		Die();
+	}
+
+	// 7. 弾更新
 	BulletManager::GetInstance().Update();
 
-	// 8.モデルに反映
-	MV1SetPosition(modelId_, pos_);
+	// 8. モデル適用
+	if (modelId_ != -1)
+	{
+		MV1SetPosition(modelId_, pos_);
+		float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z);
+		MV1SetRotationXYZ(modelId_, VGet(0.0f, rotY, 0.0f));
+	}
 }
 
 void Player::Move()
