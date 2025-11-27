@@ -53,6 +53,9 @@ public:
 	// playerがステージ内にいるかどうか確認
 	bool IsPlayerOnStage(const VECTOR& playerPos) const;
 
+	// ステージの傾きを渡す関数
+	VECTOR GetStageNormal() const;
+
 private:
 
 	// コンストラクタ

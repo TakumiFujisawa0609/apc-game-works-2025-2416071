@@ -43,4 +43,6 @@ private:
 	//int modelId_;		// 弾のモデルID
 	bool isAlive_;		// 弾の生存状態
 	int ownerId_;		// 発射者のプレイヤーID（-1=なし）
+	VECTOR prevPos_;	// 前フレームの位置
+	bool collidedWithStage_ = false;
 };

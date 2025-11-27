@@ -62,6 +62,9 @@ public:
 	// ¶‘¶ó‘Ôæ“¾
 	bool IsAlive() const { return isAlive_; }
 
+	// —‰ºó‘Ôæ“¾
+	bool IsFalling() const { return isFalling_; }
+
 	// €–S‡˜æ“¾
 	int GetDeathOrder() const { return deathOrder_; }
 

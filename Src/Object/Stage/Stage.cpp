@@ -122,12 +122,6 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	// プレイヤーの情報がなければ傾けない
 	if (players.empty()) return;
 
-	// プレイヤーの重さを
-	// プレイヤーの平均位置を計算
-	float totalWeight = 0.0f;
-	float weightedX = 0.0f;
-	float weightedZ = 0.0f;
-
 	// あらぶり対策
 	bool anyPlayerOnStage = false;
 	VECTOR totalPlayerPos = AsoUtility::VECTOR_ZERO;
@@ -154,14 +148,23 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 		return; // ★ 物理計算をスキップして終了
 	}
 
+	// プレイヤーの平均位置を計算
+	float totalWeight = 0.0f;
+	float weightedX = 0.0f;
+	float weightedZ = 0.0f;
+
 	for (auto p : players)
 	{
-		float w = p->GetWeight();
-		VECTOR pos = p->GetPos();
-		weightedX += (pos.x - this->pos_.x) * w;
-		weightedZ += (pos.z - this->pos_.z) * w;
-		totalWeight += w;
+		// 生存中かつ、落下状態ではないプレイヤーのみを加算する
+		if(!(p -> IsAlive() && !p ->IsFalling() && IsPlayerOnStage(p->GetPos())))
+			// 処理をスキップ
+			continue;
 
+		float weight = p->GetWeight();
+		VECTOR pos = p->GetPos();
+		weightedX += (pos.x - this->pos_.x) * weight;
+		weightedZ += (pos.z - this->pos_.z) * weight;
+		totalWeight += weight;
 	}
 
 	// 重さが0以下ならreturn
@@ -221,6 +224,8 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 
 	// Y軸の角度は変えない
 	angle_.y = 0.0f;
+
+
 }
 
 bool Stage::IsPlayerOnStage(const VECTOR& playerPos) const
@@ -234,4 +239,15 @@ bool Stage::IsPlayerOnStage(const VECTOR& playerPos) const
 
 	// 距離の二乗が範囲の二乗以内ならステージ内
 	return dist <= (collider_.radius * collider_.radius);
+}
+
+VECTOR Stage::GetStageNormal() const
+{
+	// ステージの傾きを基に法線ベクトルを計算
+	VECTOR up = { 0.0f, 1.0f, 0.0f };
+	VECTOR v = VTransform(up, MGetRotX(angle_.x));
+	v = VTransform(v, MGetRotZ(angle_.z));
+	v = VTransform(v, MGetRotY(angle_.y));
+	return v;
+
 }

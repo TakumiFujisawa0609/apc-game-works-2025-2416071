@@ -64,4 +64,7 @@ private:
 	// デストラクタも同様
 	~Application(void) = default;
 
+	// ポーズ画面
+	bool isPaused_ = false;
+
 };
