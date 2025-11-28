@@ -19,8 +19,8 @@ class PlayerManager
 public:
 
 	// 定数
-	static constexpr float KNOCKBACK_FORCE = 20.0f; // プレイヤー同士が衝突したときのノックバック力
-	static constexpr float KNOCKBACK_UPWARD_FORCE = 5.0f; // ノックバックの上方向成分
+	static constexpr float KNOCKBACK_FORCE = 1000000.0f; // プレイヤー同士が衝突したときのノックバック力
+	static constexpr float KNOCKBACK_UPWARD_FORCE = 500.0f; // ノックバックの上方向成分
 
 
 	// インスタンス生成

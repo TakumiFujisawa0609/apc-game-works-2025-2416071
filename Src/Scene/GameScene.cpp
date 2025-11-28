@@ -18,6 +18,7 @@ GameScene::GameScene()
 
 GameScene::~GameScene()
 {
+
 }
 
 void GameScene::Init()

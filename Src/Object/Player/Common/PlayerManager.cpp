@@ -409,16 +409,17 @@ void PlayerManager::CheckBulletCollisions()
 			// 衝突しているかチェック
 			if (distSq < radSum * radSum)
 			{
-				
+
 				// 衝突しているときの処理
 				// ノックバックベクトル計算
 				VECTOR playerPos = p->GetPos();
 				VECTOR dir = VSub(playerPos, bPos);
 				dir.y = 0.0f; // 水平方向のみ
 				float len = VSize(dir);
-				VECTOR knockBackDir = (len > 0.0f) ? VScale(dir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
-
-				VECTOR knockBack = VScale(knockBackDir, KNOCKBACK_FORCE + 120.0f);
+				VECTOR knockBackDir{};
+				knockBackDir = (len > 0.0f) ? VScale(dir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
+				VECTOR knockBack{};
+				knockBack = VScale(knockBackDir, -KNOCKBACK_FORCE - 120000.0f);
 				knockBack.y += KNOCKBACK_UPWARD_FORCE + 10.0f; // 上方向成分追加
 
 				// プレイヤーにノックバックを適用
