@@ -3,6 +3,7 @@
 #include <memory>
 #include "Player.h"
 #include "../../Stage/Stage.h"
+#include "../Control/InputController.h"
 
 // Playerの識別
 enum class PlayerType
@@ -36,7 +37,10 @@ public:
 
 
 	// プレイヤー生成
+	// 既存の「内部で Controller を生成する」CreatePlayer
 	void CreatePlayer(PlayerType type, int id, const PlayerParam& param);
+	// AI 用の InputController を渡せるようにする。
+	void CreatePlayer(PlayerType type, int id, const PlayerParam& param, std::unique_ptr<InputController> controller);
 
 	// 全プレイヤー更新
 	void UpdatePlayers(Stage& stage);
@@ -46,9 +50,6 @@ public:
 
 	// 生データのプレイヤー配列を取得
 	std::vector<Player*> GetPlayerRawPlayers() const;
-
-	// 追加: 生存プレイヤー取得
-	//std::vector<Player*> GetAlivePlayerRawPlayers() const;
 
 	// 全削除
 	void ClearPlayers();
@@ -79,15 +80,14 @@ public:
 	// リセット
 	void Reset();
 
+	// 解放
 	void Release();
-
-
-
 
 private:
 
 	PlayerManager();
 	~PlayerManager();
+
 	// インスタンス
 	static PlayerManager* instance_;
 	std::vector<std::shared_ptr<Player>> players_;

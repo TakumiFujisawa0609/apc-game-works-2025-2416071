@@ -62,6 +62,37 @@ void PlayerManager::InitAllPlayers()
 	//AttackManager::GetInstance().Init();
 }
 
+void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& param, std::unique_ptr<InputController> controller)
+{
+	// ID 重複チェック
+	for (auto& player : players_) {
+		if (player->GetID() == id) return;
+	}
+
+	if (!controller) return;
+
+	std::shared_ptr<Player> newPlayer = nullptr;
+
+	switch (type)
+	{
+	case PlayerType::Player_1:
+		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
+		break;
+	case PlayerType::Player_2:
+		newPlayer = std::make_shared<Player_2>(id, param, std::move(controller));
+		break;
+	case PlayerType::Player_3:
+		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
+		break;
+	case PlayerType::Player_4:
+		newPlayer = std::make_shared<Player_4>(id, param, std::move(controller));
+		break;
+	default:
+		break;
+	}
+
+	if (newPlayer) players_.push_back(newPlayer);
+}
 void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& param)
 {
 	// 同じIDのプレイヤーが既に存在する場合は生成しない

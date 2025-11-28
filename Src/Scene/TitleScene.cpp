@@ -83,5 +83,6 @@ void TitleScene::Release(void)
 	// ‰æ‘œŠJ•ú
 	DeleteGraph(titleImg_);
 	DeleteGraph(bButtonImg_);
+
 }
 

@@ -101,6 +101,12 @@ void Stage::Release()
 		MV1DeleteModel(modelId_);
 		modelId_ = -1;
 	}
+
+	if (skyModelId_ != -1)
+	{
+		MV1DeleteModel(skyModelId_);
+		skyModelId_ = -1;
+	}
 }
 
 // プレイヤーの位置に応じてステージを傾ける

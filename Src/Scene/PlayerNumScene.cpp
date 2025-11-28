@@ -131,5 +131,23 @@ void PlayerNumScene::Draw(void)
 
 void PlayerNumScene::Release(void)
 {
-
+	// ‰æ‘œ‰ð•ú
+	if (bgImg_ != -1)
+	{
+		DeleteGraph(bgImg_);
+		bgImg_ = -1;
+	}
+	for (int i = 0; i < SELECT::SELECT_MAX; i++)
+	{
+		if (selectImg_[i] != -1)
+		{
+			DeleteGraph(selectImg_[i]);
+			selectImg_[i] = -1;
+		}
+	}
+	if (selectPromptImg_ != -1)
+	{
+		DeleteGraph(selectPromptImg_);
+		selectPromptImg_ = -1;
+	}
 }
