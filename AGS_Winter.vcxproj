@@ -169,6 +169,7 @@
     <ClCompile Include="Src\Common\Vector2.cpp" />
     <ClCompile Include="Src\Object\Stage\StageManager.cpp" />
     <ClCompile Include="Src\Object\Stage\Stage.cpp" />
+    <ClCompile Include="Src\Object\Stage\Tile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Src\Object\Player\Control\AIController.h" />
@@ -203,6 +204,7 @@
     <ClInclude Include="Src\Common\Vector2.h" />
     <ClInclude Include="Src\Object\Stage\StageManager.h" />
     <ClInclude Include="Src\Object\Stage\Stage.h" />
+    <ClInclude Include="Src\Object\Stage\Tile.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Data\Image\Background.png" />

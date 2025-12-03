@@ -36,6 +36,23 @@ void Stage::Init()
 	// スカイドームモデルの読み込み
 	skyModelId_ = MV1LoadModel("Data/Model/Stage/skydome.mv1");
 
+	// タイルモデルをロード
+	tileModelId_ = MV1LoadModel("Data/Model/Stage/Tiles.mv1");
+
+	// タイル初期化
+	float half = (TILE_COUNT - 1) * 0.5f;
+	for (int z = 0; z < TILE_COUNT; ++z)
+	{
+		for (int x = 0; x < TILE_COUNT; ++x)
+		{
+			VECTOR pos = TileIdxToWorld(x, z);
+			bool isCorner = (x == 0 && z == 0) || (x == 0 && z == TILE_COUNT - 1) ||
+				(x == TILE_COUNT - 1 && z == 0) || (x == TILE_COUNT - 1 && z == TILE_COUNT - 1);
+			if (isCorner) tiles_[x][z].Init(TileType::Safe, 9999, pos);
+			else tiles_[x][z].Init(TileType::Breakable, 3, pos);
+		}
+	}
+
 	// ステージの位置・角度・スケール初期化
 	pos_ = DEFAULT_POS;
 	angle_ = AsoUtility::VECTOR_ZERO;
@@ -56,6 +73,8 @@ void Stage::Init()
 	angularVelocity_ = AsoUtility::VECTOR_ZERO;
 	momentOfInertia_ = MOMENT_OF_INERTIA;			// 慣性モーメントの仮の値s
 	dampingFactor_ = DAMPING_FACTOR;				// 減衰係数の仮の値
+
+
 }
 
 // 更新
@@ -80,6 +99,23 @@ void Stage::Draw()
 	MV1SetRotationXYZ(modelId_, angle_);
 	MV1SetScale(modelId_, scale_);
 	MV1DrawModel(modelId_);
+
+	// タイル描画（タイルモデルは tileModelId_）
+	for (int z = 0; z < TILE_COUNT; ++z)
+	{
+		for (int x = 0; x < TILE_COUNT; ++x)
+		{
+			const Tile& t = tiles_[x][z];
+			if (!t.IsHole())
+			{
+				t.Render(tileModelId_);
+			}
+			else
+			{
+				// （必要なら穴表現）
+			}
+		}
+	}
 
 	// スカイドームの描画
 	MV1SetPosition(skyModelId_, skyPos_);
@@ -106,6 +142,12 @@ void Stage::Release()
 	{
 		MV1DeleteModel(skyModelId_);
 		skyModelId_ = -1;
+	}
+
+	if (tileModelId_ != -1)
+	{
+		MV1DeleteModel(tileModelId_);
+		tileModelId_ = -1;
 	}
 }
 
@@ -140,19 +182,19 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 			totalPlayerPos = VAdd(totalPlayerPos, p->GetPos());
 		}
 	}
-	if (!anyPlayerOnStage)
-	{
-		// プレイヤーが誰もステージ上にいない場合
+	//if (!anyPlayerOnStage)
+	//{
+	//	// プレイヤーが誰もステージ上にいない場合
 
-		// 徐々に中央に戻すことで、荒ぶりを止めつつ自然な停止を表現
-		angle_.x = AsoUtility::Lerp(angle_.x, 0.0f, 0.05f); // 0.05fは戻る速さ
-		angle_.z = AsoUtility::Lerp(angle_.z, 0.0f, 0.05f);
+	//	// 徐々に中央に戻すことで、荒ぶりを止めつつ自然な停止を表現
+	//	angle_.x = AsoUtility::Lerp(angle_.x, 0.0f, 0.05f); // 0.05fは戻る速さ
+	//	angle_.z = AsoUtility::Lerp(angle_.z, 0.0f, 0.05f);
 
-		// Y軸の角度は変えない
-		angle_.y = 0.0f;
+	//	// Y軸の角度は変えない
+	//	angle_.y = 0.0f;
 
-		return; // ★ 物理計算をスキップして終了
-	}
+	//	return; // ★ 物理計算をスキップして終了
+	//}
 
 	// プレイヤーの平均位置を計算
 	float totalWeight = 0.0f;
@@ -256,4 +298,22 @@ VECTOR Stage::GetStageNormal() const
 	v = VTransform(v, MGetRotY(angle_.y));
 	return v;
 
+}
+
+void Stage::DamageTileAtWorldPos(const VECTOR& worldPos, int damageAmount)
+{
+}
+
+void Stage::PlayerStepAt(const VECTOR& worldPos)
+{
+}
+
+bool Stage::WorldToTileIndex(const VECTOR& worldPos, int& outTileX, int& outTileZ) const
+{
+	return false;
+}
+
+VECTOR Stage::TileIdxToWorld(int x, int z) const
+{
+	return VECTOR();
 }

@@ -2,6 +2,7 @@
 #include <DxLib.h>
 #include <vector>
 #include <algorithm>
+#include "Tile.h"
 
 class Player;
 
@@ -24,7 +25,12 @@ public:
 	static constexpr float COLLIDER_RADIUS = 1000.0f;						// コライダーの半径
 	static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;					// コライダーのY最大値オフセット
 	static constexpr float MOMENT_OF_INERTIA = 10000.0f;						// プレイヤーに対してステージの反発力(値が大きいほど傾きにくい)
-	static constexpr float DAMPING_FACTOR = 0.05f;							// プレイヤーの方向に傾く速さ
+	static constexpr float DAMPING_FACTOR = 0.05f;	
+	
+	// タイル
+	static constexpr int TILE_COUNT = 14;
+	static constexpr float TILE_SIZE = 2.0f;
+
 
 	// インスタンス
 	static void CreateInstance();
@@ -55,6 +61,13 @@ public:
 
 	// ステージの傾きを渡す関数
 	VECTOR GetStageNormal() const;
+
+	void DamageTileAtWorldPos(const VECTOR& worldPos, int damageAmount);
+	void PlayerStepAt(const VECTOR& worldPos);
+
+	// 補助関数
+	bool WorldToTileIndex(const VECTOR& worldPos, int& outTileX, int& outTileZ) const;
+	VECTOR TileIdxToWorld(int x, int z) const;
 
 private:
 
@@ -90,5 +103,9 @@ private:
 	VECTOR skyPos_;
 	VECTOR skyScale_;
 	VECTOR skyAngle_;
+
+	Tile tiles_[TILE_COUNT][TILE_COUNT];
+	int tileModelId_ = -1;
+
 
 };
