@@ -25,40 +25,40 @@ Player::~Player()
 
 void Player::Init()
 {
-	// 変数の初期化 (リセット可能な状態をInitで設定)
-	
-	pos_ = { 0.0f, 0.0f, 0.0f }; 
+	pos_ = { 0.0f, 0.0f, 0.0f };
 	moveVec_ = { 0.0f,0.0f,0.0f };
 	param_.speed = 15.0f;
-	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f };	// 初期向きはZ+方向
-	modelId_ = -1;											// Initでロードしない場合は-1で初期化
-
-	inputVecNor_ = { 0.0f, 0.0f, 1.0f };					// 初期入力方向はZ+方向
+	angle_ = { 0.0f, AsoUtility::Deg2RadF(180.0f), 1.0f };
+	modelId_ = -1;
+	inputVecNor_ = { 0.0f, 0.0f, 1.0f };
+	isAlive_ = true;
+	isFalling_ = false;
+	isGround_ = false;
 }
 
 void Player::Update()
 {
-	// ステージインスタンス取得
 	Stage& stage = Stage::GetInstance();
 
+	// --- 傾き計算用行列 ---
 	MATRIX rotX = MGetRotX(stage.GetAngle().x);
 	MATRIX rotZ = MGetRotZ(stage.GetAngle().z);
 	MATRIX stageRotMat = MMult(rotZ, rotX);
-	MATRIX invStageRotMat = MTranspose(stageRotMat); // ステージ回転の逆行列
+	MATRIX invStageRotMat = MTranspose(stageRotMat); // 逆行列
 
 	VECTOR stageCenter = stage.GetPos();
 	float stageRadius = stage.GetCollider().radius;
 
-	// 1. プレイヤー位置をステージローカルへ変換し半径内か判定
+	// 1. プレイヤー座標をステージローカル座標に変換
 	VECTOR rel = VSub(pos_, stageCenter);
-	VECTOR local = VTransform(rel, invStageRotMat); // 傾き補正後のローカル座標
+	VECTOR local = VTransform(rel, invStageRotMat);
 	float distLocalXZ = sqrtf(local.x * local.x + local.z * local.z);
 	bool insideLocalRadius = (distLocalXZ <= stageRadius);
 
-	// 2. 物理更新 or 落下挙動
+	// 2. 移動・物理処理
 	if (!isFalling_)
 	{
-		// 通常移動
+		// 移動入力処理
 		Move();
 
 		// 重力
@@ -76,82 +76,54 @@ void Player::Update()
 	}
 	else
 	{
-		// 落下中
+		// 落下時は重力だけ
 		moveVec_.y -= GRAVITY_ACCEL;
 	}
 
-	// 3. 位置更新（まず移動）
-	pos_ = VAdd(pos_, moveVec_);
-
-	// 4. 衝突解決（複数回試行でめり込み軽減）
-	const int MAX_SOLVE = 3;
-	bool grounded = false;
-	for (int iter = 0; iter < MAX_SOLVE; ++iter)
-	{
-		MV1_COLL_RESULT_POLY_DIM result =
-			MV1CollCheck_Sphere(stage.GetModelID(), -1, pos_, collisionRadius_);
-
-		if (result.HitNum == 0) break;
-
-		bool anyAdjust = false;
-		for (int i = 0; i < result.HitNum; ++i)
-		{
-			const auto& poly = result.Dim[i];
-			// 中心からポリゴン接触点へのベクトル
-			VECTOR toCenter = VSub(pos_, poly.HitPosition);
-			float penetration = VDot(toCenter, poly.Normal);
-			float depth = collisionRadius_ - penetration;
-
-			if (depth > 0.0f)
-			{
-				// 押し戻し
-				VECTOR push = VScale(poly.Normal, depth);
-				pos_ = VAdd(pos_, push);
-				anyAdjust = true;
-
-				// 接地判定
-				if (poly.Normal.y > PUSHBACK_THRESHOLD_Y)
-				{
-					grounded = true;
-					// 垂直速度リセット
-					if (moveVec_.y < 0.0f) moveVec_.y = 0.0f;
-				}
-				else if (poly.Normal.y < 0.1f)
-				{
-					// 斜面滑り補正：法線方向への食い込み速度を除去
-					float speedOnNormal = VDot(moveVec_, poly.Normal);
-					if (speedOnNormal < 0.0f)
-					{
-						VECTOR proj = VScale(poly.Normal, speedOnNormal);
-						moveVec_ = VSub(moveVec_, proj);
-					}
-				}
+	// 3. 足元タイル判定
+	int tx, tz;
+	isGround_ = false;
+	if (stage.WorldToTileIndex(pos_, tx, tz)) {
+		if (tx >= 0 && tx < Stage::TILE_COUNT && tz >= 0 && tz < Stage::TILE_COUNT) {
+			Tile& tile = stage.GetTile(tx, tz);
+			if (!tile.IsHole()) {
+				// タイルの上に立つ
+				isGround_ = true;
+				// 必要があればY座標をリセット
+				if (pos_.y < 0.0f) pos_.y = 0.0f;
+				// 下方向移動成分リセット
+				if (moveVec_.y < 0.0f) moveVec_.y = 0.0f;
+			}
+			else {
+				// 穴なので落下
+				isGround_ = false;
 			}
 		}
-
-		if (!anyAdjust) break;
+	}
+	else {
+		// 範囲外（ステージ外など）は落下
+		isGround_ = false;
 	}
 
-	// 5. 半径外 + 接地していない → 落下開始
-	if (!grounded && !insideLocalRadius)
+	if (!isGround_)
 	{
-		isFalling_ = true;
-	}
-	else if (grounded)
-	{
-		isFalling_ = false;
+		// 落下処理
+		moveVec_.y -= GRAVITY_ACCEL;
 	}
 
-	// 6. 死亡判定（一定以下）
+	// 4. 位置更新
+	pos_ = VAdd(pos_, moveVec_);
+
+	// 5. 死亡判定（下抜け）
 	if (pos_.y < -1000.0f)
 	{
 		Die();
 	}
 
-	// 7. 弾更新
+	// 6. 弾更新
 	BulletManager::GetInstance().Update();
 
-	// 8. モデル適用
+	// 7. モデル描画ポジション
 	if (modelId_ != -1)
 	{
 		MV1SetPosition(modelId_, pos_);

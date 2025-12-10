@@ -42,6 +42,11 @@ public:
 	// 基本処理
 	virtual void Init();
 	virtual void Update();
+
+	// タイルに立っているかどうか
+	bool IsGround() const { return isGround_; }
+
+
 	virtual void Draw();
 
 	// 解放は派生クラスで実装
@@ -96,6 +101,7 @@ protected:
 	float attackCooldown_ = 0.0f;	// 攻撃クールダウンタイム
 	bool isAlive_ = true;			// 生存フラグ
 	bool isFalling_ = false;		// 落下中フラグ
+	bool isGround_ = false;			// 接地フラグ
 
 	std::unique_ptr<InputController> controller_;		// 入力コントローラ
 

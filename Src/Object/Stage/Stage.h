@@ -3,109 +3,105 @@
 #include <vector>
 #include <algorithm>
 #include "Tile.h"
-
-class Player;
+class Player; // 前方宣言
 
 // シリンダー型コライダー
 struct CylinderCollider
 {
-	VECTOR center;	// 中心位置
-	float radius;	// 半径
-	float yMin;		// Yの最小値
-	float yMax;		// Yの最大値
+    VECTOR center;    // 中心位置
+    float radius;     // 半径
+    float yMin;       // Yの最小値
+    float yMax;       // Yの最大値
 };
 
 class Stage
 {
 public:
+    // 定数
+    static constexpr VECTOR DEFAULT_POS = { 0.0f, 0.0f, 0.0f }; // ステージの初期位置
+    static constexpr VECTOR DEFAULT_SCALE = { 3.0f, 3.0f, 3.0f };
+    static constexpr float COLLIDER_RADIUS = 1000.0f;
+    static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;
+    static constexpr float MOMENT_OF_INERTIA = 10000.0f;
+    static constexpr float DAMPING_FACTOR = 0.05f;
 
-	// 定数
-	static constexpr VECTOR DEFAULT_POS = { 0.0f, -2250.0f, 0.0f };			// ステージの初期位置
-	static constexpr VECTOR DEFAULT_SCALE = { 3.0f, 3.0f, 3.0f };			// ステージの初期スケール
-	static constexpr float COLLIDER_RADIUS = 1000.0f;						// コライダーの半径
-	static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;					// コライダーのY最大値オフセット
-	static constexpr float MOMENT_OF_INERTIA = 10000.0f;						// プレイヤーに対してステージの反発力(値が大きいほど傾きにくい)
-	static constexpr float DAMPING_FACTOR = 0.05f;	
-	
-	// タイル
-	static constexpr int TILE_COUNT = 14;
-	static constexpr float TILE_SIZE = 2.0f;
+    // タイル
+    static constexpr int TILE_COUNT = 7;
+    static constexpr float TILE_SIZE = 200.0f;
 
+    // インスタンス
+    static void CreateInstance();
+    static Stage& GetInstance();
 
-	// インスタンス
-	static void CreateInstance();
-	static Stage& GetInstance();
+    // 基本処理
+    void Init();
+    void Update(const std::vector<Player*>& players);
+    void Draw();
+    void Release();
 
-	// 基本処理
-	void Init();
-	void Update();
-	void Draw();
-	void Release();
+    // モデルID取得
+    int GetModelID() const { return tileModelId_; }
 
-	// モデルUD
-	int GetModelID() const { return modelId_; }
+    // ステージの位置・角度・スケール取得
+    const VECTOR& GetPos() const { return pos_; }
+    const VECTOR& GetAngle() const { return angle_; }
+    const VECTOR& GetScale() const { return scale_; }
 
-	// ステージの位置・角度・スケール取得
-	const VECTOR& GetPos() const { return pos_; }
-	const VECTOR& GetAngle() const { return angle_; }
-	const VECTOR& GetScale() const { return scale_; }
+    // コライダー取得
+    const CylinderCollider& GetCollider() const { return collider_; }
 
-	// ステージの傾き更新
-	const CylinderCollider& GetCollider() const {return collider_;}
+    // 傾き/物理系
+    void UpdateTilt(const std::vector<Player*>& players);
+    bool IsPlayerOnStage(const VECTOR& playerPos) const;
+    VECTOR GetStageNormal() const;
 
-	// プレイヤーの位置に応じてステージを傾ける
-	void UpdateTilt(const std::vector<Player*>& players);
+    // タイル系
+    bool WorldToTileIndex(const VECTOR& worldPos, int& outTileX, int& outTileZ) const;
+    VECTOR TileIdxToWorld(int x, int z) const;
 
-	// playerがステージ内にいるかどうか確認
-	bool IsPlayerOnStage(const VECTOR& playerPos) const;
+    // プレイヤーが踏んだ位置を確認
+    void CheckPlayerStepOnTiles(const std::vector<Player*>& players);
 
-	// ステージの傾きを渡す関数
-	VECTOR GetStageNormal() const;
-
-	void DamageTileAtWorldPos(const VECTOR& worldPos, int damageAmount);
-	void PlayerStepAt(const VECTOR& worldPos);
-
-	// 補助関数
-	bool WorldToTileIndex(const VECTOR& worldPos, int& outTileX, int& outTileZ) const;
-	VECTOR TileIdxToWorld(int x, int z) const;
+    // タイル配列への安全なアクセス(Getter)
+    Tile& GetTile(int x, int z) { return tiles_[x][z]; }
+    const Tile& GetTile(int x, int z) const { return tiles_[x][z]; }
+ 
 
 private:
 
-	// コンストラクタ
-	Stage() = default;
-	~Stage() = default;
+    // タイル配列
+    Tile tiles_[TILE_COUNT][TILE_COUNT];
 
-	// インスタンス
-	static Stage* instance_;
+    Stage() = default;
+    ~Stage() = default;
 
-	// モデルID
-	int modelId_ = -1;
-	// 位置・角度・スケール
-	VECTOR pos_;
-	VECTOR angle_;
-	VECTOR scale_;
+    static Stage* instance_;
 
-	// コライダー
-	CylinderCollider collider_;
+    // モデルID
+    int modelId_ = -1;
+    int skyModelId_ = -1;
+    int tileModelId_ = -1;
 
-	// 物理制御用変数
-	VECTOR angularVelocity_;
-	float momentOfInertia_;
-	float dampingFactor_;
-	float restitutionFactor_;
+    // 位置・角度・スケール
+    VECTOR pos_ = DEFAULT_POS;
+    VECTOR angle_{};
+    VECTOR scale_ = DEFAULT_SCALE;
 
-	float maxStageRange_ = 600.0f;
+    // スカイドーム
+    VECTOR skyPos_{};
+    VECTOR skyScale_{};
+    VECTOR skyAngle_{};
 
+    // コライダー
+    CylinderCollider collider_{};
 
-	// スカイドームモデル
-	int skyModelId_ = -1;
-	// スカイドームの位置・スケール
-	VECTOR skyPos_;
-	VECTOR skyScale_;
-	VECTOR skyAngle_;
+    // 物理制御
+    VECTOR angularVelocity_{};
+    float momentOfInertia_ = MOMENT_OF_INERTIA;
+    float dampingFactor_ = DAMPING_FACTOR;
+    float restitutionFactor_ = 0.0f;
 
-	Tile tiles_[TILE_COUNT][TILE_COUNT];
-	int tileModelId_ = -1;
+    float maxStageRange_ = 600.0f;
 
 
 };

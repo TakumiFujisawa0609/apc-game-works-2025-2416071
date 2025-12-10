@@ -5,10 +5,10 @@
 #include <cmath>
 #include "../../Manager/InputManager.h"
 
-// 静的メンバ変数の初期化
+// インスタンス管理
 Stage* Stage::instance_ = nullptr;
 
-// インスタンス生成・取得
+// インスタンス取得
 Stage& Stage::GetInstance()
 {
 	if (instance_ == nullptr)
@@ -26,187 +26,124 @@ void Stage::CreateInstance()
 	}
 }
 
-
 // 初期化
 void Stage::Init()
 {
-	// モデルの読み込み
-	modelId_ = MV1LoadModel("Data/Model/Stage/stage.mv1");
-
-	// スカイドームモデルの読み込み
+	tileModelId_ = MV1LoadModel("Data/Model/Stage/Tile.mv1");
 	skyModelId_ = MV1LoadModel("Data/Model/Stage/skydome.mv1");
 
-	// タイルモデルをロード
-	tileModelId_ = MV1LoadModel("Data/Model/Stage/Tiles.mv1");
-
-	// タイル初期化
-	float half = (TILE_COUNT - 1) * 0.5f;
-	for (int z = 0; z < TILE_COUNT; ++z)
-	{
-		for (int x = 0; x < TILE_COUNT; ++x)
-		{
+	for (int z = 0; z < TILE_COUNT; ++z) {
+		for (int x = 0; x < TILE_COUNT; ++x) {
 			VECTOR pos = TileIdxToWorld(x, z);
-			bool isCorner = (x == 0 && z == 0) || (x == 0 && z == TILE_COUNT - 1) ||
-				(x == TILE_COUNT - 1 && z == 0) || (x == TILE_COUNT - 1 && z == TILE_COUNT - 1);
-			if (isCorner) tiles_[x][z].Init(TileType::Safe, 9999, pos);
-			else tiles_[x][z].Init(TileType::Breakable, 3, pos);
+			bool isCorner = (x == 0 && z == 0) ||
+				(x == 0 && z == TILE_COUNT - 1) ||
+				(x == TILE_COUNT - 1 && z == 0) ||
+				(x == TILE_COUNT - 1 && z == TILE_COUNT - 1);
+			if (isCorner)
+				tiles_[x][z].Init(TYPE::SAFE, 9999, pos, tileModelId_);
+			else
+				tiles_[x][z].Init(TYPE::BRAKABLE, 3, pos, tileModelId_);
 		}
 	}
 
-	// ステージの位置・角度・スケール初期化
+	// ステージ基準位置
 	pos_ = DEFAULT_POS;
 	angle_ = AsoUtility::VECTOR_ZERO;
 	scale_ = DEFAULT_SCALE;
 
-	// スカイドームモデルの初期化
+	// スカイドーム
 	skyPos_ = { 0.0f, 250.0f, 0.0f };
 	skyAngle_ = AsoUtility::VECTOR_ZERO;
 	skyScale_ = { 50.0f, 50.0f, 50.0f };
 
-	// コライダーの初期化	
-	collider_.center = pos_;						// コライダーの中心位置をステージの位置に設定
-	collider_.radius = COLLIDER_RADIUS;				// コライダーの半径を設定
-	collider_.yMin = pos_.y;						// コライダーのY最小値を設定
-	collider_.yMax = pos_.y + COLLIDER_YMAX_OFFSET;	// コライダーのY最大値を設定
+	// コライダー
+	collider_.center = pos_;
+	collider_.radius = COLLIDER_RADIUS;
+	collider_.yMin = pos_.y;
+	collider_.yMax = pos_.y + COLLIDER_YMAX_OFFSET;
 
-	// 物理的な傾きの初期化
+	// 物理回転
 	angularVelocity_ = AsoUtility::VECTOR_ZERO;
-	momentOfInertia_ = MOMENT_OF_INERTIA;			// 慣性モーメントの仮の値s
-	dampingFactor_ = DAMPING_FACTOR;				// 減衰係数の仮の値
-
+	momentOfInertia_ = MOMENT_OF_INERTIA;
+	dampingFactor_ = DAMPING_FACTOR;
+	restitutionFactor_ = 0.0f;
 
 }
 
 // 更新
-void Stage::Update()
+void Stage::Update(const std::vector<Player*>& players)
 {
-	// 物理的な傾きの更新
-	// 角速度に基づいて角度を更新
+	// 傾きの物理更新
 	angle_.x += angularVelocity_.x;
 	angle_.y += angularVelocity_.y;
 	angle_.z += angularVelocity_.z;
-	// 減衰を適用して角速度を減少させる
 	angularVelocity_.x *= (1.0f - dampingFactor_);
 	angularVelocity_.y *= (1.0f - dampingFactor_);
 	angularVelocity_.z *= (1.0f - dampingFactor_);
 
+	// プレイヤーが踏んでいるタイルごとにOnStep(床を壊す)
+	CheckPlayerStepOnTiles(players);
 }
 
 // 描画
 void Stage::Draw()
 {
-	MV1SetPosition(modelId_, pos_);
-	MV1SetRotationXYZ(modelId_, angle_);
-	MV1SetScale(modelId_, scale_);
-	MV1DrawModel(modelId_);
-
-	// タイル描画（タイルモデルは tileModelId_）
-	for (int z = 0; z < TILE_COUNT; ++z)
-	{
-		for (int x = 0; x < TILE_COUNT; ++x)
-		{
-			const Tile& t = tiles_[x][z];
-			if (!t.IsHole())
-			{
-				t.Render(tileModelId_);
-			}
-			else
-			{
-				// （必要なら穴表現）
-			}
-		}
-	}
-
-	// スカイドームの描画
+	// スカイドーム描画
 	MV1SetPosition(skyModelId_, skyPos_);
 	MV1SetRotationXYZ(skyModelId_, skyAngle_);
 	MV1SetScale(skyModelId_, skyScale_);
 	MV1DrawModel(skyModelId_);
 
+	// タイル描画
 
-	// デバッグ表示
-	//DrawFormatString(0, 400, GetColor(130, 255, 130), "Stage Angle: (%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angle_.x), AsoUtility::Rad2DegF(angle_.y), AsoUtility::Rad2DegF(angle_.z));
-	//DrawSphere3D(collider_.center, collider_.radius, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), FALSE);
+	for (int z = 0; z < TILE_COUNT; ++z)
+		for (int x = 0; x < TILE_COUNT; ++x)
+			tiles_[x][z].Draw(angle_);
 }
 
 // 解放
 void Stage::Release()
 {
-	if (modelId_ != -1)
-	{
-		MV1DeleteModel(modelId_);
-		modelId_ = -1;
-	}
-
 	if (skyModelId_ != -1)
 	{
 		MV1DeleteModel(skyModelId_);
 		skyModelId_ = -1;
 	}
-
 	if (tileModelId_ != -1)
 	{
 		MV1DeleteModel(tileModelId_);
 		tileModelId_ = -1;
 	}
+	for (int z = 0; z < TILE_COUNT; ++z)
+		for (int x = 0; x < TILE_COUNT; ++x)
+			tiles_[x][z].Release();
 }
 
-// プレイヤーの位置に応じてステージを傾ける
+// 傾き物理（プレイヤーの重さ位置で傾く）
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
-	// プレイヤーの機能実装まで傾けない
-	//return;
-
-	// デバッグ用で特定のキーを押下したら傾けない
 	InputManager& ins = InputManager::GetInstance();
 
-	// F1キーで傾き無効化,もう一度押すと有効化
 	if (ins.IsNew(KEY_INPUT_F1))
 	{
 		return;
 	}
 
-
-	// プレイヤーの情報がなければ傾けない
 	if (players.empty()) return;
 
-	// あらぶり対策
-	bool anyPlayerOnStage = false;
-	VECTOR totalPlayerPos = AsoUtility::VECTOR_ZERO;
-
-	for (auto p : players)
-	{
-		if (IsPlayerOnStage(p->GetPos()))
-		{
-			anyPlayerOnStage = true;
-			totalPlayerPos = VAdd(totalPlayerPos, p->GetPos());
-		}
-	}
-	//if (!anyPlayerOnStage)
-	//{
-	//	// プレイヤーが誰もステージ上にいない場合
-
-	//	// 徐々に中央に戻すことで、荒ぶりを止めつつ自然な停止を表現
-	//	angle_.x = AsoUtility::Lerp(angle_.x, 0.0f, 0.05f); // 0.05fは戻る速さ
-	//	angle_.z = AsoUtility::Lerp(angle_.z, 0.0f, 0.05f);
-
-	//	// Y軸の角度は変えない
-	//	angle_.y = 0.0f;
-
-	//	return; // ★ 物理計算をスキップして終了
-	//}
-
-	// プレイヤーの平均位置を計算
 	float totalWeight = 0.0f;
 	float weightedX = 0.0f;
 	float weightedZ = 0.0f;
 
-	for (auto p : players)
+	for (auto* p : players)
 	{
-		// 生存中かつ、落下状態ではないプレイヤーのみを加算する
-		if(!(p -> IsAlive() && !p ->IsFalling() && IsPlayerOnStage(p->GetPos())))
-			// 処理をスキップ
+		if (!(p->IsAlive() && !p->IsFalling()))
 			continue;
+
+		int tx, tz;
+		if (!WorldToTileIndex(p->GetPos(), tx, tz)) continue;
+		if (tx < 0 || tx >= TILE_COUNT || tz < 0 || tz >= TILE_COUNT) continue;
+		if (tiles_[tx][tz].IsHole()) continue; // 穴にいるプレイヤーは傾き対象外
 
 		float weight = p->GetWeight();
 		VECTOR pos = p->GetPos();
@@ -215,105 +152,87 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 		totalWeight += weight;
 	}
 
-	// 重さが0以下ならreturn
 	if (totalWeight <= 0.0f) return;
 
-	// 中心位置
 	float centerX = weightedX / totalWeight;
 	float centerZ = weightedZ / totalWeight;
 
-	// プレイヤーの重さによる力の計算
-	float totalMass = totalWeight; // 重さの総和を質量とみなす
-	const float GRAVITY = 9.81f; // 重力加速度
+	float totalMass = totalWeight;
+	const float GRAVITY = 9.81f;
 
-	// プレイヤーの重さによる力(プレイヤーの合計質量とステージの中心からの距離で計算)
-	// T = r * F
 	VECTOR torque = AsoUtility::VECTOR_ZERO;
+	torque.x = centerZ * totalMass * GRAVITY;
+	torque.z = -centerX * totalMass * GRAVITY;
 
-	// X軸周りの力
-	torque.x = centerZ * totalMass * GRAVITY; // Z方向の位置が遠いほどX軸周りの力が大きい
-
-	// Z軸周りの力
-	torque.z = -centerX * totalMass * GRAVITY; // X方向の位置が遠いほどZ軸周りの力が大きい
-
-
-	// ステージの傾きを元に戻そうとする力
 	VECTOR restoringTorque = AsoUtility::VECTOR_ZERO;
-	restoringTorque.x = -angle_.x * restitutionFactor_; // X軸周りの復元力
-	restoringTorque.z = -angle_.z * restitutionFactor_; // Z軸周りの復元力
+	restoringTorque.x = -angle_.x * restitutionFactor_;
+	restoringTorque.z = -angle_.z * restitutionFactor_;
 
-	// すべての力を合計
-	VECTOR totalTorque = AsoUtility::VECTOR_ZERO;
-	totalTorque = VAdd(torque, restoringTorque);
+	VECTOR totalTorque = VAdd(torque, restoringTorque);
 
-	// 角加速度の計算
 	VECTOR angularAcceleration = VScale(totalTorque, 1.0f / momentOfInertia_);
-
-	//　角速度の更新
-	float deltaTime = 1.0f / 60.0f; // フレーム時間（60FPS想定）
+	float deltaTime = 1.0f / 60.0f;
 	angularVelocity_ = VAdd(angularVelocity_, VScale(angularAcceleration, deltaTime));
-
-	// 減衰の適用
 	angularVelocity_ = VScale(angularVelocity_, dampingFactor_);
-
-	// 角度の更新
 	angle_ = VAdd(angle_, VScale(angularVelocity_, deltaTime));
 
-	// 最大角の制限
-	const float maxTilt = AsoUtility::Deg2RadF(45.0f); // 最大傾き45度
+	const float maxTilt = AsoUtility::Deg2RadF(45.0f);
 	angle_.x = std::fmax(std::fmin(angle_.x, maxTilt), -maxTilt);
 	angle_.z = std::fmax(std::fmin(angle_.z, maxTilt), -maxTilt);
 
-	// ステージの角度をモデルに反映
-	MV1SetRotationXYZ(modelId_, angle_);
+	MV1SetRotationXYZ(tileModelId_, angle_);
+	MV1RefreshCollInfo(tileModelId_);
 
-	// 衝突情報の更新
-	MV1RefreshCollInfo(modelId_);
-
-	// Y軸の角度は変えない
 	angle_.y = 0.0f;
-
-
 }
 
+// プレイヤー座標がステージ内か判定
 bool Stage::IsPlayerOnStage(const VECTOR& playerPos) const
 {
-	// ステージの中心からプレイヤーまでの水平位置を計算
 	VECTOR relationPos = VSub(playerPos, this->pos_);
-
-	//Y軸は無視で、水平面のみで距離を計算
 	relationPos.y = 0.0f;
 	float dist = relationPos.x * relationPos.x + relationPos.z * relationPos.z;
-
-	// 距離の二乗が範囲の二乗以内ならステージ内
 	return dist <= (collider_.radius * collider_.radius);
 }
 
+// ステージ傾きベクトル取得
 VECTOR Stage::GetStageNormal() const
 {
-	// ステージの傾きを基に法線ベクトルを計算
 	VECTOR up = { 0.0f, 1.0f, 0.0f };
 	VECTOR v = VTransform(up, MGetRotX(angle_.x));
 	v = VTransform(v, MGetRotZ(angle_.z));
 	v = VTransform(v, MGetRotY(angle_.y));
 	return v;
-
 }
 
-void Stage::DamageTileAtWorldPos(const VECTOR& worldPos, int damageAmount)
-{
-}
-
-void Stage::PlayerStepAt(const VECTOR& worldPos)
-{
-}
-
+// ワールド座標→タイル配列インデックス
 bool Stage::WorldToTileIndex(const VECTOR& worldPos, int& outTileX, int& outTileZ) const
 {
-	return false;
+	VECTOR localPos = VSub(worldPos, pos_);
+	outTileX = static_cast<int>((localPos.x + (TILE_COUNT * TILE_SIZE) / 2) / TILE_SIZE);
+	outTileZ = static_cast<int>((localPos.z + (TILE_COUNT * TILE_SIZE) / 2) / TILE_SIZE);
+	bool inRange = (outTileX >= 0 && outTileX < TILE_COUNT && outTileZ >= 0 && outTileZ < TILE_COUNT);
+	return inRange;
 }
 
+// タイル座標→ワールド座標
 VECTOR Stage::TileIdxToWorld(int x, int z) const
 {
-	return VECTOR();
+	float offsetX = (x - TILE_COUNT / 2 + 0.5f) * TILE_SIZE;
+	float offsetZ = (z - TILE_COUNT / 2 + 0.5f) * TILE_SIZE;
+	return VAdd(VGet(offsetX, 0.0f, offsetZ), pos_);
+}
+
+void Stage::CheckPlayerStepOnTiles(const std::vector<Player*>& players)
+{
+	for (const auto* p : players)
+	{
+		VECTOR pos = p->GetPos();
+		int tx, tz;
+		if (WorldToTileIndex(pos, tx, tz))
+		{
+			if (tx >= 0 && tx < TILE_COUNT && tz >= 0 && tz < TILE_COUNT)
+				tiles_[tx][tz].OnStep();
+		}
+	}
 }
