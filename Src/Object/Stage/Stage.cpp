@@ -113,7 +113,7 @@ void Stage::Release()
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
 	// プレイヤーの機能実装まで傾けない
-	//return;
+	return;
 
 	// デバッグ用で特定のキーを押下したら傾けない
 	InputManager& ins = InputManager::GetInstance();

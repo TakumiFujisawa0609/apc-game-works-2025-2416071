@@ -11,10 +11,10 @@ void Player_2::Init(void)
 	Player::Init();
 	// ƒ‚ƒfƒ‹‚Ì“Ç‚İ‚İ
 	modelId_ = MV1LoadModel("Data/Model/Player/Body_AB_01.mv1");
-	pos_ = { 60.0f, 0.0f, 0.0f };
-	angle_ = { 0.0f, AsoUtility::Deg2RadF(0.0f), 1.0f }; // ‰ŠúŒü‚«‚ÍX+•ûŒü
-	//param_.speed = 6.0f;
-	param_.jumpPower = 7.0f;
+	//pos_ = { 60.0f, 0.0f, 0.0f };
+	//angle_ = { 0.0f, AsoUtility::Deg2RadF(0.0f), 1.0f }; // ‰ŠúŒü‚«‚ÍX+•ûŒü
+	////param_.speed = 6.0f;
+	//param_.jumpPower = 7.0f;
 }
 
 void Player_2::Release(void)

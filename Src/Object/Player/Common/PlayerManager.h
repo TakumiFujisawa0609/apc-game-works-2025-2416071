@@ -5,7 +5,6 @@
 #include "../../Stage/Stage.h"
 #include "../Control/InputController.h"
 
-// Playerの識別
 enum class PlayerType
 {
 	Player_1,
@@ -17,11 +16,9 @@ enum class PlayerType
 class PlayerManager
 {
 public:
-
-	// 定数
-	static constexpr float KNOCKBACK_FORCE = 1000000.0f; // プレイヤー同士が衝突したときのノックバック力
-	static constexpr float KNOCKBACK_UPWARD_FORCE = 500.0f; // ノックバックの上方向成分
-
+	// ノックバックの調整（水平方向・上方向）
+	static constexpr float KNOCKBACK_FORCE = 3000.0f;        // 弾が当たった相手への水平ノックバック
+	static constexpr float KNOCKBACK_UPWARD_FORCE = 200.0f;  // 弾ヒットの上向き成分
 
 	// インスタンス生成
 	static void CreateInstance();
@@ -35,11 +32,10 @@ public:
 	// 全プレイヤー初期化
 	void InitAllPlayers();
 
-
 	// プレイヤー生成
-	// 既存の「内部で Controller を生成する」CreatePlayer
+	// コントローラを内部で生成する版
 	void CreatePlayer(PlayerType type, int id, const PlayerParam& param);
-	// AI 用の InputController を渡せるようにする。
+	// AI/外部用に InputController を受け取る版
 	void CreatePlayer(PlayerType type, int id, const PlayerParam& param, std::unique_ptr<InputController> controller);
 
 	// 全プレイヤー更新
@@ -48,43 +44,43 @@ public:
 	// 全プレイヤー描画
 	void DrawPlayers();
 
-	// 生データのプレイヤー配列を取得
+	// 生のプレイヤーポインタ配列取得
 	std::vector<Player*> GetPlayerRawPlayers() const;
 
 	// 全削除
 	void ClearPlayers();
 
-	// 勝敗判定を行う
+	// 勝敗判定
 	void CheckGameResult();
 
-	// プレイヤーの順位を取得
+	// プレイヤーの順位を取得（死亡順に基づく）
 	std::vector<int> GetPlayerRanks() const;
 
-	
-
-	// ゲームオーバー状態を取得
+	// ゲームオーバー状態取得
 	bool IsGameOver() const { return isGameOver_; }
 
-	// 勝者IDを取得
+	// 勝者ID取得
 	int GetWinnerID() const { return winnerID_; }
 
-	// ゲームオーバーフラグを取得
+	// ゲームオーバーフラグ取得（IsGameOverと同じ）
 	bool GetIsGameOver() const { return isGameOver_; }
+
+	// ゲーム開始時刻(ms)取得（弾回復開始の判定用）
+	int GetGameStartTimeMs() const { return gameStartTimeMs_; }
 
 	// プレイヤー同士の衝突判定
 	void CheckPlayerCollisions();
 
-	// 弾との衝突判定
+	// 弾とプレイヤーの衝突判定
 	void CheckBulletCollisions();
 
 	// リセット
 	void Reset();
 
-	// 解放
+	// 破棄
 	void Release();
 
 private:
-
 	PlayerManager();
 	~PlayerManager();
 
@@ -92,12 +88,14 @@ private:
 	static PlayerManager* instance_;
 	std::vector<std::shared_ptr<Player>> players_;
 
-	// ゲーム終了フラグ (勝者が決定したらtrue)
+	// ゲームオーバーフラグ
 	bool isGameOver_ = false;
 
-	// 勝者ID (-1: 未決定, 0, 1...: プレイヤーID)
+	// 勝者ID (-1: 未決, 0, 1...: プレイヤーID)
 	int winnerID_ = -1;
 
-	Player* player_;
+	Player* player_ = nullptr;
 
+	// 追加: ゲーム開始時刻（ms）
+	int gameStartTimeMs_ = 0;
 };

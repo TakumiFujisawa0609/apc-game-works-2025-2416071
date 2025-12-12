@@ -12,7 +12,7 @@ void Player_4::Init()
 	modelId_ = MV1LoadModel("Data/Model/Player/Body_AD_01.mv1");
 
 	//param_.speed = 6.0f;
-	param_.jumpPower = 700.0f;
+	//param_.jumpPower = 700.0f;
 }
 
 void Player_4::Update()
