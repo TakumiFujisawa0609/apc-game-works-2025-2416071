@@ -4,57 +4,87 @@
 #include <string>
 #include <DxLib.h>
 
-// キャラ選択シーン (順番制: P1→P2→...)
-// 現在手番プレイヤーのみ対応 PAD 操作可。キーボードは常にフォールバック入力として有効。
-// キャラクター重複禁止 (確定済みプレイヤーの選択とは被らないように自動スキップ)
+// キャラクター選択シーン（順番選択: P1→P2→…）
 class CharacterSelect : public SceneBase
 {
 public:
-	static constexpr int MAX_PLAYERS = 4;
-	static constexpr int MAX_CHARACTERS = 4; // 仮キャラ数 (最低でも人数以上を推奨)
+    static constexpr int MAX_PLAYERS = 4;
+    static constexpr int MAX_CHARACTERS = 4;
 
-	CharacterSelect(int playerCount = 0);
-	~CharacterSelect() override;
+    CharacterSelect(int playerCount = 0);
+    ~CharacterSelect() override;
 
-	void Init() override;
-	void Update() override;
-	void Draw() override;
-	void Release() override;
+    void Init() override;
+    void Update() override;
+    void Draw() override;
+    void Release() override;
 
-	bool IsFinished() const { return finished_; }
+    bool IsFinished() const { return finished_; }
 
 private:
-	// 入力処理
-	void HandleInput();
-	void ChangeCharacter(int delta);   // 重複回避しつつキャラ変更
-	void DecideCurrent();
-	void BackToPrevious();
+    // 入力処理
+    void HandleInput();
+    void ChangeCharacter(int delta);
+    void DecideCurrent();
+    void BackToPrevious();
 
-	// 状態遷移
-	void AdvancePlayer();
-	void RevertPlayer();
-	void CompleteSelection();
+    // 順番管理
+    void AdvancePlayer();
+    void RevertPlayer();
+    void CompleteSelection();
 
-	// 重複関連
-	bool IsTaken(int characterIdx) const;            // 他プレイヤー(確定済)に取られているか
-	int  FindNextAvailable(int start, int dir) const; // start から dir(±1)方向へ空きを探す
+    // 重複チェック
+    bool IsTaken(int characterIdx) const;
+    int  FindNextAvailable(int start, int dir) const;
 
-	// 描画補助
-	void DrawPadWarning();
-	void DrawPlayerEntries();
-	void DrawGuide();
-	void DrawDuplicateNotice(); // 行き場がない場合の注意表示
+    // 描画
+    int ActivePlayerIndexForDraw() const;
+    void DrawHeader();
+    void DrawCharacterGrid();
+    void DrawCharacterCard(int idx, int x, int y, int w, int h, bool highlight, bool taken);
+    void DrawPlayerList();
+    void DrawFooter();
+    void DrawDuplicateNotice();
 
-	// 外部へ選択反映
-	void ApplySelection();
+    // 追加: 3Dプレビュー＋パラメータ表示
+    void DrawPreviewModelAndParams();
 
-	int playerCount_;
-	int currentPlayer_;
-	bool finished_;
+    // 見た目設定
+    void BuildDefaultCharacters();
 
-	std::vector<int>  selectedIndex_; // 各プレイヤーの選択キャラ (0～MAX_CHARACTERS-1)
-	std::vector<bool> confirmed_;     // 確定フラグ
-	std::vector<std::string> characterNames_;
+    // レイアウト
+    int gridCols_ = 2;
+    int gridRows_ = 2;
+    int cardW_ = 240;
+    int cardH_ = 140;
+    int gridLeft_ = 60;
+    int gridTop_ = 100;
+    int gridGapX_ = 40;
+    int gridGapY_ = 40;
 
-	bool duplicateBlock_; // 現在候補が重複で確定不可 (理論上 ChangeCharacter で回避するので false のはず)
+    int rightPanelX_ = 420;
+    int rightPanelY_ = 100;
+    int rightLineH_ = 30;
+
+    // プレビュー表示設定
+    int previewAreaX_ = 900;
+    int previewAreaY_ = 260;
+    float previewScale_ = 1.4f;
+    float previewModelOffsetX_ = 180.0f;
+
+    // 状態
+    int playerCount_;
+    int currentPlayer_;
+    bool finished_;
+    bool duplicateBlock_;
+
+    std::vector<std::string> characterNames_;
+    std::vector<int>  selectedIndex_;
+    std::vector<bool> confirmed_;
+
+    // 3Dプレビュー用モデルハンドル
+    int previewModelId_[MAX_CHARACTERS] = { -1, -1, -1, -1 };
+
+    // 点滅
+    int blinkCounter_ = 0;
 };

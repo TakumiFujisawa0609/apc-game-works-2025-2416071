@@ -5,6 +5,7 @@
 #include "../../Stage/Stage.h"
 #include "../Control/InputController.h"
 
+// プレイヤー種類
 enum class PlayerType
 {
 	Player_1,
@@ -16,14 +17,19 @@ enum class PlayerType
 class PlayerManager
 {
 public:
-	// ノックバックの調整（水平方向・上方向）
-	static constexpr float KNOCKBACK_FORCE = 3000.0f;        // 弾が当たった相手への水平ノックバック
-	static constexpr float KNOCKBACK_UPWARD_FORCE = 200.0f;  // 弾ヒットの上向き成分
+	// ノックバック強度（弾ヒット）
+	static constexpr float KNOCKBACK_FORCE = 150000.0f; // 水平ノックバック（弾）
+	static constexpr float KNOCKBACK_UPWARD_FORCE = 750.0f;    // 上向きノックバック（弾）
 
-	// インスタンス生成
+	// 突進ヒット専用の上向き成分
+	static constexpr float DASH_KNOCKBACK_UPWARD = 900.0f;
+
+	// 追加: キャラクターのデフォルトパラメータ・モデルパス取得
+	static PlayerParam GetDefaultParamForType(PlayerType type);
+	static const char* GetModelPathForType(PlayerType type);
+
+	// インスタンス生成/取得
 	static void CreateInstance();
-
-	// インスタンス取得
 	static PlayerManager& GetInstance();
 
 	// 初期化
@@ -33,69 +39,52 @@ public:
 	void InitAllPlayers();
 
 	// プレイヤー生成
-	// コントローラを内部で生成する版
 	void CreatePlayer(PlayerType type, int id, const PlayerParam& param);
-	// AI/外部用に InputController を受け取る版
 	void CreatePlayer(PlayerType type, int id, const PlayerParam& param, std::unique_ptr<InputController> controller);
 
-	// 全プレイヤー更新
+	// 更新/描画
 	void UpdatePlayers(Stage& stage);
-
-	// 全プレイヤー描画
 	void DrawPlayers();
 
-	// 生のプレイヤーポインタ配列取得
+	// プレイヤー配列（生ポインタ）
 	std::vector<Player*> GetPlayerRawPlayers() const;
 
-	// 全削除
+	// 後始末
 	void ClearPlayers();
 
 	// 勝敗判定
 	void CheckGameResult();
 
-	// プレイヤーの順位を取得（死亡順に基づく）
+	// プレイヤー順位（死亡順に基づく）
 	std::vector<int> GetPlayerRanks() const;
 
-	// ゲームオーバー状態取得
+	// 状態
 	bool IsGameOver() const { return isGameOver_; }
-
-	// 勝者ID取得
+	bool GetIsGameOver() const { return isGameOver_; }
 	int GetWinnerID() const { return winnerID_; }
 
-	// ゲームオーバーフラグ取得（IsGameOverと同じ）
-	bool GetIsGameOver() const { return isGameOver_; }
-
-	// ゲーム開始時刻(ms)取得（弾回復開始の判定用）
+	// ゲーム開始時刻（ms）
 	int GetGameStartTimeMs() const { return gameStartTimeMs_; }
 
-	// プレイヤー同士の衝突判定
+	// 衝突
 	void CheckPlayerCollisions();
-
-	// 弾とプレイヤーの衝突判定
 	void CheckBulletCollisions();
 
-	// リセット
+	// リセット/解放
 	void Reset();
-
-	// 破棄
 	void Release();
 
 private:
 	PlayerManager();
 	~PlayerManager();
 
-	// インスタンス
 	static PlayerManager* instance_;
 	std::vector<std::shared_ptr<Player>> players_;
 
-	// ゲームオーバーフラグ
 	bool isGameOver_ = false;
-
-	// 勝者ID (-1: 未決, 0, 1...: プレイヤーID)
 	int winnerID_ = -1;
 
 	Player* player_ = nullptr;
 
-	// 追加: ゲーム開始時刻（ms）
 	int gameStartTimeMs_ = 0;
 };

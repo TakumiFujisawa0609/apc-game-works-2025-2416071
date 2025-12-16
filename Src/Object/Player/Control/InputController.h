@@ -1,31 +1,32 @@
 #pragma once
-#include <DxLib.h> // VECTOR型のために必要
+#include <DxLib.h>
 
-// プレイヤーが使用するキーセットの定義をグローバルスコープに配置
+// キー設定
 struct KeyConfig
 {
-	int up;		// 前進
-	int down;	// 後退
-	int left;	// 左移動
-	int right;	// 右移動
-	int jump;	// ジャンプ
-	int attack;	// 攻撃
+    int up;
+    int down;
+    int left;
+    int right;
+    int jump;
+    int attack;
 };
 
 class InputController
 {
 public:
-	// 仮想デストラクタ
-	virtual ~InputController() = default;
+    virtual ~InputController() = default;
 
-	// 入力ベクトルを取得する純粋仮想関数を定義
-	virtual VECTOR GetMoveInputVector() const = 0;
+    // XZ 平面の移動入力
+    virtual VECTOR GetMoveInputVector() const = 0;
 
-	// ジャンプトリガーを取得する純粋仮想関数を定義
-	virtual bool IsJumpTrigger() const = 0;
+    // ジャンプ
+    virtual bool IsJumpTrigger() const = 0;
 
-	// 攻撃トリガーを取得する純粋仮想関数を定義
-	virtual bool IsAttackTrigger() const = 0;
+    // 攻撃
+    virtual bool IsAttackTrigger() const = 0;
+
+    // 追加: ダッシュの「ため」(チャージ) ホールド
+    // 既定は未対応（false）。Controller/AIController で必要に応じて上書き。
+    virtual bool IsDashChargeHeld() const { return false; }
 };
-
-

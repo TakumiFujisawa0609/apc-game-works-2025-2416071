@@ -18,7 +18,7 @@ void AIController::InitDefaults()
 	// 攻撃関連
 	lastAttackTimeMs_ = 0;
 	attackIntervalMs_ = 500;
-	attackRange_ = 600.0f; // 攻撃開始距離（拡張済み）
+	attackRange_ = 600.0f; // 攻撃開始距離
 	aggression_ = 0.65f;
 
 	// ワンダー
@@ -204,7 +204,6 @@ void AIController::PickNewWanderTarget(bool ensureFar /*= true*/) const
 	wanderIntervalMs_ = 1200 + (std::rand() % 1200);
 }
 
-// GetMoveInputVector の実装（ワンダー + 回避 + ステージ補正 + 滑らか化）
 VECTOR AIController::GetMoveInputVector() const
 {
 	int now = GetNowCount();
@@ -268,13 +267,14 @@ VECTOR AIController::GetMoveInputVector() const
 	return currentMoveVec_;
 }
 
-// ジャンプ判定（高い敵が近ければジャンプ、でなければ低確率）
+// ジャンプ判定
 bool AIController::IsJumpTrigger() const
 {
 
 
 	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
 	const Player* me = nullptr;
+
 	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
 	if (!me) return false;
 
@@ -292,7 +292,7 @@ bool AIController::IsJumpTrigger() const
 	return (std::rand() % 1000) < 6;
 }
 
-// 攻撃判定（拡張された attackRange_ を使用、距離に応じて確率を下げる）
+// 攻撃判定
 bool AIController::IsAttackTrigger() const
 {
 	int now = GetNowCount();

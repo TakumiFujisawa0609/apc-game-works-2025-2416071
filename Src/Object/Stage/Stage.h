@@ -5,13 +5,13 @@
 
 class Player;
 
-// シリンダー型コライダー
+// 円筒コライダー
 struct CylinderCollider
 {
-	VECTOR center;	// 中心位置
+	VECTOR center;	// 中心座標
 	float radius;	// 半径
-	float yMin;		// Yの最小値
-	float yMax;		// Yの最大値
+	float yMin;		// Yの最小
+	float yMax;		// Yの最大
 };
 
 class Stage
@@ -19,46 +19,51 @@ class Stage
 public:
 
 	// 定数
-	static constexpr VECTOR DEFAULT_POS = { 0.0f, -2250.0f, 0.0f };			// ステージの初期位置
+	static constexpr VECTOR DEFAULT_POS = { 0.0f, -2250.0f, 0.0f };			// ステージの初期座標
 	static constexpr VECTOR DEFAULT_SCALE = { 3.0f, 3.0f, 3.0f };			// ステージの初期スケール
-	static constexpr float COLLIDER_RADIUS = 1000.0f;						// コライダーの半径
-	static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;					// コライダーのY最大値オフセット
-	static constexpr float MOMENT_OF_INERTIA = 10000.0f;						// プレイヤーに対してステージの反発力(値が大きいほど傾きにくい)
-	static constexpr float DAMPING_FACTOR = 0.05f;							// プレイヤーの方向に傾く速さ
+	static constexpr float COLLIDER_RADIUS = 1000.0f;						// コライダー半径
+	static constexpr float COLLIDER_YMAX_OFFSET = 5000.0f;					// コライダーY最大のオフセット
+	static constexpr float MOMENT_OF_INERTIA = 10000.0f;						// 慣性モーメント
+	static constexpr float DAMPING_FACTOR = 0.05f;							// 減衰
+
+	// 端許容マージン（プレイヤー中心が少しはみ出しても在ステージとみなす幅）
+	static constexpr float ON_STAGE_MARGIN = 120.0f; 
+
+	// 無人グレースタイマー（ms）
+	static constexpr int NO_PLAYER_GRACE_MS = 700; 
 
 	// インスタンス
 	static void CreateInstance();
 	static Stage& GetInstance();
 
-	// 基本処理
+	// ライフサイクル
 	void Init();
 	void Update();
 	void Draw();
 	void Release();
 
-	// モデルUD
+	// 参照
 	int GetModelID() const { return modelId_; }
-
-	// ステージの位置・角度・スケール取得
 	const VECTOR& GetPos() const { return pos_; }
 	const VECTOR& GetAngle() const { return angle_; }
 	const VECTOR& GetScale() const { return scale_; }
+	const CylinderCollider& GetCollider() const { return collider_; }
 
-	// ステージの傾き更新
-	const CylinderCollider& GetCollider() const {return collider_;}
-
-	// プレイヤーの位置に応じてステージを傾ける
+	// ステージ傾斜更新
 	void UpdateTilt(const std::vector<Player*>& players);
 
-	// playerがステージ内にいるかどうか確認
+	// 在ステージ判定（従来・マージンなし）
 	bool IsPlayerOnStage(const VECTOR& playerPos) const;
 
-	// ステージの傾きを渡す関数
+	// 在ステージ判定（マージンあり）
+	bool IsPlayerOnStage(const VECTOR& playerPos, float margin) const;
+
+	// 法線
 	VECTOR GetStageNormal() const;
 
 private:
 
-	// コンストラクタ
+	// コンストラクタ/デストラクタ
 	Stage() = default;
 	~Stage() = default;
 
@@ -75,7 +80,7 @@ private:
 	// コライダー
 	CylinderCollider collider_;
 
-	// 物理制御用変数
+	// 回転用
 	VECTOR angularVelocity_;
 	float momentOfInertia_;
 	float dampingFactor_;
@@ -83,12 +88,12 @@ private:
 
 	float maxStageRange_ = 600.0f;
 
-
-	// スカイドームモデル
+	// スカイドーム
 	int skyModelId_ = -1;
-	// スカイドームの位置・スケール
 	VECTOR skyPos_;
 	VECTOR skyScale_;
 	VECTOR skyAngle_;
 
+	// 無人グレース管理
+	int lastOnStageTimeMs_ = 0;
 };

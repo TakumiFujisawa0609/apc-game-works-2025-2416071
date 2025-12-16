@@ -1,6 +1,6 @@
 #include "PlayerManager.h"
 #include "Player.h"
-#include "../Player/Player_1.h" 
+#include "../Player/Player_1.h"
 #include "../Player/Player_2.h"
 #include "../Player/Player_3.h"
 #include "../Player/Player_4.h"
@@ -11,9 +11,38 @@
 #include <DxLib.h>
 #include <memory>
 #include <algorithm>
+#include <cmath>
 
 // 静的インスタンス
 PlayerManager* PlayerManager::instance_ = nullptr;
+
+// 追加: キャラクターのデフォルトパラメータ
+PlayerParam PlayerManager::GetDefaultParamForType(PlayerType type)
+{
+	PlayerParam param;
+	switch (type)
+	{
+	case PlayerType::Player_1: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 7.0f; break;
+	case PlayerType::Player_2: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
+	case PlayerType::Player_3: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
+	case PlayerType::Player_4: param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 2.0f; break;
+	default:                   param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
+	}
+	return param;
+}
+
+// 追加: モデルパス取得
+const char* PlayerManager::GetModelPathForType(PlayerType type)
+{
+	switch (type)
+	{
+	case PlayerType::Player_1: return "Data/Model/Player/Body_AA_01.mv1";
+	case PlayerType::Player_2: return "Data/Model/Player/Body_AB_01.mv1";
+	case PlayerType::Player_3: return "Data/Model/Player/Body_AC_01.mv1";
+	case PlayerType::Player_4: return "Data/Model/Player/Body_AD_01.mv1";
+	default: return "Data/Model/Player/Body_AA_01.mv1";
+	}
+}
 
 // コンストラクタ / デストラクタ
 PlayerManager::PlayerManager() {}
@@ -34,16 +63,13 @@ PlayerManager& PlayerManager::GetInstance()
 // 初期化 / リセット / 解放
 void PlayerManager::Init()
 {
-	// プレイヤー配列クリア
 	players_.clear();
-
-	// Playerの死亡順カウンタ初期化
 	Player::ResetDeathCounter();
 
 	isGameOver_ = false;
 	winnerID_ = -1;
 
-	// ゲーム開始時刻記録（弾回復開始30秒の判定用）
+	// 弾回復開始の30秒判定用
 	gameStartTimeMs_ = GetNowCount();
 
 	Reset();
@@ -51,18 +77,14 @@ void PlayerManager::Init()
 
 void PlayerManager::InitAllPlayers()
 {
-	// 全プレイヤー初期化（リスポーンなど）
 	for (auto& player : players_)
 	{
 		player->Init();
 	}
-	// 弾などのクリアが必要ならここで
-	// BulletManager::GetInstance().Init(); // 必要なら用意
 }
 
 void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& param, std::unique_ptr<InputController> controller)
 {
-	// ID 重複チェック
 	for (auto& player : players_) {
 		if (player->GetID() == id) return;
 	}
@@ -94,16 +116,13 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 
 void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& param)
 {
-	// 既に同一IDのプレイヤーが存在する場合は生成しない
 	for (auto& player : players_) {
 		if (player->GetID() == id) return;
 	}
 
-	// 新しいプレイヤーを生成
 	std::shared_ptr<Player> newPlayer = nullptr;
 	std::unique_ptr<InputController> controller = nullptr;
 
-	// 入力設定 （ID0~3: キーボード＋ゲームパッド）
 	KeyConfig keyConfig;
 	InputManager::JOYPAD_NO padNo = static_cast<InputManager::JOYPAD_NO>(0);
 
@@ -127,7 +146,6 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 		return;
 	}
 
-	// コントローラーを生成
 	controller = std::make_unique<Controller>(keyConfig, padNo);
 
 	switch (type)
@@ -153,35 +171,27 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 
 void PlayerManager::ClearPlayers()
 {
-	// 各 Player::Release() を呼ぶ
 	for (auto& player : players_) {
 		player->Release();
 	}
-	// プレイヤー配列をクリア
 	players_.clear();
 
-	// 弾のクリア
 	BulletManager::GetInstance().Release();
 }
 
 void PlayerManager::UpdatePlayers(Stage& stage)
 {
-	// ゲームオーバーなら更新停止
 	if (isGameOver_) return;
 
-	// ステージ傾き（全プレイヤー）更新
 	stage.UpdateTilt(GetPlayerRawPlayers());
 
-	// 各プレイヤー更新
 	for (auto& player : players_)
 	{
 		player->Update();
 	}
 
-	// 生存プレイヤー配列
 	std::vector<Player*> alive;
 	alive.reserve(players_.size());
-
 	for (auto& p : players_)
 	{
 		if (p->IsAlive())
@@ -190,22 +200,17 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 		}
 	}
 
-	// 生存者のみでステージ傾き再更新（落下中を除外したい場合の二段階更新）
 	stage.UpdateTilt(alive);
 
-	// 弾の衝突
 	CheckBulletCollisions();
-
-	// プレイヤー同士の衝突
 	CheckPlayerCollisions();
 
-	// 勝敗判定
 	CheckGameResult();
 }
 
 void PlayerManager::DrawPlayers()
 {
-	// デバッグ：プレイヤー間距離の可視化
+	// デバッグ: プレイヤー間の距離表示ライン
 	for (size_t i = 0; i < players_.size(); i++)
 	{
 		for (size_t j = i + 1; j < players_.size(); ++j)
@@ -226,7 +231,6 @@ void PlayerManager::DrawPlayers()
 		}
 	}
 
-	// 全プレイヤー描画
 	for (auto& player : players_)
 	{
 		player->Draw();
@@ -236,13 +240,9 @@ void PlayerManager::DrawPlayers()
 // 勝敗判定
 void PlayerManager::CheckGameResult()
 {
-	// 既に決着済みなら何もしない
 	if (isGameOver_) return;
-
-	// 2人以上でなければガード
 	if (players_.size() < 2) return;
 
-	// 生存プレイヤーのリスト
 	std::vector<Player*> alivePlayers;
 	for (const auto& player : players_) {
 		if (player->IsAlive()) {
@@ -250,17 +250,13 @@ void PlayerManager::CheckGameResult()
 		}
 	}
 
-	// 1. 生存者が1名 -> そのプレイヤーが勝者
 	if (alivePlayers.size() == 1) {
 		winnerID_ = alivePlayers[0]->GetID();
 		isGameOver_ = true;
 		return;
 	}
 
-	// 2. 誰も生きていない場合 -> 最後に死んだプレイヤーが勝者
 	if (alivePlayers.empty()) {
-
-		// 全プレイヤーを死亡順でソート（deathOrder==0 は最初に除外扱い）
 		std::vector<Player*> sortedDeadPlayers = GetPlayerRawPlayers();
 
 		std::sort(sortedDeadPlayers.begin(), sortedDeadPlayers.end(), [](const Player* a, const Player* b) {
@@ -269,7 +265,6 @@ void PlayerManager::CheckGameResult()
 			return a->GetDeathOrder() < b->GetDeathOrder();
 			});
 
-		// 最後に死亡したプレイヤーを勝者に
 		winnerID_ = sortedDeadPlayers.back()->GetID();
 		isGameOver_ = true;
 		return;
@@ -291,7 +286,6 @@ std::vector<int> PlayerManager::GetPlayerRanks() const
 	return ranks;
 }
 
-// 生のポインタ配列
 std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 {
 	std::vector<Player*> rawPlayers;
@@ -299,7 +293,7 @@ std::vector<Player*> PlayerManager::GetPlayerRawPlayers() const
 	return rawPlayers;
 }
 
-// プレイヤー同士の衝突
+// プレイヤー同士の衝突（突進ヒット対応　通常押し合い）
 void PlayerManager::CheckPlayerCollisions()
 {
 	const auto& rawPlayers = GetPlayerRawPlayers();
@@ -313,30 +307,72 @@ void PlayerManager::CheckPlayerCollisions()
 
 			if (!p1->IsAlive() || !p2->IsAlive()) continue;
 
-			VECTOR diff = VSub(p1->GetPos(), p2->GetPos());
-			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+			const VECTOR pos1 = p1->GetPos();
+			const VECTOR pos2 = p2->GetPos();
+
+			VECTOR diffXZ = { pos1.x - pos2.x, 0.0f, pos1.z - pos2.z };
+			float distXZ = VSize(diffXZ);
 			float radSum = p1->GetCollisionRadius() + p2->GetCollisionRadius();
 
-			if (distSq < radSum * radSum)
+			if (distXZ >= radSum) continue;
+
+			// どちらか一方がダッシュ中なら、攻撃側→防御側に片方向ノックバックを与える
+			const bool d1 = p1->IsDashing();
+			const bool d2 = p2->IsDashing();
+			if (d1 ^ d2)
 			{
-				float dist = sqrtf(distSq);
-				float overlap = radSum - dist;
+				Player* attacker = d1 ? p1 : p2;
+				Player* defender = d1 ? p2 : p1;
 
-				VECTOR knockBackDir = (dist > 0.0f) ? VScale(diff, 1.0f / dist) : VGet(1.0f, 0.0f, 0.0f);
+				// ダッシュ方向（水平）
+				VECTOR kbDir = attacker->GetDashDir();
+				kbDir.y = 0.0f;
+				float kbl = VSize(kbDir);
+				if (kbl < 1e-5f) {
+					// 念のため、相手への方向にフォールバック
+					kbDir = VSub(defender->GetPos(), attacker->GetPos());
+					kbDir.y = 0.0f;
+					kbl = VSize(kbDir);
+				}
+				if (kbl > 1e-5f) kbDir = VScale(kbDir, 1.0f / kbl);
 
-				constexpr float KNOCKBACK_FORCE_LOCAL = 10.0f;
+				// ため時間に応じたインパクト強度を使用（水平）　上向き定数
+				float power = attacker->GetDashImpactPower(); // プレイヤー側で設定済み（12万　40万程度）
+				VECTOR knockBack = VScale(kbDir, power);
+				knockBack.y += DASH_KNOCKBACK_UPWARD;
 
-				VECTOR knockBack1 = VScale(knockBackDir, overlap * KNOCKBACK_FORCE_LOCAL);
-				VECTOR knockBack2 = VScale(knockBackDir, -overlap * KNOCKBACK_FORCE_LOCAL);
+				defender->ApplyHit(knockBack);
 
-				p1->ApplyHit(knockBack1);
-				p2->ApplyHit(knockBack2);
+				// 多重ヒット防止：攻撃側のダッシュを終了
+				attacker->EndDashOnHit();
+
+				// 片方向ノックバック完了。通常押し合いはスキップ
+				continue;
 			}
+
+			// 双方ダッシュでない場合は通常押し合い（簡易カプセル：水平　縦距離係数）
+			float dy = std::fabs(pos1.y - pos2.y);
+			const float CAP_HEIGHT = 180.0f;
+			float heightFactorTmp = 1.0f - (dy / CAP_HEIGHT);
+			float heightFactor = (heightFactorTmp < 0.0f) ? 0.0f : heightFactorTmp;
+
+			float overlap = (radSum - distXZ) * heightFactor;
+			if (overlap <= 0.0f) continue;
+
+			VECTOR dir = (distXZ > 1e-5f) ? VScale(diffXZ, 1.0f / distXZ) : VGet(1.0f, 0.0f, 0.0f);
+
+			// 押し戻し（弱め）
+			const float KNOCKBACK_FORCE_LOCAL = 6.0f;
+			VECTOR knockBack1 = VScale(dir, overlap * KNOCKBACK_FORCE_LOCAL);
+			VECTOR knockBack2 = VScale(dir, -overlap * KNOCKBACK_FORCE_LOCAL);
+
+			p1->ApplyHit(knockBack1);
+			p2->ApplyHit(knockBack2);
 		}
 	}
 }
 
-// 弾の衝突
+// 弾とプレイヤーの衝突（連続判定：Swept Sphere）
 void PlayerManager::CheckBulletCollisions()
 {
 	const auto& rawPlayers = GetPlayerRawPlayers();
@@ -346,38 +382,79 @@ void PlayerManager::CheckBulletCollisions()
 	{
 		if (!b->IsAlive()) continue;
 
-		const VECTOR& bPos = b->GetPos();
-		float bRad = b->GetCollRad();
+		const VECTOR& p0 = b->GetPrevPos();
+		const VECTOR& p1 = b->GetPos();
+		VECTOR v = VSub(p1, p0);
+		float vv = VDot(v, v);
+
+		// 1発につき最初に当たった対象のみ
+		bool hitSomeone = false;
+		float bestT = 1.0f;
+		Player* bestTarget = nullptr;
+		VECTOR bestClosest = p1;
 
 		for (Player* p : rawPlayers)
 		{
 			if (!p->IsAlive()) continue;
 
-			int ownerId = b->GetOwnerId();
-			if (p->GetID() == ownerId) continue;
+			// 発射者本人は除外
+			if (p->GetID() == b->GetOwnerId()) continue;
 
-			VECTOR diff = VSub(bPos, p->GetPos());
-			float distSq = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-			float radSum = bRad + p->GetCollisionRadius();
+			// 合成半径
+			float R = b->GetCollRad() + p->GetCollisionRadius();
 
-			if (distSq < radSum * radSum)
+			// 弾がほぼ停止：点と球
+			if (vv < 1e-6f)
 			{
-				// ノックバック方向（水平正規化）
-				VECTOR playerPos = p->GetPos();
-				VECTOR dir = VSub(playerPos, bPos);
-				dir.y = 0.0f;
-				float len = VSize(dir);
-				VECTOR knockBackDir = (len > 1e-5f) ? VScale(dir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
-
-				VECTOR knockBack = VScale(knockBackDir, KNOCKBACK_FORCE);
-				knockBack.y += KNOCKBACK_UPWARD_FORCE;
-
-				p->ApplyHit(knockBack);
-
-				// 弾は1ヒットで消える
-				b->Kill();
-				break;
+				VECTOR d = VSub(p1, p->GetPos());
+				float d2 = VDot(d, d);
+				if (d2 <= R * R)
+				{
+					bestTarget = p;
+					bestClosest = p1;
+					bestT = 0.0f;
+					hitSomeone = true;
+				}
+				continue;
 			}
+
+			// 線分p0->p1 と 球(c, R) の最近接点
+			VECTOR c = p->GetPos();
+			VECTOR w = VSub(c, p0);
+			float t = VDot(w, v) / vv;
+			if (t < 0.0f) t = 0.0f;
+			else if (t > 1.0f) t = 1.0f;
+
+			VECTOR closest = VAdd(p0, VScale(v, t));
+			VECTOR d = VSub(closest, c);
+			float dist2 = VDot(d, d);
+			if (dist2 <= R * R)
+			{
+				if (t < bestT)
+				{
+					bestT = t;
+					bestTarget = p;
+					bestClosest = closest;
+					hitSomeone = true;
+				}
+			}
+		}
+
+		if (hitSomeone && bestTarget)
+		{
+			// 衝突点→プレイヤーの水平正規化ベクトルでノックバック
+			VECTOR kbDir = VSub(bestTarget->GetPos(), bestClosest);
+			kbDir.y = 0.0f;
+			float len = VSize(kbDir);
+			kbDir = (len > 1e-5f) ? VScale(kbDir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
+
+			VECTOR knockBack = VScale(kbDir, KNOCKBACK_FORCE);
+			knockBack.y += KNOCKBACK_UPWARD_FORCE;
+
+			bestTarget->ApplyHit(knockBack);
+
+			// 弾は1ヒットで消える
+			b->Kill();
 		}
 	}
 }
@@ -385,7 +462,6 @@ void PlayerManager::CheckBulletCollisions()
 void PlayerManager::Reset()
 {
 	ClearPlayers();
-	// 再初期化（必要ならここでプレイヤー再生成など）
 	for (auto& player : players_)
 	{
 		player->Init();

@@ -1,11 +1,9 @@
 #pragma once
 #include <DxLib.h>
 
-
 class Bullet
 {
 public:
-
 	// 定数
 	static constexpr float BULLET_LIMIT = 2000.0f;
 
@@ -18,7 +16,7 @@ public:
 	// 更新処理
 	void Update();
 
-	// 描画処理
+	// 描画
 	void Draw() const;
 
 	void Release();
@@ -26,23 +24,24 @@ public:
 	bool IsAlive() const { return isAlive_; }
 	const VECTOR& GetPos() const { return pos_; }
 
-	// 当たり半径
+	// 衝突半径
 	float GetCollRad() const { return 30.0f; }
 
-	// 弾を殺す処理
+	// 弾を消す
 	void Kill() { isAlive_ = false; }
 
-	// 発射者ID取得
+	// オーナーID取得
 	int GetOwnerId() const { return ownerId_; }
 
-private:
+	// 追加: 前フレーム位置の取得（CCD用）
+	const VECTOR& GetPrevPos() const { return prevPos_; }
 
-	VECTOR pos_;		// 弾の位置
-	VECTOR dir_;		// 弾の進行方向
-	float speed_;		// 弾の速度
-	//int modelId_;		// 弾のモデルID
-	bool isAlive_;		// 弾の生存状態
-	int ownerId_;		// 発射者のプレイヤーID（-1=なし）
-	VECTOR prevPos_;	// 前フレームの位置
+private:
+	VECTOR pos_;        // 弾の位置
+	VECTOR dir_;        // 弾の進行方向（正規化推奨）
+	float speed_;       // 弾の速度
+	bool isAlive_;      // 生存フラグ
+	int ownerId_;       // 発射者のプレイヤーID（-1=なし）
+	VECTOR prevPos_;    // 前フレーム位置（CCD用）
 	bool collidedWithStage_ = false;
 };

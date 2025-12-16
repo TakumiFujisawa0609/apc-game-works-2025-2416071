@@ -47,10 +47,10 @@ public:
 	static float Deg2RadF(float deg);
 	static int Deg2RadI(int deg);
 
-	// 0～360度の範囲に収める
+	// 0　360度の範囲に収める
 	static double DegIn360(double deg);
 
-	// 0(0)～2π(360度)の範囲に収める
+	// 0(0)　2π(360度)の範囲に収める
 	static double RadIn2PI(double rad);
 
 	// 回転が少ない方の回転向きを取得する(時計回り:1、反時計回り:-1)
