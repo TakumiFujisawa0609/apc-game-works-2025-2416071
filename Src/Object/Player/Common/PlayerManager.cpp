@@ -127,19 +127,23 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 	InputManager::JOYPAD_NO padNo = static_cast<InputManager::JOYPAD_NO>(0);
 
 	if (id == 0) {
-		keyConfig = { KEY_INPUT_W, KEY_INPUT_S, KEY_INPUT_A, KEY_INPUT_D, KEY_INPUT_SPACE, KEY_INPUT_F };
+		// Player1: à⁄ìÆ=WASD, ÉWÉÉÉìÉv=Space, çUåÇ=F, ÇΩÇﬂ=LShift
+		keyConfig = { KEY_INPUT_W, KEY_INPUT_S, KEY_INPUT_A, KEY_INPUT_D, KEY_INPUT_SPACE, KEY_INPUT_F, KEY_INPUT_LSHIFT };
 		padNo = InputManager::JOYPAD_NO::PAD1;
 	}
 	else if (id == 1) {
-		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN, KEY_INPUT_RSHIFT };
+		// Player2: ñÓàÛÅ{Enter, çUåÇ=âEShift, ÇΩÇﬂ=ç∂Ctrl
+		keyConfig = { KEY_INPUT_UP, KEY_INPUT_DOWN, KEY_INPUT_LEFT, KEY_INPUT_RIGHT, KEY_INPUT_RETURN, KEY_INPUT_RSHIFT, KEY_INPUT_LCONTROL };
 		padNo = InputManager::JOYPAD_NO::PAD2;
 	}
 	else if (id == 2) {
-		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_Q, KEY_INPUT_U };
+		// Player3: IJKLÅ{QçUåÇÅ{OÇΩÇﬂ
+		keyConfig = { KEY_INPUT_I, KEY_INPUT_K, KEY_INPUT_J, KEY_INPUT_L, KEY_INPUT_Q, KEY_INPUT_U, KEY_INPUT_O };
 		padNo = InputManager::JOYPAD_NO::PAD3;
 	}
 	else if (id == 3) {
-		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_E, KEY_INPUT_NUMPAD7 };
+		// Player4: ÉeÉìÉLÅ[à⁄ìÆÅ{EÉWÉÉÉìÉvÅ{ÇΩÇﬂÇÕâºÇ≈RShiftÅiå„Ç©ÇÁïœçXÅj
+		keyConfig = { KEY_INPUT_NUMPAD8, KEY_INPUT_NUMPAD5, KEY_INPUT_NUMPAD4, KEY_INPUT_NUMPAD6, KEY_INPUT_E, KEY_INPUT_NUMPAD7, KEY_INPUT_RSHIFT };
 		padNo = InputManager::JOYPAD_NO::PAD4;
 	}
 	else {
@@ -150,20 +154,11 @@ void PlayerManager::CreatePlayer(PlayerType type, int id, const PlayerParam& par
 
 	switch (type)
 	{
-	case PlayerType::Player_1:
-		newPlayer = std::make_shared<Player_1>(id, param, std::move(controller));
-		break;
-	case PlayerType::Player_2:
-		newPlayer = std::make_shared<Player_2>(id, param, std::move(controller));
-		break;
-	case PlayerType::Player_3:
-		newPlayer = std::make_shared<Player_3>(id, param, std::move(controller));
-		break;
-	case PlayerType::Player_4:
-		newPlayer = std::make_shared<Player_4>(id, param, std::move(controller));
-		break;
-	default:
-		break;
+	case PlayerType::Player_1: newPlayer = std::make_shared<Player_1>(id, param, std::move(controller)); break;
+	case PlayerType::Player_2: newPlayer = std::make_shared<Player_2>(id, param, std::move(controller)); break;
+	case PlayerType::Player_3: newPlayer = std::make_shared<Player_3>(id, param, std::move(controller)); break;
+	case PlayerType::Player_4: newPlayer = std::make_shared<Player_4>(id, param, std::move(controller)); break;
+	default: break;
 	}
 
 	players_.push_back(newPlayer);

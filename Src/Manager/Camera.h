@@ -22,7 +22,7 @@ public:
 	enum class MODE
 	{
 		NONE,
-		FIXED_POINT,	// 固定カメラ（本プロジェクトでは「平均注視・X軸回転」の追従に利用）
+		FIXED_POINT,	// 固定カメラ（本作では「平均注視・X軸回転」の追従に利用）
 		FREE,			// 自由カメラ（デバッグ）
 	};
 
@@ -35,7 +35,7 @@ public:
 	// 初期化
 	void Init(void);
 
-	// 更新（プレイヤーの平均座標に追従し、X軸回転のみで配置）
+	// 更新（FIXED_POINT時のみ、プレイヤー平均注視＋X軸回転で追従）
 	void Update(void);
 
 	// 描画前のカメラ設定
@@ -61,7 +61,21 @@ public:
 	// 自由カメラ移動（デバッグ）
 	void MoveXYZDirection(void);
 
+	// 追加: ゲーム開始用の安定リセット
+	// - pitchDeg: X軸回転（度数法）
+	// - baseDistance: 初期距離（オートズームは数フレーム後から有効化）
+	// - enableAutoZoom: オートズームを使うか
+	// - zoomSpreadScale: 散開→距離の寄与係数
+	void ResetForGame(float pitchDeg = 30.0f, float baseDistance = 1400.0f,
+		bool enableAutoZoom = true, float zoomSpreadScale = 1.5f);
+
 private:
+
+	// 内部ヘルパ
+	static inline VECTOR LerpV(const VECTOR& a, const VECTOR& b, float t)
+	{
+		return { a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t };
+	}
 
 	// カメラモード
 	MODE mode_;
@@ -72,16 +86,20 @@ private:
 	// カメラの角度（x=ピッチのみ使用）
 	VECTOR angles_;
 
-	// 追従用パラメータ（平均注視＋オートズーム＋スムージング）
-	float baseDistance_ = 1400.0f;  // 基本距離
-	float zoomSpreadScale_ = 1.5f;    // 散開量→距離の寄与係数
-	float minDistance_ = 800.0f;  // 最小距離
-	float maxDistance_ = 2600.0f; // 最大距離
-	float lerpFactor_ = 0.12f;   // 位置スムージング（0..1）
+	// 追従設定
+	bool   followPlayers_ = false;
+	bool   autoZoom_ = true;
+	float  baseDistance_ = 1400.0f;
+	float  zoomSpreadScale_ = 1.5f;
+	float  minDistance_ = 800.0f;
+	float  maxDistance_ = 2600.0f;
+	float  lerpFactor_ = 0.12f;
 
-	// 内部ヘルパ
-	static inline VECTOR LerpV(const VECTOR& a, const VECTOR& b, float t)
-	{
-		return { a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t };
-	}
+	// オートズームの滑らかな立ち上げ
+	int    zoomRampFrames_ = 30; // 最初のNフレームは固定距離
+	int    zoomRampCounter_ = 0;
+
+	// 直近ターゲット（スムージング）
+	VECTOR lastTarget_ = { 0.0f, 0.0f, 0.0f };
+	bool   hasLastTarget_ = false;
 };

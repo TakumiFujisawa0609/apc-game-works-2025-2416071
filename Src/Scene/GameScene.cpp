@@ -18,82 +18,58 @@ GameScene::GameScene()
 
 GameScene::~GameScene()
 {
-
 }
 
 void GameScene::Init()
 {
-	// カメラを固定
+	// カメラを安定リセット
 	Camera* camera = SceneManager::GetInstance().GetCamera();
 	camera->ChangeMode(Camera::MODE::FIXED_POINT);
+	camera->ResetForGame(30.0f, 1400.0f, true, 1.5f);
 
-	// プレイヤー人数取得
-	int scenePlayerNum = SceneManager::GetInstance().GetPlayerNum();
+	// プレイヤー数
+	playerNum_ = SceneManager::GetInstance().GetPlayerNum();
+	singlePlayerMode_ = (playerNum_ == 1);
 
-	// Stage 初期化
+	// ステージ
 	Stage::GetInstance().Init();
 
-	// PlayerManager 初期化
+	// PlayerManager
 	playerManager_ = &PlayerManager::GetInstance();
 	playerManager_->Reset();
 
-	// CharacterSelect で選ばれたキャラIDリスト（各プレイヤーの選択）
+	// 選択キャラ
 	const auto& selected = SceneManager::GetInstance().GetSelectedPlayerNums();
 
-	// createCount: GameScene で生成するプレイヤー（実体）の数
-	int createCount = scenePlayerNum;
-	bool singlePlayerMode = (scenePlayerNum == 1);
-
-	if (singlePlayerMode)
-	{
-		createCount = 4; // 1人選択時のみ 4体に拡張
+	// 生成数
+	int createCount = playerNum_;
+	if (singlePlayerMode_) {
+		createCount = 4; // 1人選択でも4体生成（0は人間、他はAI）
 	}
-	else
-	{
-		// selected に値が入っていればその数を優先して使う
-		if (!selected.empty())
-		{
-			createCount = static_cast<int>(selected.size());
-		}
-		// safety clamp
+	else {
+		if (!selected.empty()) createCount = (int)selected.size();
 		if (createCount < 1) createCount = 1;
 		if (createCount > 4) createCount = 4;
 	}
 
-	// プレイヤー生成ループ
 	for (int i = 0; i < createCount; ++i)
 	{
 		PlayerType type = PlayerType::Player_1;
-
-		// キャラタイプ決定
 		if (!selected.empty())
 		{
-			// singlePlayerMode のとき selected は通常サイズ1（選んだキャラ）
-			// i==0 はプレイヤーの選択キャラ、i>0 は AI 用に順次別のキャラを割り当てる
-			if (singlePlayerMode)
-			{
+			if (singlePlayerMode_) {
 				int humanTypeIndex = selected[0];
-				int t = (humanTypeIndex + i) % 4;
-				if (t < 0) t = 0;
-				type = static_cast<PlayerType>(t);
+				type = static_cast<PlayerType>((humanTypeIndex + i) % 4);
 			}
-			else
-			{
-				// マルチプレイ（選択された複数）: i 番目に選ばれたキャラを使う
-				int ti = selected[i];
-				if (ti < 0) ti = 0;
-				if (ti > 3) ti = 3;
+			else {
+				int ti = selected[i]; if (ti < 0) ti = 0; if (ti > 3) ti = 3;
 				type = static_cast<PlayerType>(ti);
 			}
 		}
-		else
-		{
-			// 選択がない場合は既存の安定的割当（i % 4）
-			int t = i % 4;
-			type = static_cast<PlayerType>(t);
+		else {
+			type = static_cast<PlayerType>(i % 4);
 		}
 
-		// プレイヤーパラメータ設定（既存ロジックを維持）
 		PlayerParam param;
 		switch (type)
 		{
@@ -104,36 +80,18 @@ void GameScene::Init()
 		default:                   param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
 		}
 
-		// createAsHuman 判定
-		bool createAsHuman = false;
-		if (singlePlayerMode)
-		{
-			// single-player の場合は i==0 が人間、それ以外は AI
-			createAsHuman = (i == 0);
-		}
-		else
-		{
-			// マルチプレイ（2P/3P/4P）はすべて人間（AI は生成しない）
-			createAsHuman = true;
-		}
+		bool createAsHuman = singlePlayerMode_ ? (i == 0) : true;
 
-		if (createAsHuman)
-		{
-			// 既存の CreatePlayer（内部で Controller を作る）を利用
+		if (createAsHuman) {
 			playerManager_->CreatePlayer(type, i, param);
 		}
-		else
-		{
-			// single-player の AI を生成して注入（ownerId=i）
+		else {
 			std::unique_ptr<InputController> aiController = std::make_unique<AIController>(i);
 			playerManager_->CreatePlayer(type, i, param, std::move(aiController));
 		}
 	}
 
-	// 生成したプレイヤーを初期化（ループ外で一度だけ呼ぶ）
 	playerManager_->InitAllPlayers();
-
-	// トランジションタイマー初期化
 	transitionTimer_ = 0;
 }
 
@@ -141,22 +99,30 @@ void GameScene::Update()
 {
 	InputManager& ins = InputManager::GetInstance();
 
-	// グリッド更新
-	//grid_->Update();
-	
-	// プレイヤー更新とステージ傾き更新を一本化
+	// プレイヤー/ステージ更新
 	playerManager_->UpdatePlayers(Stage::GetInstance());
 
-	// ゲームオーバー状態を取得
-	bool isGameOver = playerManager_->GetIsGameOver();
+	// 1人プレイ時、ID=0（人間）が死亡したら即ゲームオーバー
+	if (singlePlayerMode_ && !playerManager_->GetIsGameOver())
+	{
+		const auto raw = playerManager_->GetPlayerRawPlayers();
+		for (auto* p : raw) {
+			if (!p) continue;
+			if (p->GetID() == 0) {
+				if (!p->IsAlive()) {
+					// 勝者未設定（-1）でゲームオーバー
+					playerManager_->ForceGameOver(-1);
+				}
+				break;
+			}
+		}
+	}
 
-	// ゲームオーバー時、数秒後にリザルト画面へ遷移
-	if (isGameOver)
+	// ゲームオーバー → 結果へ
+	if (playerManager_->GetIsGameOver())
 	{
 		transitionTimer_++;
-
-		// 3秒後にリザルト画面へ遷移
-		if (transitionTimer_ > 180)
+		if (transitionTimer_ > 90) // 1.5秒ほど待ってから
 		{
 			SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::RESULT);
 		}
@@ -165,40 +131,31 @@ void GameScene::Update()
 
 void GameScene::Draw()
 {
-	// グリッド描画
-	//grid_->Draw();
-
-	// ステージ描画
+	// ステージ
 	Stage::GetInstance().Draw();
 
-	// プレイヤー描画
+	// プレイヤー
 	playerManager_->DrawPlayers();
 
-	// 操作説明
-	if (playerManager_->GetIsGameOver())
-	{
-		int winnerID = playerManager_->GetWinnerID();
-		char buffer[128];
-		//sprintf_s(buffer, "Player %d Wins!", winnerID + 1);
-		// PAD1の右ボタンまたはEnterキーでタイトルへ戻る 操作促し文字
-		DrawString(100, 200, "終了！！　自動で画面が変わります", GetColor(250, 130, 130));
-	}
-
-	// デバッグ：プレイヤー人数表示
+	// デバッグ表示
 	DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
 
-	// デバッグ：勝者表示
 	if (playerManager_->GetIsGameOver())
 	{
-		int winnerID = playerManager_->GetWinnerID();
-		DrawFormatString(10, 30, GetColor(255, 255, 0), "Winner: Player %d", winnerID + 1);
+		if (playerNum_ == 1)
+		{
+			DrawString(100, 200, "GAME OVER", GetColor(250, 130, 130));
+		}
+		else
+		{
+			int winnerID = playerManager_->GetWinnerID();
+			DrawFormatString(100, 200, GetColor(255, 255, 0), "Winner: Player %d", winnerID + 1);
+		}
 	}
-
 }
 
 void GameScene::Draw3D()
 {
-	// 3D描画が必要な場合はここに追加
 }
 
 void GameScene::Release()
@@ -211,4 +168,3 @@ void GameScene::Release()
 		playerManager_ = nullptr;
 	}
 }
-

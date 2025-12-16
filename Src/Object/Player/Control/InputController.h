@@ -10,6 +10,7 @@ struct KeyConfig
     int right;
     int jump;
     int attack;
+    int dashCharge; 
 };
 
 class InputController
@@ -27,6 +28,5 @@ public:
     virtual bool IsAttackTrigger() const = 0;
 
     // 追加: ダッシュの「ため」(チャージ) ホールド
-    // 既定は未対応（false）。Controller/AIController で必要に応じて上書き。
     virtual bool IsDashChargeHeld() const { return false; }
 };

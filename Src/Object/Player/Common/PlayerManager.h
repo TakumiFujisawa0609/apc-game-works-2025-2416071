@@ -24,7 +24,7 @@ public:
 	// 突進ヒット専用の上向き成分
 	static constexpr float DASH_KNOCKBACK_UPWARD = 900.0f;
 
-	// 追加: キャラクターのデフォルトパラメータ・モデルパス取得
+	// 追加: キャラ定義の取得（既存）
 	static PlayerParam GetDefaultParamForType(PlayerType type);
 	static const char* GetModelPathForType(PlayerType type);
 
@@ -34,8 +34,6 @@ public:
 
 	// 初期化
 	void Init();
-
-	// 全プレイヤー初期化
 	void InitAllPlayers();
 
 	// プレイヤー生成
@@ -55,7 +53,7 @@ public:
 	// 勝敗判定
 	void CheckGameResult();
 
-	// プレイヤー順位（死亡順に基づく）
+	// プレイヤー順位（死亡順）
 	std::vector<int> GetPlayerRanks() const;
 
 	// 状態
@@ -73,6 +71,9 @@ public:
 	// リセット/解放
 	void Reset();
 	void Release();
+
+	// 追加: 強制的にゲームオーバーにする（winnerId=-1 なら勝者表示なし）
+	void ForceGameOver(int winnerId = -1) { isGameOver_ = true; winnerID_ = winnerId; }
 
 private:
 	PlayerManager();

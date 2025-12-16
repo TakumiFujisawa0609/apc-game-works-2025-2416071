@@ -20,25 +20,59 @@ void Camera::Init(void)
 	pos_ = DEFAULT_POS;
 	angles_ = DEFAULT_ANGLES;
 
-	// 初期は固定ポイント（＝本作では追従カメラとして利用）
+	// 初期は固定ポイント（＝追従カメラとして利用）
 	mode_ = MODE::FIXED_POINT;
+
+	// 追従設定の初期値
+	followPlayers_ = false;
+	autoZoom_ = true;
+	baseDistance_ = 1400.0f;
+	zoomSpreadScale_ = 1.5f;
+	minDistance_ = 800.0f;
+	maxDistance_ = 2600.0f;
+	lerpFactor_ = 0.12f;
+	zoomRampFrames_ = 30;
+	zoomRampCounter_ = 0;
+	hasLastTarget_ = false;
+}
+
+void Camera::ResetForGame(float pitchDeg, float baseDistance, bool enableAutoZoom, float zoomSpreadScale)
+{
+	// ピッチを設定（Yaw/Rollは0）
+	angles_.x = pitchDeg * DX_PI_F / 180.0f;
+	angles_.y = 0.0f;
+	angles_.z = 0.0f;
+
+	// 追従フラグとズーム設定
+	followPlayers_ = true;
+	autoZoom_ = enableAutoZoom;
+	baseDistance_ = baseDistance;
+	zoomSpreadScale_ = zoomSpreadScale;
+	zoomRampCounter_ = 0;         // 最初は固定距離
+	hasLastTarget_ = false;     // ターゲット未定義
+
+	// 初期位置はステージ中心＋固定距離（人数に依らず一定）
+	const VECTOR center = Stage::GetInstance().GetPos();
+	const float sinP = std::sinf(angles_.x);
+	const float cosP = std::cosf(angles_.x);
+	pos_ = { center.x, center.y + sinP * baseDistance_, center.z - cosP * baseDistance_ };
+	lastTarget_ = center;
+	hasLastTarget_ = true;
 }
 
 void Camera::Update(void)
 {
-	// 追従カメラ（平均注視＋X軸回転のみ）
-	// プレイヤーの平均座標を求める（生存者のみ）
-	auto& pm = PlayerManager::GetInstance();
-	const auto players = pm.GetPlayerRawPlayers();
+	// FIXED_POINT で追従有効時のみ処理
+	if (mode_ != MODE::FIXED_POINT || !followPlayers_) return;
 
+	// 生存プレイヤーの平均座標
+	const auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
 	int alive = 0;
 	VECTOR sum = { 0.0f, 0.0f, 0.0f };
-
 	for (auto* p : players)
 	{
-		if (!p) continue;
-		if (!p->IsAlive()) continue;
-		VECTOR po = p->GetPos();
+		if (!p || !p->IsAlive()) continue;
+		const VECTOR po = p->GetPos();
 		sum.x += po.x; sum.y += po.y; sum.z += po.z;
 		++alive;
 	}
@@ -50,46 +84,49 @@ void Camera::Update(void)
 	}
 	else
 	{
-		// 誰もいなければステージ中心
 		target = Stage::GetInstance().GetPos();
 	}
 
-	// プレイヤーの散開量（XZ平面）から距離をオートズーム
+	// オートズーム距離
 	float dist = baseDistance_;
-	if (alive > 0)
+	if (autoZoom_)
 	{
-		float maxSpread = 0.0f;
-		for (auto* p : players)
+		if (zoomRampCounter_ >= zoomRampFrames_)
 		{
-			if (!p || !p->IsAlive()) continue;
-			const VECTOR po = p->GetPos();
-			const float dx = po.x - target.x;
-			const float dz = po.z - target.z;
-			const float spread = std::sqrt(dx * dx + dz * dz);
-			if (spread > maxSpread) maxSpread = spread;
+			// 散開量（XZ）から距離を算出
+			float maxSpread = 0.0f;
+			for (auto* p : players)
+			{
+				if (!p || !p->IsAlive()) continue;
+				const VECTOR po = p->GetPos();
+				const float dx = po.x - target.x;
+				const float dz = po.z - target.z;
+				const float spread = std::sqrt(dx * dx + dz * dz);
+				if (spread > maxSpread) maxSpread = spread;
+			}
+			dist = baseDistance_ + maxSpread * zoomSpreadScale_;
+			if (dist < minDistance_) dist = minDistance_;
+			if (dist > maxDistance_) dist = maxDistance_;
 		}
-		dist = baseDistance_ + maxSpread * zoomSpreadScale_;
-		if (dist < minDistance_) dist = minDistance_;
-		if (dist > maxDistance_) dist = maxDistance_;
+		else
+		{
+			// ランプ中は固定距離
+			++zoomRampCounter_;
+			dist = baseDistance_;
+		}
 	}
 
-	// X軸回転（ピッチ）のみでカメラ位置を決定
-	// forward（視線方向）は (0, -sinθ, cosθ) を想定
-	// target = cameraPos + forward * dist となるように cameraPos を計算
-	const float pitch = angles_.x; // ラジアン（DEFAULT_ANGLES 初期値を使用）
-	const float sinP = std::sinf(pitch);
-	const float cosP = std::cosf(pitch);
+	// X軸回転のみで視点位置を算出
+	const float sinP = std::sinf(angles_.x);
+	const float cosP = std::cosf(angles_.x);
+	const VECTOR desiredPos = { target.x, target.y + sinP * dist, target.z - cosP * dist };
 
-	const VECTOR desiredPos = {
-		target.x,
-		target.y + sinP * dist,
-		target.z - cosP * dist
-	};
-
-	// スムージングして追従
+	// ターゲットと視点をスムージング
+	if (!hasLastTarget_) { lastTarget_ = target; hasLastTarget_ = true; }
+	lastTarget_ = LerpV(lastTarget_, target, lerpFactor_);
 	pos_ = LerpV(pos_, desiredPos, lerpFactor_);
 
-	// 固定カメラでは Yaw/Roll は使わない（X軸回転のみ）
+	// Yaw/Rollは使わない
 	angles_.y = 0.0f;
 	angles_.z = 0.0f;
 }
@@ -108,7 +145,6 @@ void Camera::SetBeforeDraw(void)
 	case MODE::FREE:
 		// 自由移動・回転
 		MoveXYZDirection();
-		// SetBeforeDrawFree(); // 必要なら切り替え
 		break;
 
 	case MODE::NONE:
@@ -144,10 +180,10 @@ void Camera::MoveXYZDirection(void)
 	// IJKLで平行移動（デバッグ）
 	const float movePow = 3.0f;
 	VECTOR dir = AsoUtility::VECTOR_ZERO;
-	if (ins.IsNew(KEY_INPUT_I)) { dir = { 0.0f, 0.0f, 1.0f }; }
-	if (ins.IsNew(KEY_INPUT_J)) { dir = { -1.0f, 0.0f, 0.0f }; }
+	if (ins.IsNew(KEY_INPUT_I)) { dir = { 0.0f, 0.0f,  1.0f }; }
+	if (ins.IsNew(KEY_INPUT_J)) { dir = { -1.0f, 0.0f,  0.0f }; }
 	if (ins.IsNew(KEY_INPUT_K)) { dir = { 0.0f, 0.0f, -1.0f }; }
-	if (ins.IsNew(KEY_INPUT_L)) { dir = { 1.0f, 0.0f, 0.0f }; }
+	if (ins.IsNew(KEY_INPUT_L)) { dir = { 1.0f, 0.0f,  0.0f }; }
 	if (!AsoUtility::EqualsVZero(dir))
 	{
 		MATRIX mat = MGetIdent();
@@ -189,19 +225,6 @@ void Camera::DrawDebug(void)
 void Camera::ChangeMode(MODE mode)
 {
 	mode_ = mode;
-
-	switch (mode_)
-	{
-	case Camera::MODE::FIXED_POINT:
-		// 追従は Update() が担当
-		break;
-	case Camera::MODE::FREE:
-		// デバッグ用
-		break;
-	case Camera::MODE::NONE:
-	default:
-		break;
-	}
 }
 
 void Camera::Release(void)

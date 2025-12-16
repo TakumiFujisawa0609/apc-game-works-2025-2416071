@@ -12,20 +12,17 @@ VECTOR Controller::GetMoveInputVector() const
     InputManager& ins = InputManager::GetInstance();
     VECTOR worldInputVec = { 0.0f, 0.0f, 0.0f };
 
-    // ゲームパッド接続時は左スティックの連続ベクトル
-    if (GetJoypadNum() > 0)
+    if (GetJoypadNum() == 0)
     {
-        InputManager::JOYPAD_IN_STATE padState = ins.GetJPadInputState(padNo_);
-        // AKeyLX, AKeyLY を XZ 平面ベクトルへ変換（環境既存のヘルパを使用）
-        worldInputVec = ins.GetDirXZAKey(padState.AKeyLX, padState.AKeyLY);
-    }
-    else
-    {
-        // 未接続時はキーボード（パルス的にベクトルを与える）
         if (ins.IsNew(config_.up))    worldInputVec.z += 10.0f;
         if (ins.IsNew(config_.down))  worldInputVec.z -= 10.0f;
         if (ins.IsNew(config_.left))  worldInputVec.x -= 10.0f;
         if (ins.IsNew(config_.right)) worldInputVec.x += 10.0f;
+    }
+    else
+    {
+        InputManager::JOYPAD_IN_STATE padState = ins.GetJPadInputState(padNo_);
+        worldInputVec = ins.GetDirXZAKey(padState.AKeyLX, padState.AKeyLY);
     }
 
     return worldInputVec;
@@ -35,17 +32,11 @@ bool Controller::IsJumpTrigger() const
 {
     InputManager& ins = InputManager::GetInstance();
 
-    // キーボード・ジャンプ
-    if (ins.IsTrgDown(config_.jump))
-        return true;
+    if (ins.IsTrgDown(config_.jump)) return true;
 
-    // パッド・ジャンプ（例: R_TRIGGER）
     if (GetJoypadNum() > 0) {
-        if (ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::R_TRIGGER)) {
-            return true;
-        }
+        if (ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::R_TRIGGER)) return true;
     }
-
     return false;
 }
 
@@ -53,17 +44,11 @@ bool Controller::IsAttackTrigger() const
 {
     InputManager& ins = InputManager::GetInstance();
 
-    // キーボード・攻撃
-    if (ins.IsTrgDown(config_.attack))
-        return true;
+    if (ins.IsTrgDown(config_.attack)) return true;
 
-    // パッド・攻撃（例: 十字キーDOWN）
     if (GetJoypadNum() > 0) {
-        if (ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::DOWN)) {
-            return true;
-        }
+        if (ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::DOWN)) return true;
     }
-
     return false;
 }
 
@@ -73,20 +58,14 @@ bool Controller::IsDashChargeHeld() const
 
     if (GetJoypadNum() > 0)
     {
-    
-        if (ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::L_TRIGGER)) {
-            return true;
+        // 推奨: トリガ押しっぱなしAPI
+        if (ins.IsPadBtnNew(padNo_, InputManager::JOYPAD_BTN::L_TRIGGER) || // 代替（押下検知）
+            ins.IsPadBtnTrgDown(padNo_, InputManager::JOYPAD_BTN::L_TRIGGER)) {
+            // 押下イベントのみの場合は、必要なら「押しっぱなし状態」を自前で保持してください
         }
-
-        InputManager::JOYPAD_IN_STATE padState = ins.GetJPadInputState(padNo_);
-        const float lt = padState.AKeyLY;
-        if (lt > 0.5f) return true;
+        // 左トリガーのアナログ値での判定が必要なら、InputManagerにLT値を追加して参照してください
     }
 
-    // キーボード（共用）: Shift は「ため」
-    if (CheckHitKey(KEY_INPUT_LSHIFT) || CheckHitKey(KEY_INPUT_RSHIFT)) {
-        return true;
-    }
-
-    return false;
+    // キーボード: プレイヤー別の dashCharge キーを使用
+    return CheckHitKey(config_.dashCharge) != 0;
 }
