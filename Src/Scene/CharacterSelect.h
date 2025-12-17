@@ -46,8 +46,11 @@ private:
     void DrawFooter();
     void DrawDuplicateNotice();
 
-    // 追加: 3Dプレビュー＋パラメータ表示
+    // 3Dプレビュー＋パラメータ表示
     void DrawPreviewModelAndParams();
+
+    // 追加: カード内パラメータ表示
+    void DrawCardStatsBars(const struct PlayerParam& p, int x, int y, int w, int h);
 
     // 見た目設定
     void BuildDefaultCharacters();
@@ -70,7 +73,7 @@ private:
     int previewAreaX_ = 900;
     int previewAreaY_ = 260;
     float previewScale_ = 1.4f;
-    float previewModelOffsetX_ = 180.0f;
+    float previewModelOffsetX_ = 400.0f;
 
     // 状態
     int playerCount_;

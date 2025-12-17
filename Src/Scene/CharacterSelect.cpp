@@ -219,7 +219,6 @@ void CharacterSelect::RevertPlayer()
 void CharacterSelect::CompleteSelection()
 {
     finished_ = true;
-    // 保険：完了直後の描画で out of range にならないようクランプ
     if (currentPlayer_ >= playerCount_) currentPlayer_ = playerCount_ - 1;
     if (currentPlayer_ < 0) currentPlayer_ = 0;
 }
@@ -229,10 +228,7 @@ void CharacterSelect::Draw()
     DrawHeader();
     DrawCharacterGrid();
     DrawPlayerList();
-
-    // 3Dプレビュー＋パラメータ（固定表示）
     DrawPreviewModelAndParams();
-
     DrawFooter();
     DrawDuplicateNotice();
 }
@@ -249,7 +245,7 @@ int CharacterSelect::ActivePlayerIndexForDraw() const
 void CharacterSelect::DrawHeader()
 {
     const int activeIdx = ActivePlayerIndexForDraw();
-    DrawFormatString(60, 40, GetColor(255, 255, 255), "キャラクター選択（順番選択）");
+    DrawFormatString(60, 40, GetColor(255, 255, 255), "キャラクター選択");
     if (!finished_) {
         DrawFormatString(60, 66, GetColor(180, 180, 255), "P%d が選択中", activeIdx + 1);
     }
@@ -272,7 +268,6 @@ void CharacterSelect::DrawCharacterGrid()
             int x = gridLeft_ + c * (cardW_ + gridGapX_);
             int y = gridTop_ + r * (cardH_ + gridGapY_);
 
-            // ハイライトは finished_ で無効化。参照は必ず activeIdx を使う
             bool highlight = (!finished_) && (idx == selectedIndex_[activeIdx]);
             bool taken = IsTaken(idx);
 
@@ -284,7 +279,7 @@ void CharacterSelect::DrawCharacterGrid()
 
 void CharacterSelect::DrawCharacterCard(int idx, int x, int y, int w, int h, bool highlight, bool taken)
 {
-    // 背景色は固定（必要なら PlayerType で変更）
+    // 背景色
     unsigned int bg = GetColor(60, 60, 60);
     if (taken) bg = ColorMul(bg, 0.5f);
 
@@ -294,7 +289,14 @@ void CharacterSelect::DrawCharacterCard(int idx, int x, int y, int w, int h, boo
     const char* name = characterNames_[idx].c_str();
     DrawFormatString(x + 10, y + 8, GetColor(255, 255, 255), "%s", name);
 
-    // ハイライト
+    // 追加: カード内に常時パラメータ棒グラフを描画
+    int typeIdx = idx;
+    if (typeIdx < 0) typeIdx = 0;
+    if (typeIdx >= MAX_CHARACTERS) typeIdx = MAX_CHARACTERS - 1;
+    PlayerParam p = PlayerManager::GetDefaultParamForType(static_cast<PlayerType>(typeIdx));
+    DrawCardStatsBars(p, x, y, w, h);
+
+    // ハイライト枠
     if (highlight)
     {
         int blink = (blinkCounter_ / 10) % 2;
@@ -325,12 +327,55 @@ void CharacterSelect::DrawPlayerList()
             ok ? GetColor(120, 255, 120) :
             GetColor(255, 255, 255);
 
-        DrawFormatString(x, y, nameCol, "P%d : %s %s",
+       /* DrawFormatString(x, y, nameCol, "P%d : %s %s",
             i + 1,
             characterNames_[sel].c_str(),
-            ok ? "[OK]" : "");
+            ok ? "[OK]" : "");*/
 
         y += rightLineH_;
+    }
+}
+
+void CharacterSelect::DrawCardStatsBars(const PlayerParam& p, int x, int y, int w, int h)
+{
+    // カード内マージン
+    const int mx = 10;
+    const int my = 10;
+
+    // 棒グラフ領域（カード下部に3本）
+    int bx = x + mx;
+    int bw = w - mx * 2;
+
+    // 3本のバーを下から積む
+    int rowH = 16;
+    int gap = 6;
+    int baseY = y + h - (rowH * 3 + gap * 2 + my);
+
+    auto clamp01 = [](float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); };
+    float speedT = clamp01(p.speed / 10.0f + 0.1f);
+    float jumpT = clamp01(p.jumpPower / 10.0f + 0.1f);
+    float weightT = clamp01(p.weight / 15.0f);
+
+    struct BarDef { const char* label; float t; unsigned int col; };
+    BarDef bars[3] = {
+        { "Speed",  speedT,  GetColor(120, 220, 255) },
+        { "Jump ",  jumpT,   GetColor(120, 255, 160) },
+        { "Weight", weightT, GetColor(255, 180, 120) },
+    };
+
+    for (int i = 0; i < 3; ++i)
+    {
+        int yy = baseY + i * (rowH + gap);
+        int filled = (int)(bw * bars[i].t);
+
+        // ラベル
+        DrawFormatString(bx, yy - 12, GetColor(220, 220, 220), "%s", bars[i].label);
+        // 枠＋ベース
+        DrawBox(bx, yy, bx + bw, yy + rowH, GetColor(60, 60, 60), TRUE);
+        // フィル
+        DrawBox(bx, yy, bx + filled, yy + rowH, bars[i].col, TRUE);
+        // 外枠
+        DrawBox(bx, yy, bx + bw, yy + rowH, GetColor(20, 20, 20), FALSE);
     }
 }
 
@@ -338,7 +383,7 @@ void CharacterSelect::DrawPreviewModelAndParams()
 {
     const int activeIdx = ActivePlayerIndexForDraw();
 
-    // 選択中のキャラは activeIdx で取得（currentPlayer_ を使わない）
+    // 選択中のキャラは activeIdx で取得
     int sel = selectedIndex_[activeIdx];
     if (sel < 0 || sel >= MAX_CHARACTERS) sel = 0;
 
@@ -359,14 +404,14 @@ void CharacterSelect::DrawPreviewModelAndParams()
         MV1DrawModel(modelId);
     }
 
-    // パラメータ棒グラフ
-    PlayerParam p = PlayerManager::GetDefaultParamForType(static_cast<PlayerType>(sel));
+    // プレビュー下の棒グラフ（参考表示）
+    PlayerParam pp = PlayerManager::GetDefaultParamForType(static_cast<PlayerType>(sel));
     auto clamp01 = [](float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); };
-    float speedT = clamp01(p.speed / 10.0f + 0.1f);
-    float jumpT = clamp01(p.jumpPower / 10.0f + 0.1f);
-    float weightT = clamp01(p.weight / 15.0f);
+    float speedT = clamp01(pp.speed / 10.0f + 0.1f);
+    float jumpT = clamp01(pp.jumpPower / 10.0f + 0.1f);
+    float weightT = clamp01(pp.weight / 15.0f);
 
-    int bx = previewAreaX_ - 180;
+    int bx = previewAreaX_ - 300;
     int by = previewAreaY_ + 120;
     int bw = 360;
 
@@ -386,7 +431,7 @@ void CharacterSelect::DrawFooter()
 {
     int baseY = 420;
     DrawFormatString(60, baseY + 0, GetColor(180, 180, 255), "操作ガイド: ←/→ で選択  Enter/Space で決定  B で戻る");
-    DrawFormatString(60, baseY + 20, GetColor(160, 160, 160), "プレビューは固定表示（プレイヤーは移動しません）。");
+    //DrawFormatString(60, baseY + 20, GetColor(160, 160, 160), "プレビューは固定表示（プレイヤーは移動しません）。");
 }
 
 void CharacterSelect::DrawDuplicateNotice()
@@ -396,8 +441,8 @@ void CharacterSelect::DrawDuplicateNotice()
     int blink = (blinkCounter_ / 8) % 2;
     if (blink == 0) return;
 
-    DrawFormatString(60, 360, GetColor(255, 120, 120),
-        "このキャラは既に他のプレイヤーが選択済みです。別のキャラを選択してください。");
+    //DrawFormatString(60, 360, GetColor(255, 120, 120),
+    //    "このキャラは既に他のプレイヤーが選択済みです。別のキャラを選択してください。");
 }
 
 void CharacterSelect::Release()
@@ -416,4 +461,3 @@ void CharacterSelect::Release()
     selectedIndex_.clear();
     confirmed_.clear();
 }
-

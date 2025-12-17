@@ -16,7 +16,7 @@ public:
 	static constexpr int BACKGROUND_COLOR_G = 139;
 	static constexpr int BACKGROUND_COLOR_B = 139;
 
-	// ディレクショナルライトの方向
+	// ディレクションライトの方向
 	static constexpr VECTOR LIGHT_DIRECTION = { 0.3f, -0.7f, 0.8f };
 
 	// シーン管理用
@@ -32,16 +32,16 @@ public:
 		RESULT,
 	};
 
-	// インスタンスの生成
+	// インスタンス生成
 	static void CreateInstance(void);
 
-	// インスタンスの取得
+	// インスタンス取得
 	static SceneManager& GetInstance(void);
 
 	// 初期化
 	void Init(void);
 
-	// 3Dの初期化
+	// 3D初期化
 	void Init3D(void);
 
 	// 更新
@@ -50,24 +50,24 @@ public:
 	// 描画
 	void Draw(void);
 
-	// リソースの破棄
+	// リソース解放
 	void Destroy(void);
 
-	// 状態遷移
+	// 遷移
 	void ChangeScene(SCENE_ID nextId);
 
-	// シーンIDの取得
-	SCENE_ID GetSceneID(void) const {return sceneId_;}
+	// 現在シーンID
+	SCENE_ID GetSceneID(void) const { return sceneId_; }
 
-	// デルタタイムの取得
-	float GetDeltaTime(void) const {return deltaTime_;}
+	// ΔTime
+	float GetDeltaTime(void) const { return deltaTime_; }
 
-	// カメラの取得
-	Camera* GetCamera(void) const {return camera_;}
+	// カメラ
+	Camera* GetCamera(void) const { return camera_; }
 
 private:
 
-	// 静的インスタンス
+	// 単一インスタンス
 	static SceneManager* instance_;
 
 	SCENE_ID sceneId_;
@@ -76,53 +76,56 @@ private:
 	// フェード
 	Fader* fader_;
 
-	// 各種シーン
+	// 現在のシーン
 	SceneBase* scene_;
 
 	// カメラ
 	Camera* camera_;
 
-	// シーン遷移中判定
+	// 遷移中フラグ
 	bool isSceneChanging_;
-
-	//ここから下にobjectのポインタを追加していく
-
 
 	// デルタタイム
 	std::chrono::system_clock::time_point preTime_;
 	float deltaTime_;
 
-	// デフォルトコンストラクタをprivateにして、
-	// 外部から生成できない様にする
+	// コンストラクタは private
 	SceneManager(void);
 
-	// コピーコンストラクタも同様
+	// コピー禁止
 	SceneManager(const SceneManager& instance) = default;
 
-	// デストラクタも同様
+	// デストラクタ
 	~SceneManager(void) = default;
 
-	// デルタタイムをリセットする
+	// ΔTime再設定
 	void ResetDeltaTime(void);
 
-	// シーン遷移
+	// シーン切替実行
 	void DoChangeScene(SCENE_ID sceneId);
 
-	// フェード
+	// フェード制御
 	void Fade(void);
 
 	// プレイヤー数
 	int playerNum_;
 
-	// キャラ選択で決まった各プレイヤー数をセット・ゲットする
+	// キャラセレで最後に選ばれたタイプ一覧（ID順）
 	std::vector<int> selectedPlayerNums_;
 
-	public:
-		void SetPlayerNum(int num) { playerNum_ = num; }
-		int GetPlayerNum(void) const { return playerNum_; }
+public:
+	void SetPlayerNum(int num) { playerNum_ = num; }
+	int GetPlayerNum(void) const { return playerNum_; }
 
-		// 選択タイプの保存と取得
-		void SetSelectedPlayerNums(const std::vector<int>& types) { selectedPlayerNums_ = types; }
-		const std::vector<int>& GetSelectedPlayerNums() const { return selectedPlayerNums_; }
+	// セーブ: キャラセレ（ID順）
+	void SetSelectedPlayerNums(const std::vector<int>& types) { selectedPlayerNums_ = types; }
+	const std::vector<int>& GetSelectedPlayerNums() const { return selectedPlayerNums_; }
 
+	// 追加: 直近ゲームで実際に出場したタイプ一覧（ID順、GameSceneが設定）
+	void SetLastSpawnedTypes(const std::vector<int>& types) { lastSpawnedTypes_ = types; }
+	const std::vector<int>& GetLastSpawnedTypes() const { return lastSpawnedTypes_; }
+
+private:
+	// 追加: 直近ゲームのスポーンタイプ（Resultで使用）
+	std::vector<int> lastSpawnedTypes_;
 };
