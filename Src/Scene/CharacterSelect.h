@@ -88,6 +88,9 @@ private:
     // 3Dプレビュー用モデルハンドル
     int previewModelId_[MAX_CHARACTERS] = { -1, -1, -1, -1 };
 
+    // 背景
+	int bgImageId_ = -1;
+
     // 点滅
     int blinkCounter_ = 0;
 };

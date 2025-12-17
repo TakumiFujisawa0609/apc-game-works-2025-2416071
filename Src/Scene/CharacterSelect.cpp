@@ -3,6 +3,7 @@
 #include "../Manager/SceneManager.h"
 #include "../Object/Player/Common/PlayerManager.h"
 #include "../Utility/AsoUtility.h"
+#include "../Application.h"
 
 // 簡易アルファ混合（暗くする）
 static unsigned int ColorMul(unsigned int c, float a)
@@ -75,6 +76,9 @@ void CharacterSelect::Init()
             previewModelId_[i] = -1;
         }
     }
+
+    // 背景イメージロード
+	bgImageId_ = LoadGraph("Data/Image/Background.png");
 
     currentPlayer_ = 0;
     finished_ = false;
@@ -225,6 +229,8 @@ void CharacterSelect::CompleteSelection()
 
 void CharacterSelect::Draw()
 {
+	// 背景描画
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 1.0, 0.0, bgImageId_, TRUE);
     DrawHeader();
     DrawCharacterGrid();
     DrawPlayerList();
@@ -314,7 +320,7 @@ void CharacterSelect::DrawPlayerList()
     int x = rightPanelX_;
     int y = rightPanelY_;
 
-    DrawFormatString(x, y - 24, GetColor(200, 200, 255), "プレイヤー状態");
+    //DrawFormatString(x, y - 24, GetColor(200, 200, 255), "プレイヤー状態");
     for (int i = 0; i < playerCount_; ++i)
     {
         bool isActive = (!finished_) && (i == activeIdx);
@@ -417,7 +423,7 @@ void CharacterSelect::DrawPreviewModelAndParams()
 
     auto drawBar = [&](const char* label, float t, int y, unsigned int col) {
         int filled = (int)(bw * t);
-        DrawFormatString(bx, y - 14, GetColor(230, 230, 230), "%s", label);
+        //DrawFormatString(bx, y - 14, GetColor(230, 230, 230), "%s", label);
         DrawBox(bx, y, bx + bw, y + 14, GetColor(60, 60, 60), TRUE);
         DrawBox(bx, y, bx + filled, y + 14, col, TRUE);
         DrawBox(bx, y, bx + bw, y + 14, GetColor(20, 20, 20), FALSE);
@@ -430,7 +436,7 @@ void CharacterSelect::DrawPreviewModelAndParams()
 void CharacterSelect::DrawFooter()
 {
     int baseY = 420;
-    DrawFormatString(60, baseY + 0, GetColor(180, 180, 255), "操作ガイド: ←/→ で選択  Enter/Space で決定  B で戻る");
+    //DrawFormatString(60, baseY + 0, GetColor(180, 180, 255), "操作ガイド: ←/→ で選択  Enter/Space で決定  B で戻る");
     //DrawFormatString(60, baseY + 20, GetColor(160, 160, 160), "プレビューは固定表示（プレイヤーは移動しません）。");
 }
 
@@ -460,4 +466,7 @@ void CharacterSelect::Release()
     characterNames_.clear();
     selectedIndex_.clear();
     confirmed_.clear();
+
+    // 背景解放
+    DeleteGraph(bgImageId_);
 }

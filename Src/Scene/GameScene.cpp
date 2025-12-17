@@ -147,7 +147,7 @@ void GameScene::Draw()
 	playerManager_->DrawPlayers();
 
 	// デバッグ
-	DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
+	//DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
 
 	if (playerManager_->GetIsGameOver())
 	{

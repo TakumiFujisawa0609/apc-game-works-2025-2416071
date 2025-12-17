@@ -113,7 +113,7 @@ void Stage::Release()
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
 
-	return;
+	//return;
 
 	// デバッグ: F1で傾きを固定
 	InputManager& ins = InputManager::GetInstance();
@@ -123,7 +123,7 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	}
 
 	// プレイヤー不在
-	if (players.empty()) return;
+	//if (players.empty()) return;
 
 	const int nowMs = GetNowCount();
 

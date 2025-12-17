@@ -182,13 +182,13 @@ void Bullet::Draw() const
 
 	// デバッグ表示
 	// 生きている弾の座標を表示
-	DrawFormatString(0, 200, GetColor(255, 255, 255), "Bullet Pos: (%.2f, %.2f, %.2f)", pos_.x, pos_.y, pos_.z);
+	//DrawFormatString(0, 200, GetColor(255, 255, 255), "Bullet Pos: (%.2f, %.2f, %.2f)", pos_.x, pos_.y, pos_.z);
 
 	// 弾が移動した線を表示
-	DrawLine3D(prevPos_, pos_, GetColor(0, 255, 0));
+	//DrawLine3D(prevPos_, pos_, GetColor(0, 255, 0));
 
 	// 弾がステージと当たったかどうかを表示
-	DrawFormatString(0, 220, GetColor(255, 255, 255), "Bullet Collided: %s", collidedWithStage_ ? "Yes" : "No");
+	//DrawFormatString(0, 220, GetColor(255, 255, 255), "Bullet Collided: %s", collidedWithStage_ ? "Yes" : "No");
 }
 
 void Bullet::Release()

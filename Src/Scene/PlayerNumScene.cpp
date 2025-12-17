@@ -86,18 +86,18 @@ void PlayerNumScene::Draw(void)
 	// PAD1 未接続なら注意（ただしキーボードは使用可能）
 	if (!pi.pad1Connected)
 	{
-		DrawFormatString2(100, 90, GetColor(255, 180, 120), -1, "注意: PAD1 未接続。キーボードで操作できます。");
+		//DrawFormatString2(100, 90, GetColor(255, 180, 120), -1, "注意: PAD1 未接続。キーボードで操作できます。");
 	}
 
 	// 現在人数
-	DrawFormatString(100, 120, GetColor(255, 255, 255), "プレイヤー人数: %d", GetSelectNum());
+	//DrawFormatString(100, 120, GetColor(255, 255, 255), "プレイヤー人数: %d", GetSelectNum());
 
 	// 選択肢表示
 	for (int i = 0; i < SELECT::SELECT_MAX; i++)
 	{
 		// ここに選択中の人数画像を表示する
 		int color = (i == selectNum_) ? GetColor(255, 255, 0) : GetColor(255, 255, 255);
-		DrawFormatString2(100, 160 + i * 30, color, -1, "%d 人", i + 1);
+		//DrawFormatString2(100, 160 + i * 30, color, -1, "%d 人", i + 1);
 	}
 
 	switch (selectNum_)
@@ -125,8 +125,8 @@ void PlayerNumScene::Draw(void)
 	}
 
 	// 操作ガイド
-	DrawFormatString2(500, 170, GetColor(180, 180, 255), -1, "PAD1: X=左 / B=右 / A=決定 / Y=戻る");
-	DrawFormatString2(500, 210, GetColor(180, 180, 255), -1, "KEY : ←/A/↑/W=左, →/D/↓/S=右, Enter/Space=決定, B=戻る");
+	/*DrawFormatString2(500, 170, GetColor(180, 180, 255), -1, "PAD1: X=左 / B=右 / A=決定 / Y=戻る");
+	DrawFormatString2(500, 210, GetColor(180, 180, 255), -1, "KEY : ←/A/↑/W=左, →/D/↓/S=右, Enter/Space=決定, B=戻る");*/
 }
 
 void PlayerNumScene::Release(void)

@@ -33,22 +33,22 @@ void Grid::Draw(void)
 		// Xé≤(ê‘)
 		sPos = { -HLEN, 0.0f, num * TERM };
 		ePos = { HLEN, 0.0f, num * TERM };
-		DrawLine3D(sPos, ePos, 0xff0000);
-		DrawSphere3D(ePos, 20.0f, 10, 0xff0000, 0xff0000, true);
+		//DrawLine3D(sPos, ePos, 0xff0000);
+		//DrawSphere3D(ePos, 20.0f, 10, 0xff0000, 0xff0000, true);
 
 		// Zé≤(ê¬)
 		sPos = { num * TERM, 0.0f, -HLEN };
 		ePos = { num * TERM, 0.0f,  HLEN };
-		DrawLine3D(sPos, ePos, 0x0000ff);
-		DrawSphere3D(ePos, 20.0f, 10, 0x0000ff, 0x0000ff, true);
+		//DrawLine3D(sPos, ePos, 0x0000ff);
+		//DrawSphere3D(ePos, 20.0f, 10, 0x0000ff, 0x0000ff, true);
 
 	}
 
 	// Yé≤(óŒ)
 	sPos = { 0.0f, -HLEN, 0.0f };
 	ePos = { 0.0f,  HLEN, 0.0f };
-	DrawLine3D(sPos, ePos, 0x00ff00);
-	DrawSphere3D(ePos, 20.0f, 10, 0x00ff00, 0x00ff00, true);
+	//DrawLine3D(sPos, ePos, 0x00ff00);
+	//DrawSphere3D(ePos, 20.0f, 10, 0x00ff00, 0x00ff00, true);
 
 }
 

@@ -216,8 +216,8 @@ void Camera::SetBeforeDrawFree(void)
 
 void Camera::DrawDebug(void)
 {
-	DrawFormatString(0, 600, GetColor(255, 0, 0),
-		"Camera Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);
+	/*DrawFormatString(0, 600, GetColor(255, 0, 0),
+		"Camera Pos:(%.1f, %.1f, %.1f)", pos_.x, pos_.y, pos_.z);*/
 	//DrawFormatString(0, 620, GetColor(255, 255, 255),
 	//	"Camera Angles:(%.2f, %.2f, %.2f)", AsoUtility::Rad2DegF(angles_.x), AsoUtility::Rad2DegF(angles_.y), AsoUtility::Rad2DegF(angles_.z));
 }

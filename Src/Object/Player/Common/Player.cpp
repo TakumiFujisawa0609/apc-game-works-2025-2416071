@@ -427,16 +427,16 @@ void Player::Draw()
 
     BulletManager::GetInstance().Draw();
 
-    DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
-    DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
+    //DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
+    //DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
 
 #ifdef _DEBUG
     char buffer[160];
-    sprintf_s(buffer, "P%d Spd=%.1f Charge=%.2fs %s Dash=%.2fs",
-        id_ + 1, VSize(moveVec_), chargeTimerSec_,
-        isCharging_ ? "CHG" : "   ",
-        isDashing_ ? dashTimerSec_ : 0.0f);
-    DrawString(10, 30 + id_ * 20, buffer, GetColor(255, 255, 255));
+    //sprintf_s(buffer, "P%d Spd=%.1f Charge=%.2fs %s Dash=%.2fs",
+    //    id_ + 1, VSize(moveVec_), chargeTimerSec_,
+    //    isCharging_ ? "CHG" : "   ",
+    //    isDashing_ ? dashTimerSec_ : 0.0f);
+    //DrawString(10, 30 + id_ * 20, buffer, GetColor(255, 255, 255));
 #endif
 }
 

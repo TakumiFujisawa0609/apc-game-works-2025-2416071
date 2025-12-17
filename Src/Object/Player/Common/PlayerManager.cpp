@@ -217,11 +217,11 @@ void PlayerManager::DrawPlayers()
 			float radSum = p1->GetCollisionRadius() + p2->GetCollisionRadius();
 			if (distSq < radSum * radSum)
 			{
-				DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(255, 0, 0));
+				//DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(255, 0, 0));
 			}
 			else
 			{
-				DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(0, 255, 0));
+				//DrawLine3D(p1->GetPos(), p2->GetPos(), GetColor(0, 255, 0));
 			}
 		}
 	}
