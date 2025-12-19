@@ -141,7 +141,7 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	// 無人処理
 	if (!anyPlayerOnStage)
 	{
-		// 無人になってからの経過がグレース内なら、原点復帰を開始しない（そのまま維持）
+		// 無人になってからの経過がグレース内なら、原点復帰を開始しない
 		if (nowMs - lastOnStageTimeMs_ < NO_PLAYER_GRACE_MS)
 		{
 			angle_.y = 0.0f; // Y回転は常にゼロへ
@@ -155,17 +155,17 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 		return;
 	}
 
-	// ここまで来たら「在ステージ」なので、最後在ステージ時刻を更新
+	
 	lastOnStageTimeMs_ = nowMs;
 
-	// 在ステージプレイヤーの重心（加重平均）
+	// 在ステージプレイヤーの重心
 	float totalWeight = 0.0f;
 	float weightedX = 0.0f;
 	float weightedZ = 0.0f;
 
 	for (auto p : players)
 	{
-		// 生存・落下中でない・端マージン内
+		// 死んでいるとき、落下しているときは除く
 		if(!(p->IsAlive() && !p->IsFalling() && IsPlayerOnStage(p->GetPos(), ON_STAGE_MARGIN)))
 			continue;
 

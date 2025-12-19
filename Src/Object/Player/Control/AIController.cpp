@@ -295,42 +295,42 @@ bool AIController::IsJumpTrigger() const
 // çUåÇîªíË
 bool AIController::IsAttackTrigger() const
 {
-	int now = GetNowCount();
-	if (now - lastAttackTimeMs_ < attackIntervalMs_) return false;
+	//int now = GetNowCount();
+	//if (now - lastAttackTimeMs_ < attackIntervalMs_) return false;
 
-	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	const Player* me = nullptr;
-	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	if (!me) return false;
+	//auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+	//const Player* me = nullptr;
+	//for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+	//if (!me) return false;
 
-	VECTOR myPos = me->GetPos();
+	//VECTOR myPos = me->GetPos();
 
-	const Player* best = nullptr;
-	float bestDistSq = FLT_MAX;
-	for (auto p : players)
-	{
-		if (p->GetID() == ownerId_) continue;
-		if (!p->IsAlive()) continue;
-		VECTOR diff = VSub(p->GetPos(), myPos);
-		float d2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-		if (d2 < bestDistSq)
-		{
-			bestDistSq = d2;
-			best = p;
-		}
-	}
-	if (!best) return false;
+	//const Player* best = nullptr;
+	//float bestDistSq = FLT_MAX;
+	//for (auto p : players)
+	//{
+	//	if (p->GetID() == ownerId_) continue;
+	//	if (!p->IsAlive()) continue;
+	//	VECTOR diff = VSub(p->GetPos(), myPos);
+	//	float d2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+	//	if (d2 < bestDistSq)
+	//	{
+	//		bestDistSq = d2;
+	//		best = p;
+	//	}
+	//}
+	//if (!best) return false;
 
-	float dist = sqrtf(bestDistSq);
-	if (dist <= attackRange_)
-	{
-		float p = (attackRange_ - dist) / attackRange_;
-		float chance = p * aggression_;
-		if ((std::rand() / (float)RAND_MAX) < chance)
-		{
-			lastAttackTimeMs_ = now;
-			return true;
-		}
-	}
+	//float dist = sqrtf(bestDistSq);
+	//if (dist <= attackRange_)
+	//{
+	//	float p = (attackRange_ - dist) / attackRange_;
+	//	float chance = p * aggression_;
+	//	if ((std::rand() / (float)RAND_MAX) < chance)
+	//	{
+	//		lastAttackTimeMs_ = now;
+	//		return true;
+	//	}
+	//}
 	return false;
 }
