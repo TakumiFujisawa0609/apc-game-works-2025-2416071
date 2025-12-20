@@ -171,7 +171,7 @@ void PlayerManager::ClearPlayers()
 	}
 	players_.clear();
 
-	BulletManager::GetInstance().Release();
+	//BulletManager::GetInstance().Release();
 }
 
 void PlayerManager::UpdatePlayers(Stage& stage)
@@ -197,7 +197,7 @@ void PlayerManager::UpdatePlayers(Stage& stage)
 
 	stage.UpdateTilt(alive);
 
-	CheckBulletCollisions();
+	//CheckBulletCollisions();
 	CheckPlayerCollisions();
 
 	CheckGameResult();
@@ -368,91 +368,95 @@ void PlayerManager::CheckPlayerCollisions()
 }
 
 // 弾とプレイヤーの衝突（連続判定：Swept Sphere）
-void PlayerManager::CheckBulletCollisions()
-{
-	const auto& rawPlayers = GetPlayerRawPlayers();
-	const auto& bullets = BulletManager::GetInstance().GetBullets();
-
-	for (const auto& b : bullets)
-	{
-		if (!b->IsAlive()) continue;
-
-		const VECTOR& p0 = b->GetPrevPos();
-		const VECTOR& p1 = b->GetPos();
-		VECTOR v = VSub(p1, p0);
-		float vv = VDot(v, v);
-
-		// 1発につき最初に当たった対象のみ
-		bool hitSomeone = false;
-		float bestT = 1.0f;
-		Player* bestTarget = nullptr;
-		VECTOR bestClosest = p1;
-
-		for (Player* p : rawPlayers)
-		{
-			if (!p->IsAlive()) continue;
-
-			// 発射者本人は除外
-			if (p->GetID() == b->GetOwnerId()) continue;
-
-			// 合成半径
-			float R = b->GetCollRad() + p->GetCollisionRadius();
-
-			// 弾がほぼ停止：点と球
-			if (vv < 1e-6f)
-			{
-				VECTOR d = VSub(p1, p->GetPos());
-				float d2 = VDot(d, d);
-				if (d2 <= R * R)
-				{
-					bestTarget = p;
-					bestClosest = p1;
-					bestT = 0.0f;
-					hitSomeone = true;
-				}
-				continue;
-			}
-
-			// 線分p0->p1 と 球(c, R) の最近接点
-			VECTOR c = p->GetPos();
-			VECTOR w = VSub(c, p0);
-			float t = VDot(w, v) / vv;
-			if (t < 0.0f) t = 0.0f;
-			else if (t > 1.0f) t = 1.0f;
-
-			VECTOR closest = VAdd(p0, VScale(v, t));
-			VECTOR d = VSub(closest, c);
-			float dist2 = VDot(d, d);
-			if (dist2 <= R * R)
-			{
-				if (t < bestT)
-				{
-					bestT = t;
-					bestTarget = p;
-					bestClosest = closest;
-					hitSomeone = true;
-				}
-			}
-		}
-
-		if (hitSomeone && bestTarget)
-		{
-			// 衝突点→プレイヤーの水平正規化ベクトルでノックバック
-			VECTOR kbDir = VSub(bestTarget->GetPos(), bestClosest);
-			kbDir.y = 0.0f;
-			float len = VSize(kbDir);
-			kbDir = (len > 1e-5f) ? VScale(kbDir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
-
-			VECTOR knockBack = VScale(kbDir, KNOCKBACK_FORCE);
-			knockBack.y += KNOCKBACK_UPWARD_FORCE;
-
-			bestTarget->ApplyHit(knockBack);
-
-			// 弾は1ヒットで消える
-			b->Kill();
-		}
-	}
-}
+//void PlayerManager::CheckBulletCollisions()
+//{
+//
+//	// 処理自体をしない
+//	return;
+//
+//	const auto& rawPlayers = GetPlayerRawPlayers();
+//	const auto& bullets = BulletManager::GetInstance().GetBullets();
+//
+//	for (const auto& b : bullets)
+//	{
+//		if (!b->IsAlive()) continue;
+//
+//		const VECTOR& p0 = b->GetPrevPos();
+//		const VECTOR& p1 = b->GetPos();
+//		VECTOR v = VSub(p1, p0);
+//		float vv = VDot(v, v);
+//
+//		// 1発につき最初に当たった対象のみ
+//		bool hitSomeone = false;
+//		float bestT = 1.0f;
+//		Player* bestTarget = nullptr;
+//		VECTOR bestClosest = p1;
+//
+//		for (Player* p : rawPlayers)
+//		{
+//			if (!p->IsAlive()) continue;
+//
+//			// 発射者本人は除外
+//			if (p->GetID() == b->GetOwnerId()) continue;
+//
+//			// 合成半径
+//			float R = b->GetCollRad() + p->GetCollisionRadius();
+//
+//			// 弾がほぼ停止：点と球
+//			if (vv < 1e-6f)
+//			{
+//				VECTOR d = VSub(p1, p->GetPos());
+//				float d2 = VDot(d, d);
+//				if (d2 <= R * R)
+//				{
+//					bestTarget = p;
+//					bestClosest = p1;
+//					bestT = 0.0f;
+//					hitSomeone = true;
+//				}
+//				continue;
+//			}
+//
+//			// 線分p0->p1 と 球(c, R) の最近接点
+//			VECTOR c = p->GetPos();
+//			VECTOR w = VSub(c, p0);
+//			float t = VDot(w, v) / vv;
+//			if (t < 0.0f) t = 0.0f;
+//			else if (t > 1.0f) t = 1.0f;
+//
+//			VECTOR closest = VAdd(p0, VScale(v, t));
+//			VECTOR d = VSub(closest, c);
+//			float dist2 = VDot(d, d);
+//			if (dist2 <= R * R)
+//			{
+//				if (t < bestT)
+//				{
+//					bestT = t;
+//					bestTarget = p;
+//					bestClosest = closest;
+//					hitSomeone = true;
+//				}
+//			}
+//		}
+//
+//		if (hitSomeone && bestTarget)
+//		{
+//			// 衝突点→プレイヤーの水平正規化ベクトルでノックバック
+//			VECTOR kbDir = VSub(bestTarget->GetPos(), bestClosest);
+//			kbDir.y = 0.0f;
+//			float len = VSize(kbDir);
+//			kbDir = (len > 1e-5f) ? VScale(kbDir, 1.0f / len) : VGet(1.0f, 0.0f, 0.0f);
+//
+//			VECTOR knockBack = VScale(kbDir, KNOCKBACK_FORCE);
+//			knockBack.y += KNOCKBACK_UPWARD_FORCE;
+//
+//			bestTarget->ApplyHit(knockBack);
+//
+//			// 弾は1ヒットで消える
+//			b->Kill();
+//		}
+//	}
+//}
 
 void PlayerManager::Reset()
 {

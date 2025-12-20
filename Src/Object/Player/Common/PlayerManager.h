@@ -66,7 +66,7 @@ public:
 
 	// Õ“Ë
 	void CheckPlayerCollisions();
-	void CheckBulletCollisions();
+	//void CheckBulletCollisions();
 
 	// ƒŠƒZƒbƒg/‰ğ•ú
 	void Reset();

@@ -89,7 +89,7 @@ protected:
     virtual void Move();
 
     // ŽËŒ‚
-    void Shot();
+    /*void Shot();*/
 
     static int nextDeathOrder_;
 

@@ -9,6 +9,8 @@
 #include "../Scene/Result.h"
 #include "Camera.h"
 #include "SceneManager.h"
+#include "../Common/PauseOverlay.h"
+#include "../Manager/InputManager.h"
 
 SceneManager* SceneManager::instance_ = nullptr;
 
@@ -48,36 +50,38 @@ void SceneManager::Init(void)
 	// デルタタイム
 	preTime_ = std::chrono::system_clock::now();
 
-	// 3D用の設定
+	// 3D設定
 	Init3D();
 
-	// 初期シーンの設定
+	// 初期シーン設定
 	DoChangeScene(SCENE_ID::TITLE);
 
+	// ポーズオーバーレイ初期化
+	pauseOverlay_ = new PauseOverlay();
+	pauseOverlay_->Init();
+	paused_ = false;
 }
 
 void SceneManager::Init3D(void)
 {
 
-	// 背景色設定
+	// 背景色
 	SetBackgroundColor(
 		BACKGROUND_COLOR_R,
 		BACKGROUND_COLOR_G,
 		BACKGROUND_COLOR_B);
 
-	// Zバッファを有効にする
+	// Zバッファ
 	SetUseZBuffer3D(true);
-
-	// Zバッファへの書き込みを有効にする
 	SetWriteZBuffer3D(true);
 
-	// バックカリングを有効にする
+	// バックカリング
 	SetUseBackCulling(true);
 
-	// ライトの設定
+	// ライティング設定
 	SetUseLighting(true);
 
-	// 正面から斜め下に向かったライト
+	// 光源設定
 	ChangeLightTypeDir({ 0.00f, -1.00f, 1.00f });
 
 }
@@ -90,17 +94,44 @@ void SceneManager::Update(void)
 		return;
 	}
 
-	// デルタタイム
+	// デルタタイム更新（ゲーム内時間の算出は維持。実処理は pause で止める）
 	auto nowTime = std::chrono::system_clock::now();
 	deltaTime_ = static_cast<float>(
 		std::chrono::duration_cast<std::chrono::nanoseconds>(nowTime - preTime_).count() / 1000000000.0);
 	preTime_ = nowTime;
 
-	// フェード機能の更新 
+	// ESC でポーズトグル（フェード中は無視）
+	auto& ins = InputManager::GetInstance();
+ 	if (!isSceneChanging_ && ins.IsTrgDown(KEY_INPUT_ESCAPE)) {
+		paused_ = !paused_;
+		// 新規ポーズ開始時にオーバーレイ初期化
+		if (paused_) {
+			pauseOverlay_->Init();
+		}
+	}
+
+	if (paused_)
+	{
+		// ポーズ中はフェード・シーン更新・カメラ更新を止める
+		bool reqResume = false, reqGoTitle = false;
+		pauseOverlay_->Update(reqResume, reqGoTitle);
+
+		if (reqGoTitle) {
+			paused_ = false;
+			ChangeScene(SCENE_ID::TITLE);
+			return;
+		}
+		if (reqResume) {
+			paused_ = false;
+		}
+		return; // 以降のシーン更新を行わない
+	}
+
+	// フェード更新・シーン更新
 	fader_->Update();
 	if (isSceneChanging_)
 	{
-		// フェード状態の切替処理
+		// フェード状態の遷移処理
 		Fade();
 	}
 	else
@@ -122,58 +153,71 @@ void SceneManager::Draw(void)
 
 	//miniCamera_->DrawScreen();
 
-	// 描画先グラフィック領域の指定
-	// (３Ｄ描画で使用するカメラの設定などがリセットされる)
+	// 描画先の設定
 	SetDrawScreen(DX_SCREEN_BACK);
 
-	// 画面を初期化
+	// 画面クリア
 	ClearDrawScreen();
 
 	// カメラ設定
 	camera_->SetBeforeDraw();
 
-	// 各シーンの描画処理
+	// シーン描画
 	scene_->Draw();
 
 	// ミニカメラ
 	//miniCamera_->Draw();
 
-	// カメラ描画
+	// カメラデバッグ
 	camera_->DrawDebug();
 
-	// 暗転・明転
+	// フェード
 	fader_->Draw();
 
-	
-
+	// ポーズ中は最後にオーバーレイ描画
+	if (paused_ && pauseOverlay_) {
+		pauseOverlay_->Draw();
+	}
 }
 
 void SceneManager::Destroy(void)
 {
 
-	// シーンの解放
-	scene_->Release();
-	delete scene_;
+	// シーンの破棄
+	if (scene_) {
+		scene_->Release();
+		delete scene_;
+		scene_ = nullptr;
+	}
 
-	// フェード機能の解放
+	// フェードの破棄
 	delete fader_;
+	fader_ = nullptr;
 
-	camera_->Release();
-	delete camera_;
+	// カメラ破棄
+	if (camera_) {
+		camera_->Release();
+		delete camera_;
+		camera_ = nullptr;
+	}
 
-	// インスタンスのメモリ解放
+	// ポーズオーバーレイ破棄
+	delete pauseOverlay_;
+	pauseOverlay_ = nullptr;
+
+	// インスタンス破棄
 	delete instance_;
+	instance_ = nullptr;
 
 }
 
 void SceneManager::ChangeScene(SCENE_ID nextId)
 {
 
-	// フェード処理が終わってからシーンを変える場合もあるため、
-	// 遷移先シーンをメンバ変数に保持
+	// フェード中でも依頼が来た場合は通常通りフェードして遷移
 	waitSceneId_ = nextId;
 
-	// フェードアウト(暗転)を開始する
+	// フェードアウト（暗転）開始
 	fader_->SetFade(Fader::STATE::FADE_OUT);
 	isSceneChanging_ = true;
 }
@@ -194,6 +238,10 @@ SceneManager::SceneManager(void)
 	deltaTime_ = 1.0f / 60.0f;
 
 	camera_ = nullptr;
+
+	// ポーズ管理
+	paused_ = false;
+	pauseOverlay_ = nullptr;
 	
 
 }
@@ -207,14 +255,15 @@ void SceneManager::ResetDeltaTime(void)
 void SceneManager::DoChangeScene(SCENE_ID sceneId)
 {
 
-	// シーンを変更する
+	// シーン切替
 	sceneId_ = sceneId;
 
-	// 現在のシーンを解放
+	// 現在のシーン破棄
 	if (scene_ != nullptr)
 	{
 		scene_->Release();
 		delete scene_;
+		scene_ = nullptr;
 	}
 
 	switch (sceneId_)
@@ -223,23 +272,23 @@ void SceneManager::DoChangeScene(SCENE_ID sceneId)
 	case SCENE_ID::TITLE:
 		scene_ = new TitleScene();
 		break;
-		// マニュアルシーン　　　　タイトル → マニュアル → 人数選択
+		// マニュアルシーン　　タイトル ← マニュアル ← 人数選択
 	case SCENE_ID::MANUAL:
 		scene_ = new ManualScene();
 		break;
-		// 人数選択シーン		   人数選択 → キャラ選択
+		// 人数選択シーン		   人数選択 ← キャラ選択
 	case SCENE_ID::PLAYERNUMBERSELECT:
 		scene_ = new PlayerNumScene();
 		break;
-		// キャラ選択シーン		   キャラ選択 → ゲーム
-		case SCENE_ID::CHARASELECT:
-			scene_ = new CharacterSelect();
+		// キャラ選択シーン		   キャラ選択 ← ゲーム
+	case SCENE_ID::CHARASELECT:
+		scene_ = new CharacterSelect();
 		break;
 		// ゲームシーン
 	case SCENE_ID::GAME:
 		scene_ = new GameScene();
 		break;
-		// 成績発表(順位)シーン
+		// ランキング（未実装）
 	case SCENE_ID::RANKING:
 		//scene_ = new RankingScene();
 		break;
@@ -249,8 +298,10 @@ void SceneManager::DoChangeScene(SCENE_ID sceneId)
 		break;
 	}
 
-	// 各シーンの初期化
-	scene_->Init();
+	// 新しいシーンの初期化
+	if (scene_) {
+		scene_->Init();
+	}
 
 	ResetDeltaTime();
 
@@ -268,7 +319,7 @@ void SceneManager::Fade(void)
 		// 明転中
 		if (fader_->IsEnd())
 		{
-			// 明転が終了したら、フェード処理終了
+			// 明転が終わったらフェードを停止
 			fader_->SetFade(Fader::STATE::NONE);
 			isSceneChanging_ = false;
 		}
@@ -277,15 +328,12 @@ void SceneManager::Fade(void)
 		// 暗転中
 		if (fader_->IsEnd())
 		{
-			// 完全に暗転してからシーン遷移
+			// 完全に暗転したら次のシーンへ
 			DoChangeScene(waitSceneId_);
-			// 暗転から明転へ
+			// 暗転後、明転へ
 			fader_->SetFade(Fader::STATE::FADE_IN);
 		}
 		break;
 	}
 
 }
-
-
-

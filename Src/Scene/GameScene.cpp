@@ -22,29 +22,29 @@ GameScene::~GameScene()
 
 void GameScene::Init()
 {
-	// カメラを安定リセット
+	// カメラをゲーム用設定に変更
 	Camera* camera = SceneManager::GetInstance().GetCamera();
 	camera->ChangeMode(Camera::MODE::FIXED_POINT);
 	camera->ResetForGame(30.0f, 1400.0f, true, 1.5f);
 
-	// プレイヤー数
+	// プレイヤー数の取得
 	playerNum_ = SceneManager::GetInstance().GetPlayerNum();
 	singlePlayerMode_ = (playerNum_ == 1);
 
-	// ステージ
+	// ステージ初期化
 	Stage::GetInstance().Init();
 
 	// PlayerManager
 	playerManager_ = &PlayerManager::GetInstance();
 	playerManager_->Reset();
 
-	// 選択キャラ
+	// キャラ選択から受け取った選択タイプ
 	const auto& selected = SceneManager::GetInstance().GetSelectedPlayerNums();
 
-	// 生成数
+	// 生成数の決定
 	int createCount = playerNum_;
 	if (singlePlayerMode_) {
-		createCount = 4; // 1人選択でも4体生成（0は人間、他はAI）
+		createCount = 4; // シングル時は4体（ID0が人間、他はAI）
 	}
 	else {
 		if (!selected.empty()) createCount = (int)selected.size();
@@ -52,7 +52,7 @@ void GameScene::Init()
 		if (createCount > 4) createCount = 4;
 	}
 
-	// 追加: 実際にスポーンしたタイプ一覧（ID順）を記録
+	// Result 用にスポーンしたタイプを記録
 	std::vector<int> spawnedTypes;
 	spawnedTypes.reserve(createCount);
 
@@ -74,9 +74,10 @@ void GameScene::Init()
 			type = static_cast<PlayerType>(i % 4);
 		}
 
-		// 記録（ID=i のタイプ）
+		// 記録
 		spawnedTypes.push_back(static_cast<int>(type));
 
+		// デフォルトパラメータ（簡易）
 		PlayerParam param;
 		switch (type)
 		{
@@ -87,6 +88,7 @@ void GameScene::Init()
 		default:                   param.weight = 10.0f; param.speed = 4.0f; param.jumpPower = 5.0f; break;
 		}
 
+		// シングル時のみ ID0 を人間、それ以外はAI
 		bool createAsHuman = singlePlayerMode_ ? (i == 0) : true;
 
 		if (createAsHuman) {
@@ -98,7 +100,7 @@ void GameScene::Init()
 		}
 	}
 
-	// Result で参照できるよう SceneManager に保存
+	// Result シーンで使うため保存
 	SceneManager::GetInstance().SetLastSpawnedTypes(spawnedTypes);
 
 	playerManager_->InitAllPlayers();
@@ -109,10 +111,10 @@ void GameScene::Update()
 {
 	InputManager& ins = InputManager::GetInstance();
 
-	// プレイヤー/ステージ更新
+	// プレイヤー／ステージ更新
 	playerManager_->UpdatePlayers(Stage::GetInstance());
 
-	// 1人プレイ（ID=0 が人間）: 死亡したら即ゲームオーバー
+	// シングルプレイ時：人間（ID=0）が死んだらゲームオーバー
 	if (singlePlayerMode_ && !playerManager_->GetIsGameOver())
 	{
 		const auto raw = playerManager_->GetPlayerRawPlayers();
@@ -127,7 +129,7 @@ void GameScene::Update()
 		}
 	}
 
-	// ゲームオーバー → 結果へ
+	// ゲームオーバー時は一定時間後にリザルトへ遷移
 	if (playerManager_->GetIsGameOver())
 	{
 		transitionTimer_++;
@@ -146,9 +148,13 @@ void GameScene::Draw()
 	// プレイヤー
 	playerManager_->DrawPlayers();
 
-	// デバッグ
+	// 追加：生存状況HUD
+	DrawPlayerStatusHUD();
+
+	// デバッグ表示（任意）
 	//DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
 
+	// ゲームオーバー表示
 	if (playerManager_->GetIsGameOver())
 	{
 		if (playerNum_ == 1)
@@ -174,7 +180,7 @@ void GameScene::DrawPlayerMarkers3D()
 		const bool isHuman = (singlePlayerMode_ && pid == humanPlayerId_);
 		const char* label = isHuman ? "YOU" : (singlePlayerMode_ ? "CPU" : "");
 
-		// マルチ時（singlePlayerMode_ == false）はラベル表示なし（必要なら P1/P2 に変更）
+		// マルチプレイでは空ラベルは表示しない
 		if (!singlePlayerMode_ && label[0] == '\0') continue;
 
 		VECTOR pos = p->GetPos();
@@ -184,7 +190,7 @@ void GameScene::DrawPlayerMarkers3D()
 		unsigned int colTri = highlight ? GetColor(255, 255, 0) : GetColor(180, 220, 255);
 		unsigned int colText = highlight ? GetColor(255, 255, 120) : GetColor(220, 240, 255);
 
-		// 下向き矢印（三角）：DxLib は塗りつぶしフラグが必要（TRUE）
+		// 三角形（頭上の目印）を描画
 		DrawTriangle3D(
 			VGet(markerPos.x - 20.0f, markerPos.y + 20.0f, markerPos.z),
 			VGet(markerPos.x + 20.0f, markerPos.y + 20.0f, markerPos.z),
@@ -192,7 +198,7 @@ void GameScene::DrawPlayerMarkers3D()
 			colTri,
 			TRUE);
 
-		// ラベル（YOU / CPU）を頭上に 2D 表示
+		// ラベル（YOU/CPU）を2Dで重ねて表示
 		DrawLabelAtWorld(label, VGet(markerPos.x, markerPos.y + 50.0f, markerPos.z), colText);
 	}
 }
@@ -200,24 +206,13 @@ void GameScene::DrawPlayerMarkers3D()
 void GameScene::DrawPlayerHUDLegend()
 {
 	unsigned int col = (youMarkerTimer_ < YOU_MARKER_HIGHLIGHT_FRAMES) ? GetColor(255, 255, 120) : GetColor(200, 220, 255);
-	if (singlePlayerMode_)
-	{
-		//DrawFormatString2(20, 50, col, -1, "YOU: あなたの操作キャラ");
-		//DrawFormatString2(20, 70, GetColor(180, 200, 255), -1, "CPU: コンピュータ操作キャラ");
-	}
-	else
-	{
-		//DrawFormatString2(20, 50, GetColor(200, 220, 255), -1, "各プレイヤーの頭上にマーカーを表示");
-	}
+	// HUDの凡例を表示する場合はここに描画を書く（現状未使用）
 }
-
 
 void GameScene::DrawLabelAtWorld(const char* text, const VECTOR& worldPos, unsigned int color)
 {
 	VECTOR screenPos = ConvWorldPosToScreenPos(worldPos);
-
-	// 画面座標へ変換後に文字を描画（適宜オフセット調整）
-	DrawFormatString2((int)screenPos.x - 16, (int)screenPos.y - 8, color, -1, text);
+	DrawFormatString((int)screenPos.x - 16, (int)screenPos.y - 8, color, "%s", text);
 }
 
 void GameScene::Draw3D()
@@ -232,5 +227,54 @@ void GameScene::Release()
 	{
 		playerManager_->ClearPlayers();
 		playerManager_ = nullptr;
+	}
+}
+
+// 追加：プレイヤー生存状態HUD（画面左上）
+// - Pn と YOU/CPU のラベルを表示
+// - 生存は緑、死亡は赤で [DEAD] を付ける
+// - 右端に丸アイコン（生存=緑／死亡=赤）も表示
+void GameScene::DrawPlayerStatusHUD()
+{
+	const auto raw = playerManager_->GetPlayerRawPlayers();
+	if (raw.empty()) return;
+
+	// 半透明のパネル
+	int panelLeft = 12;
+	int panelTop = 12;
+	int panelWidth = 260;
+	int panelHeight = 28 + (int)raw.size() * 24;
+
+	SetDrawBlendMode(DX_BLENDMODE_ALPHA, 140);
+	DrawBox(panelLeft, panelTop, panelLeft + panelWidth, panelTop + panelHeight, GetColor(30, 30, 30), TRUE);
+	SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	DrawBox(panelLeft, panelTop, panelLeft + panelWidth, panelTop + panelHeight, GetColor(80, 80, 120), FALSE);
+
+	// 見出し
+	DrawFormatString(panelLeft + 8, panelTop + 6, GetColor(220, 240, 255), "Players");
+
+	// 各プレイヤーの状態
+	int y = panelTop + 28;
+	for (auto* p : raw)
+	{
+		if (!p) continue;
+		int id = p->GetID();
+		bool alive = p->IsAlive();
+
+		unsigned int nameCol = alive ? GetColor(120, 255, 160) : GetColor(255, 120, 120);
+		const char* role = "";
+		if (singlePlayerMode_) role = (id == 0) ? "YOU" : "CPU";
+
+		// ラベル（Pn / YOU or CPU / DEAD表示）
+		DrawFormatString(panelLeft + 12, y, nameCol, "P%d %s %s", id + 1, role, alive ? "" : "[DEAD]");
+
+		// 右端の丸インジケータ
+		int cx = panelLeft + panelWidth - 24;
+		int cy = y + 6;
+		unsigned int dotCol = alive ? GetColor(100, 220, 140) : GetColor(220, 80, 80);
+		DrawCircle(cx, cy, 6, dotCol, TRUE);
+		DrawCircle(cx, cy, 6, GetColor(40, 40, 40), FALSE);
+
+		y += 24;
 	}
 }

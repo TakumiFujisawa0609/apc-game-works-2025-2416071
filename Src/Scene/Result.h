@@ -32,4 +32,7 @@ private:
 
 	// モデルロード/配置
 	void BuildModelsForResult();
+
+	// 背景画像
+	int bgImg_ = -1;
 };

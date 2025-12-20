@@ -4,6 +4,7 @@
 class SceneBase;
 class Fader;
 class Camera;
+class PauseOverlay;
 
 
 class SceneManager
@@ -64,6 +65,8 @@ public:
 
 	// カメラ
 	Camera* GetCamera(void) const { return camera_; }
+
+	bool IsPaused() const { return paused_; }
 
 private:
 
@@ -128,4 +131,7 @@ public:
 private:
 	// 追加: 直近ゲームのスポーンタイプ（Resultで使用）
 	std::vector<int> lastSpawnedTypes_;
+
+	bool paused_ = false;
+	PauseOverlay* pauseOverlay_ = nullptr;
 };

@@ -33,7 +33,7 @@ void Player_1::Update()
 	// 入力で攻撃処理
 	if (controller_->IsAttackTrigger())
 	{
-		Shot();
+		//Shot();
 	}
 
 	if (pos_.y == -1200.0f)

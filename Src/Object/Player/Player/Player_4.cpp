@@ -29,7 +29,7 @@ void Player_4::Update()
 	// “ü—Í‚ÅUŒ‚ˆ—
 	if (controller_->IsAttackTrigger())
 	{
-		Shot();
+		//Shot();
 	}
 }
 

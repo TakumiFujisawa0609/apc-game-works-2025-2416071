@@ -29,21 +29,25 @@ private:
     Player_1* debugPlayer_ = nullptr;
     int transitionTimer_ = 0;
 
+    // シングルプレイモード（プレイヤー数が1のとき true）
     bool singlePlayerMode_ = false;
 
-    // 人間（1人プレイ時はID=0）
+    // シングルプレイ時の人間プレイヤーID（0固定）
     int humanPlayerId_ = 0;
 
-    // 開始直後強調用
+    // 「YOU」マーカーの点滅用タイマー
     int youMarkerTimer_ = 0;
     static constexpr int YOU_MARKER_HIGHLIGHT_FRAMES = 240; // 約4秒
 
-    // 3Dマーカー描画（YOU/CPU ラベル）
+    // 3Dの頭上マーカー（YOU/CPU）描画
     void DrawPlayerMarkers3D();
 
-    // 左上のHUD
+    // HUDの凡例（必要に応じて使用）
     void DrawPlayerHUDLegend();
 
-    // ワールド座標→スクリーン座標でラベル描画
+    // ワールド座標に対して2Dラベルを描画
     void DrawLabelAtWorld(const char* text, const VECTOR& worldPos, unsigned int color);
+
+    // 追加: プレイヤーの生存状態を左上に表示するHUD
+    void DrawPlayerStatusHUD();
 };

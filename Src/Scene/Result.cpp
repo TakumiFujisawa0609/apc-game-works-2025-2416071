@@ -1,5 +1,7 @@
 #include "Result.h"
 #include "../Object/Player/Common/PlayerManager.h"
+#include "../Application.h"
+#include "../Utility/AsoUtility.h"
 #include "../Manager/InputManager.h"
 #include "../Manager/SceneManager.h"
 
@@ -27,6 +29,9 @@ void Result::Init(void)
 
 	// モデル準備
 	BuildModelsForResult();
+
+	// 背景色設定
+	bgImg_ = LoadGraph("Data/Image/Background.png");
 }
 
 void Result::Update(void)
@@ -50,6 +55,9 @@ void Result::Draw(void)
 		SetCameraPositionAndAngle(camPos, pitch, 0.0f, 0.0f);
 	}
 
+	// 背景
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 0.75, 0.0, bgImg_, TRUE);
+
 	// モデル描画
 	for (size_t i = 0; i < modelHandles_.size(); ++i)
 	{
@@ -60,6 +68,8 @@ void Result::Draw(void)
 		MV1SetPosition(h, modelPositions_[i]);
 		MV1DrawModel(h);
 	}
+
+	
 
 	// テキスト
 	if (singlePlayer_)
@@ -89,6 +99,8 @@ void Result::Release(void)
 	}
 	modelHandles_.clear();
 	modelPositions_.clear();
+
+	DeleteGraph(bgImg_);
 }
 
 // モデルの構築（表示するタイプを選んでロード・配置）

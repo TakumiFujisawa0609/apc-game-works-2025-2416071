@@ -1,7 +1,7 @@
 #include "AIController.h"
 #include "../Common/PlayerManager.h"
 #include "../Common/Player.h"
-#include "../../Bullet/BulletManager.h"
+//#include "../../Bullet/BulletManager.h"
 #include "../../Stage/Stage.h"
 #include <cmath>
 #include <cstdlib>
@@ -90,49 +90,54 @@ VECTOR AIController::CalcDirTuNearEnemy() const
 // 見つかれば true を返す。弾の速度情報があればそれを使うとより自然。
 bool AIController::FindNearbyBulletAndDodge(VECTOR& outDodgeDir) const
 {
-	const auto& bullets = BulletManager::GetInstance().GetBullets();
-	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	const Player* me = nullptr;
-	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	if (!me) return false;
 
-	VECTOR myPos = me->GetPos();
-	const float dangerRadius = 250.0f;
-
-	for (const auto& b : bullets)
-	{
-		if (!b->IsAlive()) continue;
-		if (b->GetOwnerId() == ownerId_) continue;
-
-		VECTOR bPos = b->GetPos();
-		VECTOR diff = VSub(bPos, myPos);
-		float dist = VSize(diff);
-		if (dist > dangerRadius) continue;
-
-		// 弾の進行方向が取れるならそれを使う（存在しない場合は fallback）
-		bool usedVel = false;
-		VECTOR vel = VGet(0.0f, 0.0f, 0.0f);
-		// もし Bullet に速度 API があれば以下を有効化してください（例）:
-		// vel = b->GetVelocity();
-		// if (fabsf(vel.x) > 1e-6f || fabsf(vel.z) > 1e-6f) usedVel = true;
-
-		VECTOR dodge;
-		if (usedVel)
-		{
-			vel.y = 0.0f;
-			dodge = VGet(-vel.z, 0.0f, vel.x);
-		}
-		else
-		{
-			dodge = VGet(-diff.z, 0.0f, diff.x);
-		}
-
-		float len = VSize(dodge);
-		if (len <= 1e-5f) continue;
-		outDodgeDir = VScale(dodge, 12.0f / len); // 回避強さ（調整可）
-		return true;
-	}
+	(void)outDodgeDir; // 未使用警告回避
 	return false;
+
+
+	//const auto& bullets = BulletManager::GetInstance().GetBullets();
+	//auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+	//const Player* me = nullptr;
+	//for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+	//if (!me) return false;
+
+	//VECTOR myPos = me->GetPos();
+	//const float dangerRadius = 250.0f;
+
+	//for (const auto& b : bullets)
+	//{
+	//	if (!b->IsAlive()) continue;
+	//	if (b->GetOwnerId() == ownerId_) continue;
+
+	//	VECTOR bPos = b->GetPos();
+	//	VECTOR diff = VSub(bPos, myPos);
+	//	float dist = VSize(diff);
+	//	if (dist > dangerRadius) continue;
+
+	//	// 弾の進行方向が取れるならそれを使う（存在しない場合は fallback）
+	//	bool usedVel = false;
+	//	VECTOR vel = VGet(0.0f, 0.0f, 0.0f);
+	//	// もし Bullet に速度 API があれば以下を有効化してください（例）:
+	//	// vel = b->GetVelocity();
+	//	// if (fabsf(vel.x) > 1e-6f || fabsf(vel.z) > 1e-6f) usedVel = true;
+
+	//	VECTOR dodge;
+	//	if (usedVel)
+	//	{
+	//		vel.y = 0.0f;
+	//		dodge = VGet(-vel.z, 0.0f, vel.x);
+	//	}
+	//	else
+	//	{
+	//		dodge = VGet(-diff.z, 0.0f, diff.x);
+	//	}
+
+	//	float len = VSize(dodge);
+	//	if (len <= 1e-5f) continue;
+	//	outDodgeDir = VScale(dodge, 12.0f / len); // 回避強さ（調整可）
+	//	return true;
+	//}
+	//return false;
 }
 
 

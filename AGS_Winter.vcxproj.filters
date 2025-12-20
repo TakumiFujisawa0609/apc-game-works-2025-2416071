@@ -105,10 +105,7 @@
     <ClCompile Include="Src\Object\Player\Control\AIController.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="Src\Object\Bullet\Bullet.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Src\Object\Bullet\BulletManager.cpp">
+    <ClCompile Include="Src\Common\PauseOverlay.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -203,10 +200,7 @@
     <ClInclude Include="Src\Object\Player\Control\AIController.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Src\Object\Bullet\Bullet.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Src\Object\Bullet\BulletManager.h">
+    <ClInclude Include="Src\Common\PauseOverlay.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

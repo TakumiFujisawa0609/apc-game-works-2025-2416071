@@ -1,5 +1,5 @@
 #include "../Control/InputController.h"
-#include "../../Bullet/BulletManager.h"
+//#include "../../Bullet/BulletManager.h"
 #include "../../Stage/Stage.h"
 #include "../../../Utility/MatrixUtility.h"
 #include "../../../Utility/AsoUtility.h"
@@ -304,7 +304,7 @@ void Player::Update()
     }
 
     // 弾更新
-    BulletManager::GetInstance().Update();
+    //BulletManager::GetInstance().Update();
 
     // モデル更新
     if (modelId_ != -1)
@@ -372,48 +372,6 @@ void Player::Move()
     }
 }
 
-void Player::Shot()
-{
-    // 弾チェック
-    if (ammoCount_ <= 0) return;
-
-    // 消費
-    ammoCount_--;
-
-    // 向きに合わせて弾発射
-    float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z);
-    MATRIX rotMat = MGetRotY(rotY);
-
-    VECTOR shootDir = VGet(0.0f, 0.0f, -1.0f);
-    shootDir = VTransform(shootDir, rotMat);
-
-    VECTOR muzzleOffset = VGet(0.0f, 1.0f, -1.0f);
-    VECTOR muzzlePos = VAdd(pos_, VTransform(muzzleOffset, rotMat));
-
-    float bulletSpeed = 20.0f;
-
-    BulletManager::GetInstance().AddBullet(muzzlePos, shootDir, bulletSpeed, id_);
-
-    // 反動（水平）
-    VECTOR recoil = shootDir; recoil.y = 0.0f;
-    float len = VSize(recoil);
-    if (len > 1e-5f) recoil = VScale(recoil, 1.0f / len);
-
-    moveVec_ = VAdd(moveVec_, VScale(recoil, -recoilForce_));
-
-    // 空中反動Y（必要なら）
-    if (recoilVerticalBonus_ > 0.0f && isFalling_) moveVec_.y += recoilVerticalBonus_;
-
-    // 水平速度キャップ
-    float hv = sqrtf(moveVec_.x * moveVec_.x + moveVec_.z * moveVec_.z);
-    const float MAX_HORIZONTAL_SPEED = 900.0f;
-    if (hv > MAX_HORIZONTAL_SPEED) {
-        float s = MAX_HORIZONTAL_SPEED / hv;
-        moveVec_.x *= s;
-        moveVec_.z *= s;
-    }
-}
-
 void Player::Draw()
 {
     MV1SetPosition(modelId_, pos_);
@@ -425,7 +383,7 @@ void Player::Draw()
 
     if (pos_.y >= -1000.0f) MV1DrawModel(modelId_);
 
-    BulletManager::GetInstance().Draw();
+    //BulletManager::GetInstance().Draw();
 
     //DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
     //DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
