@@ -32,6 +32,8 @@ public:
 	// 無人グレースタイマー（ms）
 	static constexpr int NO_PLAYER_GRACE_MS = 700; 
 
+	const float GRAVITY = 9.81f; // 重力
+
 	// インスタンス
 	static void CreateInstance();
 	static Stage& GetInstance();

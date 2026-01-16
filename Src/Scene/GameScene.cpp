@@ -148,8 +148,13 @@ void GameScene::Draw()
 	// プレイヤー
 	playerManager_->DrawPlayers();
 
-	// 追加：生存状況HUD
-	DrawPlayerStatusHUD();
+	// マーカー描画
+	DrawPlayerMarkers3D();
+
+	// プレイヤー識別HUD
+	//DrawPlayerHUDLegend();
+
+
 
 	// デバッグ表示（任意）
 	//DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
@@ -172,41 +177,83 @@ void GameScene::Draw()
 void GameScene::DrawPlayerMarkers3D()
 {
 	const auto raw = playerManager_->GetPlayerRawPlayers();
+
 	for (auto* p : raw)
 	{
 		if (!p || !p->IsAlive()) continue;
 
-		const int pid = p->GetID();
-		const bool isHuman = (singlePlayerMode_ && pid == humanPlayerId_);
-		const char* label = isHuman ? "YOU" : (singlePlayerMode_ ? "CPU" : "");
+		const int playerID = p->GetID();
+		const bool isHuman = (singlePlayerMode_ && playerID == 0);
 
-		// マルチプレイでは空ラベルは表示しない
-		if (!singlePlayerMode_ && label[0] == '\0') continue;
+		// ラベル生成
+		char label[32];
+		if (singlePlayerMode_)
+		{
+			snprintf(label, sizeof(label), "%s", isHuman ? "YOU" : "CPU");
+		}
+		else
+		{
+			snprintf(label, sizeof(label), "P%d", playerID + 1);
+		}
 
-		VECTOR pos = p->GetPos();
-		VECTOR markerPos = VGet(pos.x, pos.y + 140.0f, pos.z);
+		// 色設定
+		unsigned int labelColor;
+		unsigned int markerColor;
+		if (singlePlayerMode_)
+		{
+			// 一人プレイ: 人間は赤、AIは灰色
+			labelColor = isHuman ? GetColor(255, 60, 60) : GetColor(180, 180, 180);
+			markerColor = isHuman ? GetColor(255, 60, 60) : GetColor(180, 180, 180);
+		}
+		else
+		{
+			// マルチプレイ: 1P赤, 2P青, 3P黄, 4P緑
+			switch (playerID)
+			{
+			case 0: // 1P
+				labelColor = GetColor(255, 60, 60);
+				markerColor = GetColor(255, 60, 60);
+				break;
+			case 1: // 2P
+				labelColor = GetColor(60, 120, 255);
+				markerColor = GetColor(60, 120, 255);
+				break;
+			case 2: // 3P
+				labelColor = GetColor(255, 220, 60);
+				markerColor = GetColor(255, 220, 60);
+				break;
+			case 3: // 4P
+				labelColor = GetColor(60, 220, 120);
+				markerColor = GetColor(60, 220, 120);
+				break;
+			default:
+				labelColor = GetColor(220, 220, 220);
+				markerColor = GetColor(220, 220, 220);
+				break;
+			}
+		}
 
-		bool highlight = isHuman && (youMarkerTimer_ < YOU_MARKER_HIGHLIGHT_FRAMES) && ((youMarkerTimer_ / 8) % 2 == 0);
-		unsigned int colTri = highlight ? GetColor(255, 255, 0) : GetColor(180, 220, 255);
-		unsigned int colText = highlight ? GetColor(255, 255, 120) : GetColor(220, 240, 255);
+		VECTOR playerPos = p->GetPos();
+		VECTOR markerPos = VGet(playerPos.x, playerPos.y + 200.0f, playerPos.z);
 
 		// 三角形（頭上の目印）を描画
 		DrawTriangle3D(
 			VGet(markerPos.x - 20.0f, markerPos.y + 20.0f, markerPos.z),
 			VGet(markerPos.x + 20.0f, markerPos.y + 20.0f, markerPos.z),
 			VGet(markerPos.x, markerPos.y, markerPos.z),
-			colTri,
+			markerColor,
 			TRUE);
 
-		// ラベル（YOU/CPU）を2Dで重ねて表示
-		DrawLabelAtWorld(label, VGet(markerPos.x, markerPos.y + 50.0f, markerPos.z), colText);
+		// ラベルを重ねて表示
+		DrawLabelAtWorld(label, VGet(markerPos.x, markerPos.y + 50.0f, markerPos.z), labelColor);
 	}
 }
 
 void GameScene::DrawPlayerHUDLegend()
 {
 	unsigned int col = (youMarkerTimer_ < YOU_MARKER_HIGHLIGHT_FRAMES) ? GetColor(255, 255, 120) : GetColor(200, 220, 255);
-	// HUDの凡例を表示する場合はここに描画を書く（現状未使用）
+	DrawFormatString(20, 60, col, "YOU: Player %d", humanPlayerId_ + 1);
+
 }
 
 void GameScene::DrawLabelAtWorld(const char* text, const VECTOR& worldPos, unsigned int color)

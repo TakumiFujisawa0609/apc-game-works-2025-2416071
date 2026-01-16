@@ -372,21 +372,89 @@ void Player::Move()
     }
 }
 
+bool WorldToScreen(const VECTOR& world, int& outX, int& outY)
+{
+    // ビュー・プロジェクション行列取得
+    MATRIX view = GetCameraViewMatrix();
+    MATRIX proj = GetCameraProjectionMatrix();
+
+    // ワールド→ビュー変換
+    VECTOR v = VTransform(world, view);
+    // ビュー→クリップ空間変換
+    VECTOR clip;
+    clip.x = v.x * proj.m[0][0] + v.y * proj.m[1][0] + v.z * proj.m[2][0] + proj.m[3][0];
+    clip.y = v.x * proj.m[0][1] + v.y * proj.m[1][1] + v.z * proj.m[2][1] + proj.m[3][1];
+    clip.z = v.x * proj.m[0][2] + v.y * proj.m[1][2] + v.z * proj.m[2][2] + proj.m[3][2];
+    float w = v.x * proj.m[0][3] + v.y * proj.m[1][3] + v.z * proj.m[2][3] + proj.m[3][3];
+
+    if (w == 0.0f) return false;
+
+    // 正規化デバイス座標
+    float ndcX = clip.x / w;
+    float ndcY = clip.y / w;
+    // float ndcZ = clip.z / w; // Z値が必要なら
+
+    // 画面サイズ取得
+    int screenW, screenH;
+    GetScreenState(&screenW, &screenH, NULL);
+
+    // スクリーン座標へ変換
+    outX = static_cast<int>((ndcX * 0.5f + 0.5f) * screenW);
+    outY = static_cast<int>((-ndcY * 0.5f + 0.5f) * screenH);
+
+    // 画面外判定（必要なら）
+    if (w < 0.0f) return false;
+
+    return true;
+}
+
 void Player::Draw()
 {
     MV1SetPosition(modelId_, pos_);
 
     float rotY = atan2f(-inputVecNor_.x, -inputVecNor_.z);
     VECTOR rot = { 0.0f, rotY, 0.0f };
-
     MV1SetRotationXYZ(modelId_, rot);
 
     if (pos_.y >= -1000.0f) MV1DrawModel(modelId_);
 
-    //BulletManager::GetInstance().Draw();
+    // チャージゲージ描画
+    if (isCharging_ || chargeTimerSec_ > 0.0f) {
+        const float minSec = CHARGE_MIN_SEC;
+        const float maxSec = CHARGE_MAX_SEC;
+        float ratio = chargeTimerSec_ / maxSec;
+        if (ratio > 1.0f) ratio = 1.0f;
+        if (ratio < 0.0f) ratio = 0.0f;
 
-    //DrawSphere3D(pos_, 0.5f, 16, GetColor(255, 0, 0), GetColor(255, 0, 0), TRUE);
-    //DrawLine3D(pos_, VAdd(pos_, moveVec_), GetColor(0, 255, 0));
+        VECTOR gaugePos = pos_;
+        gaugePos.y += 2.0f;
+        gaugePos.x += 1.0f;
+
+        int screenX, screenY;
+        if (WorldToScreen(gaugePos, screenX, screenY)) {
+            int barWidth = 80;
+            int barHeight = 12;
+            int filledWidth = static_cast<int>(barWidth * ratio);
+
+            DrawBox(screenX, screenY, screenX + barWidth, screenY + barHeight, GetColor(80, 80, 80), FALSE);
+
+            int minLineX = screenX + static_cast<int>(barWidth * (minSec / maxSec));
+            DrawLine(minLineX, screenY, minLineX, screenY + barHeight, GetColor(255, 255, 0));
+
+            int r = static_cast<int>(255 * (1.0f - ratio));
+            int g = static_cast<int>(255 * ratio);
+            int b = 0;
+            DrawBox(screenX, screenY, screenX + filledWidth, screenY + barHeight, GetColor(r, g, b), TRUE);
+
+            // クールタイム表示
+            if (dashCooldownSec_ > 0.0f) {
+                char cooldownText[32];
+                sprintf_s(cooldownText, "CT: %.1fs", dashCooldownSec_);
+                int textY = screenY + barHeight + 4;
+                DrawString(screenX, textY, cooldownText, GetColor(200, 200, 255));
+            }
+        }
+    }
 
 #ifdef _DEBUG
     char buffer[160];
@@ -438,5 +506,9 @@ void Player::Die()
 
 void Player::Release()
 {
-    // 後始末
+	if (modelId_ != -1) {
+		MV1DeleteModel(modelId_);
+		modelId_ = -1;
+	}
 }
+

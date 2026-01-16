@@ -40,13 +40,13 @@ public:
     static constexpr float DEFAULT_RECOIL_VERTICAL_BONUS = 0.0f;
 
     // チャージ/ダッシュ設定
-    static constexpr float CHARGE_MAX_SEC = 1.0f;   // 最大ため時間
-    static constexpr float CHARGE_MIN_SEC = 0.10f;  // ダッシュ成立に必要な最小ため時間
+    static constexpr float CHARGE_MAX_SEC = 2.0f;   // 最大ため時間
+    static constexpr float CHARGE_MIN_SEC = 0.25f;  // ダッシュ成立に必要な最小ため時間
     static constexpr float DASH_BASE_SPEED = 50.0f;  // 最低ダッシュ速度
     static constexpr float DASH_MAX_SPEED = 110.0f; // 最大ダッシュ速度
     static constexpr float DASH_BASE_DURATION = 0.16f;  // 最低ダッシュ時間
     static constexpr float DASH_MAX_DURATION = 0.28f;  // 最大ダッシュ時間
-    static constexpr float DASH_COOLDOWN_SEC = 0.6f;   // クールダウン
+    static constexpr float DASH_COOLDOWN_SEC = 0.75f;   // クールダウン
 
     bool IsControlLocked() const { return controlLockTimerSec_ > 0.0f; }
     bool IsDashing() const { return isDashing_; }

@@ -26,7 +26,6 @@ void Stage::CreateInstance()
 	}
 }
 
-
 // 初期化
 void Stage::Init()
 {
@@ -55,7 +54,8 @@ void Stage::Init()
 	// 回転系
 	angularVelocity_ = AsoUtility::VECTOR_ZERO;
 	momentOfInertia_ = MOMENT_OF_INERTIA;
-	dampingFactor_ = DAMPING_FACTOR;
+	dampingFactor_ = 0.10f;         // 少し強めの減衰
+	restitutionFactor_ = 0.25f;     // 復元トルク強め
 
 	// 無人グレース初期化
 	lastOnStageTimeMs_ = GetNowCount();
@@ -72,7 +72,6 @@ void Stage::Update()
 	angularVelocity_.x *= (1.0f - dampingFactor_);
 	angularVelocity_.y *= (1.0f - dampingFactor_);
 	angularVelocity_.z *= (1.0f - dampingFactor_);
-
 }
 
 // 描画
@@ -88,9 +87,6 @@ void Stage::Draw()
 	MV1SetRotationXYZ(skyModelId_, skyAngle_);
 	MV1SetScale(skyModelId_, skyScale_);
 	MV1DrawModel(skyModelId_);
-
-
-	// デバッグ表示は必要なら
 }
 
 // 破棄
@@ -112,19 +108,6 @@ void Stage::Release()
 // プレイヤーの位置に応じてステージを傾斜
 void Stage::UpdateTilt(const std::vector<Player*>& players)
 {
-
-	//return;
-
-	// デバッグ: F1で傾きを固定
-	InputManager& ins = InputManager::GetInstance();
-	if (ins.IsNew(KEY_INPUT_F1))
-	{
-		return;
-	}
-
-	// プレイヤー不在
-	//if (players.empty()) return;
-
 	const int nowMs = GetNowCount();
 
 	// 端マージン付きで在ステージ判定
@@ -138,24 +121,6 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 		}
 	}
 
-	// 無人処理
-	if (!anyPlayerOnStage)
-	{
-		// 無人になってからの経過がグレース内なら、原点復帰を開始しない
-		if (nowMs - lastOnStageTimeMs_ < NO_PLAYER_GRACE_MS)
-		{
-			angle_.y = 0.0f; // Y回転は常にゼロへ
-			return;
-		}
-
-		// グレース経過後のみゆっくり原点へ戻す
-		angle_.x = AsoUtility::Lerp(angle_.x, 0.0f, 0.05f);
-		angle_.z = AsoUtility::Lerp(angle_.z, 0.0f, 0.05f);
-		angle_.y = 0.0f;
-		return;
-	}
-
-	
 	lastOnStageTimeMs_ = nowMs;
 
 	// 在ステージプレイヤーの重心
@@ -166,7 +131,7 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	for (auto p : players)
 	{
 		// 死んでいるとき、落下しているときは除く
-		if(!(p->IsAlive() && !p->IsFalling() && IsPlayerOnStage(p->GetPos(), ON_STAGE_MARGIN)))
+		if (!(p->IsAlive() && !p->IsFalling() && IsPlayerOnStage(p->GetPos(), ON_STAGE_MARGIN)))
 			continue;
 
 		float weight = p->GetWeight();
@@ -198,7 +163,6 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	float centerZ = weightedZ / totalWeight;
 
 	// プレイヤー重心に基づくトルク
-	const float GRAVITY = 9.81f; // 重力
 	VECTOR torque = AsoUtility::VECTOR_ZERO;
 	torque.x = centerZ * totalWeight * GRAVITY;
 	torque.z = -centerX * totalWeight * GRAVITY;
@@ -218,16 +182,25 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 	float deltaTime = 1.0f / 60.0f;
 	angularVelocity_ = VAdd(angularVelocity_, VScale(angularAcceleration, deltaTime));
 
+	// 角速度の上限（急激な傾き防止）
+	const float maxAngularVel = AsoUtility::Deg2RadF(2.0f); // 1フレームで最大2度
+	angularVelocity_.x = std::fmax(std::fmin(angularVelocity_.x, maxAngularVel), -maxAngularVel);
+	angularVelocity_.z = std::fmax(std::fmin(angularVelocity_.z, maxAngularVel), -maxAngularVel);
+
 	// 減衰
 	angularVelocity_ = VScale(angularVelocity_, dampingFactor_);
 
 	// 角度更新
 	angle_ = VAdd(angle_, VScale(angularVelocity_, deltaTime));
 
-	// 上限
-	const float maxTilt = AsoUtility::Deg2RadF(45.0f);
+	// 角度の上限（詰み防止・自然な傾き）
+	const float maxTilt = AsoUtility::Deg2RadF(30.0f); // 30度まで
 	angle_.x = std::fmax(std::fmin(angle_.x, maxTilt), -maxTilt);
 	angle_.z = std::fmax(std::fmin(angle_.z, maxTilt), -maxTilt);
+
+	// 角度が上限に達したら角速度をリセット
+	if (std::abs(angle_.x) >= maxTilt) angularVelocity_.x = 0.0f;
+	if (std::abs(angle_.z) >= maxTilt) angularVelocity_.z = 0.0f;
 
 	// 反映
 	MV1SetRotationXYZ(modelId_, angle_);
@@ -241,15 +214,13 @@ void Stage::UpdateTilt(const std::vector<Player*>& players)
 
 bool Stage::IsPlayerOnStage(const VECTOR& playerPos) const
 {
-	// 互換: マージンなし
 	return IsPlayerOnStage(playerPos, 0.0f);
 }
 
 bool Stage::IsPlayerOnStage(const VECTOR& playerPos, float margin) const
 {
-	// ステージ中心からの水平距離
 	VECTOR relationPos = VSub(playerPos, this->pos_);
-	relationPos.y = 0.0f;
+	relationPos.y = 0.0f;	
 	float distSq = relationPos.x * relationPos.x + relationPos.z * relationPos.z;
 
 	const float r = collider_.radius + margin;
@@ -258,11 +229,9 @@ bool Stage::IsPlayerOnStage(const VECTOR& playerPos, float margin) const
 
 VECTOR Stage::GetStageNormal() const
 {
-	// 傾きに応じた法線ベクトル
 	VECTOR up = { 0.0f, 1.0f, 0.0f };
 	VECTOR v = VTransform(up, MGetRotX(angle_.x));
 	v = VTransform(v, MGetRotZ(angle_.z));
 	v = VTransform(v, MGetRotY(angle_.y));
 	return v;
-
 }

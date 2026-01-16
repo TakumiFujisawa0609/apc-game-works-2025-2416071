@@ -7,335 +7,328 @@
 #include <cstdlib>
 #include <cfloat>
 
+// 傾斜ベクトル取得（ステージの角度から計算）
+VECTOR GetStageSlopeVector()
+{
+    Stage& stage = Stage::GetInstance();
+    VECTOR angle = stage.GetAngle();
+    // x: z軸の傾き, z: x軸の傾き
+    return VNorm(VGet(sinf(angle.z), 0.0f, sinf(angle.x)));
+}
+
+// 有利位置判定（坂の上方向に近いほど有利）
+bool IsAdvantageousPosition(const VECTOR& pos)
+{
+    VECTOR slope = GetStageSlopeVector();
+    // ステージ中心からposへの方向
+    Stage& stage = Stage::GetInstance();
+    VECTOR center = stage.GetPos();
+    VECTOR dir = VNorm(VSub(pos, center));
+    float dot = VDot(slope, dir);
+    return dot > 0.4f; // 閾値は調整可
+}
+
+// 不利位置判定（坂の下方向に近いほど不利）
+bool IsDisadvantageousPosition(const VECTOR& pos)
+{
+    VECTOR slope = GetStageSlopeVector();
+    Stage& stage = Stage::GetInstance();
+    VECTOR center = stage.GetPos();
+    VECTOR dir = VNorm(VSub(pos, center));
+    float dot = VDot(slope, dir);
+    return dot < -0.4f;
+}
+
 // デフォルトパラメータ初期化を共通化
 void AIController::InitDefaults()
 {
-	// 出力滑らか化
-	lastChangeTimeMs_ = GetNowCount();
-	currentMoveVec_ = VGet(0.0f, 0.0f, 0.0f);
-	nextChangeIntervalMs_ = 300 + (std::rand() % 1200);
+    lastChangeTimeMs_ = GetNowCount();
+    currentMoveVec_ = VGet(0.0f, 0.0f, 0.0f);
+    nextChangeIntervalMs_ = 300 + (std::rand() % 1200);
 
-	// 攻撃関連
-	lastAttackTimeMs_ = 0;
-	attackIntervalMs_ = 500;
-	attackRange_ = 600.0f; // 攻撃開始距離
-	aggression_ = 0.65f;
+    lastAttackTimeMs_ = 0;
+    attackIntervalMs_ = 500;
+    attackRange_ = 600.0f;
+    aggression_ = 0.65f;
 
-	// ワンダー
-	wanderTarget_ = VGet(0.0f, 0.0f, 0.0f);
-	wanderTimerMs_ = GetNowCount();
-	wanderIntervalMs_ = 800 + (std::rand() % 1200);
+    wanderTarget_ = VGet(0.0f, 0.0f, 0.0f);
+    wanderTimerMs_ = GetNowCount();
+    wanderIntervalMs_ = 800 + (std::rand() % 1200);
 
-	// 人間らしさ
-	reactionDelayMs_ = 180 + (std::rand() % 200);
-	moveJitterStrength_ = 0.8f;
+    reactionDelayMs_ = 180 + (std::rand() % 200);
+    moveJitterStrength_ = 0.8f;
 }
 
-// コンストラクタ（引数なし）
 AIController::AIController()
-	: ownerId_(-1)
+    : ownerId_(-1)
 {
-	InitDefaults();
+    InitDefaults();
 }
 
-// コンストラクタ（ownerId 指定）
 AIController::AIController(int ownerId)
-	: ownerId_(ownerId)
+    : ownerId_(ownerId)
 {
-	InitDefaults();
+    InitDefaults();
 }
 
-// 最寄りの敵への方向を計算して返す（XZ 平面、正規化してスケール調整）
-// ターゲットが見つからなければ currentMoveVec_ を返す
 VECTOR AIController::CalcDirTuNearEnemy() const
 {
-	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+    auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+    const Player* me = nullptr;
+    for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+    if (!me) return currentMoveVec_;
 
-	// 自分を取得
-	const Player* me = nullptr;
-	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	if (!me) return currentMoveVec_;
+    VECTOR myPos = me->GetPos();
 
-	VECTOR myPos = me->GetPos();
+    const Player* best = nullptr;
+    float bestDistSq = FLT_MAX;
+    for (auto p : players)
+    {
+        if (p->GetID() == ownerId_) continue;
+        if (!p->IsAlive()) continue;
+        VECTOR diff = VSub(p->GetPos(), myPos);
+        float d2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+        if (d2 < bestDistSq)
+        {
+            bestDistSq = d2;
+            best = p;
+        }
+    }
 
-	// 最も近い生存プレイヤーを探索
-	const Player* best = nullptr;
-	float bestDistSq = FLT_MAX;
-	for (auto p : players)
-	{
-		if (p->GetID() == ownerId_) continue;
-		if (!p->IsAlive()) continue;
-		VECTOR diff = VSub(p->GetPos(), myPos);
-		float d2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-		if (d2 < bestDistSq)
-		{
-			bestDistSq = d2;
-			best = p;
-		}
-	}
+    if (!best) return currentMoveVec_;
 
-	if (!best) return currentMoveVec_;
+    VECTOR dir = VSub(best->GetPos(), myPos);
+    dir.y = 0.0f;
+    float len = VSize(dir);
+    if (len <= 1e-5f) return currentMoveVec_;
 
-	// 方向算出（XZ 平面のみ）
-	VECTOR dir = VSub(best->GetPos(), myPos);
-	dir.y = 0.0f;
-	float len = VSize(dir);
-	if (len <= 1e-5f) return currentMoveVec_;
-
-	// コントローラ規約に合わせる（スケール）
-	return VScale(VScale(dir, 1.0f / len), 10.5f);
+    return VScale(VScale(dir, 1.0f / len), 10.5f);
 }
 
-// 近傍の弾丸を検出して回避方向を outDodgeDir に設定する。
-// 見つかれば true を返す。弾の速度情報があればそれを使うとより自然。
 bool AIController::FindNearbyBulletAndDodge(VECTOR& outDodgeDir) const
 {
-
-	(void)outDodgeDir; // 未使用警告回避
-	return false;
-
-
-	//const auto& bullets = BulletManager::GetInstance().GetBullets();
-	//auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	//const Player* me = nullptr;
-	//for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	//if (!me) return false;
-
-	//VECTOR myPos = me->GetPos();
-	//const float dangerRadius = 250.0f;
-
-	//for (const auto& b : bullets)
-	//{
-	//	if (!b->IsAlive()) continue;
-	//	if (b->GetOwnerId() == ownerId_) continue;
-
-	//	VECTOR bPos = b->GetPos();
-	//	VECTOR diff = VSub(bPos, myPos);
-	//	float dist = VSize(diff);
-	//	if (dist > dangerRadius) continue;
-
-	//	// 弾の進行方向が取れるならそれを使う（存在しない場合は fallback）
-	//	bool usedVel = false;
-	//	VECTOR vel = VGet(0.0f, 0.0f, 0.0f);
-	//	// もし Bullet に速度 API があれば以下を有効化してください（例）:
-	//	// vel = b->GetVelocity();
-	//	// if (fabsf(vel.x) > 1e-6f || fabsf(vel.z) > 1e-6f) usedVel = true;
-
-	//	VECTOR dodge;
-	//	if (usedVel)
-	//	{
-	//		vel.y = 0.0f;
-	//		dodge = VGet(-vel.z, 0.0f, vel.x);
-	//	}
-	//	else
-	//	{
-	//		dodge = VGet(-diff.z, 0.0f, diff.x);
-	//	}
-
-	//	float len = VSize(dodge);
-	//	if (len <= 1e-5f) continue;
-	//	outDodgeDir = VScale(dodge, 12.0f / len); // 回避強さ（調整可）
-	//	return true;
-	//}
-	//return false;
+    (void)outDodgeDir;
+    return false;
 }
 
+// 坂の上方向に向かう場合を有利と判定する関数
+bool IsAdvantageousDirection(const VECTOR& from, const VECTOR& to)
+{
+    VECTOR slope = GetStageSlopeVector();
+    VECTOR dir = VNorm(VSub(to, from));
+    float dot = VDot(slope, dir);
+    return dot > 0.4f; // 閾値は調整可
+}
 
-// PickNewWanderTarget: 目的地を選ぶ（端寄りを選ぶ確率や最小距離を保証）
+// PickNewWanderTarget: 目的地を選ぶ（傾斜有利方向＋距離制限）
 void AIController::PickNewWanderTarget(bool ensureFar /*= true*/) const
 {
-	Stage& stage = Stage::GetInstance();
-	VECTOR center = stage.GetPos();
-	float stageRadius = stage.GetCollider().radius;
+    Stage& stage = Stage::GetInstance();
+    VECTOR center = stage.GetPos();
+    float stageRadius = stage.GetCollider().radius;
 
-	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	const Player* me = nullptr;
-	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+    auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+    const Player* me = nullptr;
+    for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
 
-	float playerRadius = (me) ? me->GetCollisionRadius() : 50.0f;
-	const float safeMargin = (playerRadius * 1.5f > SAFE_MARGIN_BASE) ? (playerRadius * 1.5f) : SAFE_MARGIN_BASE;
-	float maxR = stageRadius - safeMargin;
-	if (maxR < 30.0f) maxR = 30.0f;
+    float playerRadius = (me) ? me->GetCollisionRadius() : 50.0f;
+    const float safeMargin = (playerRadius * 1.5f > SAFE_MARGIN_BASE) ? (playerRadius * 1.5f) : SAFE_MARGIN_BASE;
+    float maxR = stageRadius - safeMargin;
+    if (maxR < 30.0f) maxR = 30.0f;
 
-	float minDist = (ensureFar) ? WANDER_MIN_DISTANCE : 20.0f;
-	VECTOR candidate = VGet(0.0f, 0.0f, 0.0f);
-	bool picked = false;
+    float minDist = (ensureFar) ? WANDER_MIN_DISTANCE : 20.0f;
+    float maxDistFromCenter = stageRadius * 0.8f; // 外周に行き過ぎないよう制限
 
-	bool pickEdge = ((static_cast<float>(std::rand()) / RAND_MAX) < EDGE_SELECTION_PROB);
+    VECTOR candidate = VGet(0.0f, 0.0f, 0.0f);
+    bool picked = false;
 
-	for (int attempt = 0; attempt < 12; ++attempt)
-	{
-		float ang = (static_cast<float>(std::rand()) / RAND_MAX) * 2.0f * 3.14159265358979323846f;
-		float r;
-		if (pickEdge)
-		{
-			float inner = maxR * EDGE_MARGIN_FACTOR;
-			float frac = static_cast<float>(std::rand()) / RAND_MAX;
-			r = inner + frac * (maxR - inner);
-		}
-		else
-		{
-			r = (static_cast<float>(std::rand()) / RAND_MAX) * maxR;
-		}
-		candidate.x = center.x + cosf(ang) * r;
-		candidate.y = center.y;
-		candidate.z = center.z + sinf(ang) * r;
+    bool pickEdge = ((static_cast<float>(std::rand()) / RAND_MAX) < EDGE_SELECTION_PROB);
 
-		if (!me)
-		{
-			picked = true;
-			break;
-		}
-		VECTOR diff = VSub(candidate, me->GetPos());
-		float d = VSize(diff);
-		if (!ensureFar || d >= minDist)
-		{
-			picked = true;
-			break;
-		}
-	}
+    for (int attempt = 0; attempt < 12; ++attempt)
+    {
+        float ang = (static_cast<float>(std::rand()) / RAND_MAX) * 2.0f * 3.14159265358979323846f;
+        float r;
+        if (pickEdge)
+        {
+            float inner = maxR * EDGE_MARGIN_FACTOR;
+            float frac = static_cast<float>(std::rand()) / RAND_MAX;
+            r = inner + frac * (maxR - inner);
+        }
+        else
+        {
+            r = (static_cast<float>(std::rand()) / RAND_MAX) * maxR;
+        }
+        candidate.x = center.x + cosf(ang) * r;
+        candidate.y = center.y;
+        candidate.z = center.z + sinf(ang) * r;
 
-	if (!picked)
-	{
-		float ang = (static_cast<float>(std::rand()) / RAND_MAX) * 2.0f * 3.14159265358979323846f;
-		float r = maxR * 0.5f;
-		candidate.x = center.x + cosf(ang) * r;
-		candidate.y = center.y;
-		candidate.z = center.z + sinf(ang) * r;
-	}
+        if (!me)
+        {
+            picked = true;
+            break;
+        }
+        VECTOR diff = VSub(candidate, me->GetPos());
+        float d = VSize(diff);
+        float distFromCenter = VSize(VSub(candidate, center));
+        // 有利方向かつ距離条件・外周制限を満たす場合のみ選択
+        if ((!ensureFar || d >= minDist) &&
+            IsAdvantageousDirection(me->GetPos(), candidate) &&
+            distFromCenter < maxDistFromCenter)
+        {
+            picked = true;
+            break;
+        }
+    }
 
-	wanderTarget_ = candidate;
-	wanderTimerMs_ = GetNowCount();
-	wanderIntervalMs_ = 1200 + (std::rand() % 1200);
+    if (!picked)
+    {
+        float ang = (static_cast<float>(std::rand()) / RAND_MAX) * 2.0f * 3.14159265358979323846f;
+        float r = maxR * 0.5f;
+        candidate.x = center.x + cosf(ang) * r;
+        candidate.y = center.y;
+        candidate.z = center.z + sinf(ang) * r;
+    }
+
+    wanderTarget_ = candidate;
+    wanderTimerMs_ = GetNowCount();
+    wanderIntervalMs_ = 1200 + (std::rand() % 1200);
 }
+
 
 VECTOR AIController::GetMoveInputVector() const
 {
-	int now = GetNowCount();
+    int now = GetNowCount();
 
-	// wanderTarget の初期化・周期更新
-	const float initEps = 0.001f;
-	if (fabsf(wanderTarget_.x) < initEps && fabsf(wanderTarget_.z) < initEps) PickNewWanderTarget();
-	if (now - wanderTimerMs_ >= wanderIntervalMs_) PickNewWanderTarget();
+    const float initEps = 0.001f;
+    if (fabsf(wanderTarget_.x) < initEps && fabsf(wanderTarget_.z) < initEps) PickNewWanderTarget();
+    if (now - wanderTimerMs_ >= wanderIntervalMs_) PickNewWanderTarget();
 
-	// 自分のプレイヤーを取得
-	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	const Player* me = nullptr;
-	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	if (!me)
-	{
-		VECTOR rnd = VGet((std::rand() % 200 - 100) / 10.0f, 0.0f, (std::rand() % 200 - 100) / 10.0f);
-		return rnd;
-	}
+    auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+    const Player* me = nullptr;
+    for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+    if (!me)
+    {
+        VECTOR rnd = VGet((std::rand() % 200 - 100) / 10.0f, 0.0f, (std::rand() % 200 - 100) / 10.0f);
+        return rnd;
+    }
 
-	// 目的方向を計算
-	VECTOR myPos = me->GetPos();
-	VECTOR dir = VSub(wanderTarget_, myPos); dir.y = 0.0f;
-	float len = VSize(dir);
+    VECTOR myPos = me->GetPos();
+    VECTOR dir = VSub(wanderTarget_, myPos); dir.y = 0.0f;
+    float len = VSize(dir);
 
-	VECTOR desired;
-	if (len <= 20.0f)
-	{
-		// 目標近傍では小さく滞留しつつ別目標を選ぶ
-		desired = VGet(((std::rand() % 200) - 100) / 20.0f, 0.0f, ((std::rand() % 200) - 100) / 20.0f);
-		if (len <= 8.0f) { PickNewWanderTarget(); currentMoveVec_.x *= 0.3f; currentMoveVec_.z *= 0.3f; }
-	}
-	else
-	{
-		desired = VScale(VScale(dir, 1.0f / len), 10.0f);
-	}
+    VECTOR desired;
+    if (len <= 20.0f)
+    {
+        desired = VGet(((std::rand() % 200) - 100) / 20.0f, 0.0f, ((std::rand() % 200) - 100) / 20.0f);
+        if (len <= 8.0f) { PickNewWanderTarget(); currentMoveVec_.x *= 0.3f; currentMoveVec_.z *= 0.3f; }
+    }
+    else
+    {
+        desired = VScale(VScale(dir, 1.0f / len), 10.0f);
+    }
 
-	// 弾丸回避を優先的に混ぜる
-	VECTOR dodge;
-	if (FindNearbyBulletAndDodge(dodge))
-	{
-		desired = VAdd(VScale(dodge, 1.2f), VScale(desired, 0.6f));
-	}
+    // 弾丸回避を優先的に混ぜる
+    VECTOR dodge;
+    if (FindNearbyBulletAndDodge(dodge))
+    {
+        desired = VAdd(VScale(dodge, 1.2f), VScale(desired, 0.6f));
+    }
 
-	// ステージ内と傾斜回避の補正
-	//KeepInsideStage(desired);
+    // 不利位置にいる場合は坂の上方向へ補正
+    if (IsDisadvantageousPosition(myPos))
+    {
+        VECTOR slope = GetStageSlopeVector();
+        desired = VAdd(desired, VScale(slope, 8.0f));
+    }
 
-	// 出力の滑らか化
-	if (now - lastChangeTimeMs_ >= nextChangeIntervalMs_)
-	{
-		currentMoveVec_ = desired;
-		lastChangeTimeMs_ = now;
-		nextChangeIntervalMs_ = 150 + (std::rand() % 500);
-	}
-	else
-	{
-		currentMoveVec_.x = currentMoveVec_.x * 0.82f + desired.x * 0.18f;
-		currentMoveVec_.z = currentMoveVec_.z * 0.82f + desired.z * 0.18f;
-	}
+    // ステージ中心への引力を追加（外周・落下防止）
+    Stage& stage = Stage::GetInstance();
+    VECTOR center = stage.GetPos();
+    VECTOR toCenter = VSub(center, myPos); toCenter.y = 0.0f;
+    float distFromCenter = VSize(toCenter);
+    float stageRadius = stage.GetCollider().radius;
+    if (distFromCenter > stageRadius * 0.7f) // 外周に近い場合のみ
+    {
+        VECTOR pull = VScale(VNorm(toCenter), 12.0f); // 強めの補正
+        desired = VAdd(desired, pull);
+    }
 
-	currentMoveVec_.y = 0.0f;
-	return currentMoveVec_;
+    // 出力の滑らか化
+    if (now - lastChangeTimeMs_ >= nextChangeIntervalMs_)
+    {
+        currentMoveVec_ = desired;
+        lastChangeTimeMs_ = now;
+        nextChangeIntervalMs_ = 150 + (std::rand() % 500);
+    }
+    else
+    {
+        currentMoveVec_.x = currentMoveVec_.x * 0.82f + desired.x * 0.18f;
+        currentMoveVec_.z = currentMoveVec_.z * 0.82f + desired.z * 0.18f;
+    }
+
+    currentMoveVec_.y = 0.0f;
+    return currentMoveVec_;
 }
 
-// ジャンプ判定
+
 bool AIController::IsJumpTrigger() const
 {
+    auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+    const Player* me = nullptr;
 
+    for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+    if (!me) return false;
 
-	auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	const Player* me = nullptr;
+    VECTOR myPos = me->GetPos();
 
-	for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	if (!me) return false;
+    for (auto p : players)
+    {
+        if (p->GetID() == ownerId_) continue;
+        if (!p->IsAlive()) continue;
+        VECTOR diff = VSub(p->GetPos(), myPos);
+        float horDist = sqrtf(diff.x * diff.x + diff.z * diff.z);
+        if (horDist < 150.0f && diff.y > 40.0f) return true;
+    }
 
-	VECTOR myPos = me->GetPos();
-
-	for (auto p : players)
-	{
-		if (p->GetID() == ownerId_) continue;
-		if (!p->IsAlive()) continue;
-		VECTOR diff = VSub(p->GetPos(), myPos);
-		float horDist = sqrtf(diff.x * diff.x + diff.z * diff.z);
-		if (horDist < 150.0f && diff.y > 40.0f) return true;
-	}
-
-	return (std::rand() % 1000) < 6;
+    return (std::rand() % 1000) < 6;
 }
 
-// 攻撃判定
 bool AIController::IsAttackTrigger() const
 {
-	//int now = GetNowCount();
-	//if (now - lastAttackTimeMs_ < attackIntervalMs_) return false;
+    auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
+    const Player* me = nullptr;
+    for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
+    if (!me) return false;
 
-	//auto players = PlayerManager::GetInstance().GetPlayerRawPlayers();
-	//const Player* me = nullptr;
-	//for (auto p : players) { if (p->GetID() == ownerId_) { me = p; break; } }
-	//if (!me) return false;
+    VECTOR myPos = me->GetPos();
 
-	//VECTOR myPos = me->GetPos();
+    // 最も近い敵を探す
+    const Player* best = nullptr;
+    float bestDistSq = FLT_MAX;
+    for (auto p : players)
+    {
+        if (p->GetID() == ownerId_) continue;
+        if (!p->IsAlive()) continue;
+        VECTOR diff = VSub(p->GetPos(), myPos);
+        float d2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
+        if (d2 < bestDistSq)
+        {
+            bestDistSq = d2;
+            best = p;
+        }
+    }
+    if (!best) return false;
 
-	//const Player* best = nullptr;
-	//float bestDistSq = FLT_MAX;
-	//for (auto p : players)
-	//{
-	//	if (p->GetID() == ownerId_) continue;
-	//	if (!p->IsAlive()) continue;
-	//	VECTOR diff = VSub(p->GetPos(), myPos);
-	//	float d2 = diff.x * diff.x + diff.y * diff.y + diff.z * diff.z;
-	//	if (d2 < bestDistSq)
-	//	{
-	//		bestDistSq = d2;
-	//		best = p;
-	//	}
-	//}
-	//if (!best) return false;
-
-	//float dist = sqrtf(bestDistSq);
-	//if (dist <= attackRange_)
-	//{
-	//	float p = (attackRange_ - dist) / attackRange_;
-	//	float chance = p * aggression_;
-	//	if ((std::rand() / (float)RAND_MAX) < chance)
-	//	{
-	//		lastAttackTimeMs_ = now;
-	//		return true;
-	//	}
-	//}
-	return false;
+    float dist = sqrtf(bestDistSq);
+    // 攻撃範囲内なら攻撃
+    if (dist <= attackRange_)
+    {
+        // 攻撃間隔（クールタイム）
+        int now = GetNowCount();
+        if (now - lastAttackTimeMs_ < attackIntervalMs_) return false;
+        lastAttackTimeMs_ = now;
+        return true;
+    }
+    return false;
 }
+
