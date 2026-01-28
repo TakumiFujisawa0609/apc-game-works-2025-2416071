@@ -32,10 +32,20 @@ void Result::Init(void)
 
 	// 背景色設定
 	bgImg_ = LoadGraph("Data/Image/Background.png");
+
+	// フェード/演出用初期化
+	fadeTimerMs_ = 0;
 }
 
 void Result::Update(void)
 {
+	// 経過（揺れ/点滅用）
+	int nextFade = fadeTimerMs_ + 16;
+	fadeTimerMs_ = (nextFade < 1000) ? nextFade : 1000; // 約1秒で最大（ビネット等で使用）
+	const float t = GetNowCount() * 0.001f;
+	cameraBobPhase_ = t;
+	promptBlinkPhase_ = t;
+
 	// 入力
 	InputManager& ins = InputManager::GetInstance();
 
@@ -48,28 +58,52 @@ void Result::Update(void)
 
 void Result::Draw(void)
 {
-	// 結果モデル用の簡易カメラを固定配置
+	// 結果モデル用の簡易カメラを固定配置＋微揺れ
 	{
-		VECTOR camPos = VGet(0.0f, 250.0f, -800.0f);
-		float pitch = 20.0f * DX_PI_F / 180.0f;
-		SetCameraPositionAndAngle(camPos, pitch, 0.0f, 0.0f);
+		const float bob = 8.0f * sinf(cameraBobPhase_ * 0.8f);
+		const float yaw = 0.02f * sinf(cameraBobPhase_ * 0.4f);
+		VECTOR camPos = VGet(0.0f, 250.0f + bob, -800.0f);
+		float pitch = (20.0f * DX_PI_F / 180.0f);
+		SetCameraPositionAndAngle(camPos, pitch, yaw, 0.0f);
 	}
 
-	// 背景
+	// フェード係数（0.0～1.0）
+	const float rawAlpha = fadeTimerMs_ / 1000.0f;
+	const float fadeAlpha = (rawAlpha < 1.0f) ? rawAlpha : 1.0f;
+
+	// 背景（不透明）
 	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 0.75, 0.0, bgImg_, TRUE);
 
-	// モデル描画
+	// さりげないビネット（周辺減光はフェードに合わせて強度変更）
+	{
+		int vignetteAlpha = static_cast<int>(fadeAlpha * 90);
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, vignetteAlpha);
+		DrawBox(0, 0, Application::SCREEN_SIZE_X, Application::SCREEN_SIZE_Y, GetColor(0, 0, 0), TRUE);
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
+	}
+
+	// モデル描画（正面固定＋上下揺れ）
+	const float modelBobAmp = 12.0f;              // 揺れ幅（必要なら調整）
+	const float modelBob = modelBobAmp * sinf(cameraBobPhase_ * 1.6f); // 揺れ速度
+
 	for (size_t i = 0; i < modelHandles_.size(); ++i)
 	{
 		int h = modelHandles_[i];
 		if (h == -1) continue;
+
+		// スケール
 		MV1SetScale(h, VGet(modelScale_, modelScale_, modelScale_));
+
+		// 向きを正面に固定
 		MV1SetRotationXYZ(h, VGet(0.0f, 0.0f, 0.0f));
-		MV1SetPosition(h, modelPositions_[i]);
+
+		// ベース位置に上下揺れ（Yのみ加算）
+		VECTOR pos = modelPositions_[i];
+		pos.y += modelBob;
+		MV1SetPosition(h, pos);
+
 		MV1DrawModel(h);
 	}
-
-	
 
 	// テキスト
 	if (singlePlayer_)
@@ -88,7 +122,12 @@ void Result::Draw(void)
 		}
 	}
 
-	DrawString(40, 70, "Enter / PAD1-B: タイトルへ", GetColor(220, 220, 220));
+	// 入力ガイド（点滅）
+	{
+		float blink = 0.5f + 0.5f * sinf(promptBlinkPhase_ * 6.0f); // 0～1
+		int c = static_cast<int>(220 * blink);
+		DrawString(40, 70, "Enter / PAD1-B: タイトルへ", GetColor(c, c, c));
+	}
 }
 
 void Result::Release(void)

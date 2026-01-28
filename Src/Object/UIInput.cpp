@@ -17,14 +17,14 @@ bool UIInput::PadBtn(InputManager::JOYPAD_NO no, InputManager::JOYPAD_BTN btn)
 
 bool UIInput::PadAKeyThreshold(InputManager::JOYPAD_NO no, float thresholdX, float thresholdY)
 {
-	// アナログスティックの入力値を取得
-	InputManager& ins = InputManager::GetInstance();
-	InputManager::JOYPAD_IN_STATE padState = ins.GetJPadInputState(no);
-	// 指定された閾値を超えているかを判定
-	if (padState.AKeyLX >= thresholdX && padState.AKeyLY >= thresholdY) {
-		return true;
-	}
-	return false;
+    // アナログスティックの入力値を取得
+    InputManager& ins = InputManager::GetInstance();
+    InputManager::JOYPAD_IN_STATE padState = ins.GetJPadInputState(no);
+    // 指定された閾値を超えているかを判定
+    if (padState.AKeyLX >= thresholdX && padState.AKeyLY >= thresholdY) {
+        return true;
+    }
+    return false;
 }
 
 InputManager::JOYPAD_NO UIInput::ToPadNo(int idx)
@@ -132,9 +132,9 @@ PlayerNumInput UIInput::GetPlayerNumInput()
     pi.back = KeyTrg(KEY_INPUT_B);
 
 
-	// PAD1 のみ反応
-	if (pi.pad1Connected)
-	{
+    // PAD1 のみ反応
+    if (pi.pad1Connected)
+    {
         VECTOR worldInputVec = { 0.0f,0.0f,0.0f };
         static int prevAKeyLY = 0; // 前フレームの値を保持
 
@@ -152,15 +152,15 @@ PlayerNumInput UIInput::GetPlayerNumInput()
         }
 
         prevAKeyLY = padState.AKeyLY; // 前回値を更新
-        
 
-		// D-Pad / ボタンでも判定
-		//pi.left = pi.left || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::LEFT);   // X / 左
-		//pi.right = pi.right || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT);  // B / 右
 
-		pi.decide = pi.decide || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN); // A / 決定
-		pi.back = pi.back || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::TOP);      // Y / 戻る
-	}
+        // D-Pad / ボタンでも判定
+        //pi.left = pi.left || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::LEFT);   // X / 左
+        //pi.right = pi.right || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT);  // B / 右
+
+        pi.decide = pi.decide || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT); // 右 を決定に変更
+        pi.back = pi.back || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::TOP);      // Y / 戻る
+    }
 
     return pi;
 }
@@ -205,7 +205,7 @@ CharacterSelectInput UIInput::GetCharacterSelectInput(int activePlayerIndex)
         // D-Pad / ボタンでも判定
         /*ci.left = ci.left || PadBtn(padNo, InputManager::JOYPAD_BTN::LEFT);
         ci.right = ci.right || PadBtn(padNo, InputManager::JOYPAD_BTN::RIGHT);*/
-        ci.decide = ci.decide || PadBtn(padNo, InputManager::JOYPAD_BTN::DOWN);
+        ci.decide = ci.decide || PadBtn(padNo, InputManager::JOYPAD_BTN::RIGHT); // 右 を決定に変更
         ci.back = ci.back || PadBtn(padNo, InputManager::JOYPAD_BTN::TOP);
     }
 

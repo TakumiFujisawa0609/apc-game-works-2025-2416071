@@ -1,38 +1,52 @@
 #pragma once
-#include "SceneBase.h"
 #include <vector>
-#include <DxLib.h>
+#include <cstdint>
+#include <algorithm>
+#include "DxLib.h"
+#include "SceneBase.h"
 
+// 結果シーン
 class Result : public SceneBase
 {
 public:
-	// コンストラクタ
-	Result(void);
 
-	// デストラクタ
-	~Result(void) override;
-	void Init(void) override;
-	void Update(void) override;
-	void Draw(void) override;
-	void Release(void) override;
+    static inline int ClampInt(int v, int hi) { return (v < hi) ? v : hi; }
+    static inline float Clamp01(float v) { return (v < 1.0f) ? v : 1.0f; }
+
+    Result(void);
+    ~Result(void)override;
+
+    void Init(void)override;
+    void Update(void)override;
+    void Draw(void)override;
+    void Release(void)override;
 
 private:
-	// 勝者ID（-1=ゲームオーバー/勝者なし）
-	int playerWinID_;
-	// スコア等（未使用のまま維持）
-	int playerScores_[4];
+    // 表示モデルの構築（ロード・配置）
+    void BuildModelsForResult();
 
-	// 追加: 表示するモデル群
-	std::vector<int> modelHandles_;
-	std::vector<VECTOR> modelPositions_;
-	float modelScale_ = 1.4f;
+private:
+    // 勝者ID（-1 の場合はゲームオーバー）
+    int playerWinID_ = -1;
 
-	// 1人プレイか
-	bool singlePlayer_ = false;
+    // スコア（必要なら使用）
+    int playerScores_[4] = { 0, 0, 0, 0 };
 
-	// モデルロード/配置
-	void BuildModelsForResult();
+    // 1人プレイかどうか
+    bool singlePlayer_ = true;
 
-	// 背景画像
-	int bgImg_ = -1;
+    // モデルハンドル群
+    std::vector<int>   modelHandles_;
+    // モデル配置位置
+    std::vector<VECTOR> modelPositions_;
+    // モデルの一括スケール
+    float modelScale_ = 1.0f;
+
+    // 背景画像
+    int bgImg_ = -1;
+
+    // 演出用（フェード/カメラ揺れ/ガイド点滅）
+    int   fadeTimerMs_ = 0;
+    float cameraBobPhase_ = 0.0f;
+    float promptBlinkPhase_ = 0.0f;
 };
