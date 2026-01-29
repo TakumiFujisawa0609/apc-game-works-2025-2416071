@@ -50,4 +50,13 @@ private:
 
     // 追加: プレイヤーの生存状態を左上に表示するHUD
     void DrawPlayerStatusHUD();
+
+    // 操作説明用画像ボタン変数
+	int attackButtonImg_ = -1;
+
+	// 移動操作・突進方向決定用のボタン画像
+	int moveButtonImg_ = -1;
+
+    // ボタン表示用フラグ
+	bool showButtonHints_ = true;
 };

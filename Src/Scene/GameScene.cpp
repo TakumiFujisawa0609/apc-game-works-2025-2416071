@@ -22,6 +22,14 @@ GameScene::~GameScene()
 
 void GameScene::Init()
 {
+
+	// 画像の読み込み
+	attackButtonImg_ = LoadGraph("data/Image/button/xbox_lt_outline.png");
+	moveButtonImg_ = LoadGraph("data/Image/button/xbox_stick_l.png");
+
+	// 画像描画フラグ
+	showButtonHints_ = true;
+
 	// カメラをゲーム用設定に変更
 	Camera* camera = SceneManager::GetInstance().GetCamera();
 	camera->ChangeMode(Camera::MODE::FIXED_POINT);
@@ -138,6 +146,16 @@ void GameScene::Update()
 			SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::RESULT);
 		}
 	}
+
+	// 10秒経過でボタンヒントフェードアウト
+	if (showButtonHints_)
+	{
+		transitionTimer_++;
+		if (transitionTimer_ > 600) // 約10秒
+		{
+			showButtonHints_ = false;
+		}
+	}
 }
 
 void GameScene::Draw()
@@ -154,24 +172,34 @@ void GameScene::Draw()
 	// プレイヤー識別HUD
 	//DrawPlayerHUDLegend();
 
+	if(showButtonHints_)
+	{
+		// ボタン画像
+		DrawGraph(20, 400, attackButtonImg_, TRUE);
+		// + 文字
+		DrawFormatString(80, 410, GetColor(255, 255, 255), "\n押してチャージ / 離して突進");
 
+		DrawGraph(20, 500, moveButtonImg_, TRUE);
+		// + 文字
+		DrawFormatString(80, 510, GetColor(255, 255, 255), "\n移動 / 突進方向");
+	}
 
-	// デバッグ表示（任意）
-	//DrawFormatString(10, 10, GetColor(255, 255, 255), "Player Num: %d", playerNum_);
 
 	// ゲームオーバー表示
-	if (playerManager_->GetIsGameOver())
-	{
-		if (playerNum_ == 1)
-		{
-			DrawString(100, 200, "GAME OVER", GetColor(250, 130, 130));
-		}
-		else
-		{
-			int winnerID = playerManager_->GetWinnerID();
-			DrawFormatString(100, 200, GetColor(255, 255, 0), "Winner: Player %d", winnerID + 1);
-		}
-	}
+	//if (playerManager_->GetIsGameOver())
+	//{
+	//	if (playerNum_ == 1)
+	//	{
+	//		DrawString(100, 200, "GAME OVER", GetColor(250, 130, 130));
+	//	}
+	//	else
+	//	{
+	//		int winnerID = playerManager_->GetWinnerID();
+	//		DrawFormatString(100, 200, GetColor(255, 255, 0), "Winner: Player %d", winnerID + 1);
+	//	}
+	//}
+
+
 }
 
 void GameScene::DrawPlayerMarkers3D()
@@ -275,6 +303,9 @@ void GameScene::Release()
 		playerManager_->ClearPlayers();
 		playerManager_ = nullptr;
 	}
+
+	DeleteGraph(attackButtonImg_);
+	DeleteGraph(moveButtonImg_);
 }
 
 // 追加：プレイヤー生存状態HUD（画面左上）

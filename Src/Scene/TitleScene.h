@@ -24,7 +24,7 @@ private:
 	int titleImg_;
 
 	// Bƒ{ƒ^ƒ“‰æ‘œ
-	int bButtonImg_;
+	int aButtonImg_;
 };
 
 

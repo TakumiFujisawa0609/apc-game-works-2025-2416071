@@ -27,6 +27,13 @@ void PlayerNumScene::Init(void)
 
 	// 人数選択してね画像読み込み
 	selectPromptImg_ = LoadGraph("Data/Image/PlayerNum.png");
+
+	// 選択肢ボタンUI画像読み込み
+	cursorLImg_ = LoadGraph("Data/Image/button/xbox_stick_l_vertical.png");
+	//cursorRImg_ = LoadGraph("Data/Image/button/xbox_button_color_b.png");
+
+	decideImg_ = LoadGraph("Data/Image/button/xbox_button_color_a.png");
+
 }
 
 void PlayerNumScene::Update(void)
@@ -125,6 +132,16 @@ void PlayerNumScene::Draw(void)
 	}
 
 	// 操作ガイド
+	// 画面左上に表示
+	// 左右移動
+	DrawRotaGraph(120, 200, 1.0, 0.0, cursorLImg_, TRUE);
+	// 画像横に文字表示
+	DrawFormatString(150, 185, GetColor(255, 255, 255), "Lスティック上下で人数変更\n※PAD1のみ操作できます");
+
+	// 決定
+	DrawRotaGraph(120, 300, 1.0, 0.0, decideImg_, TRUE);
+	DrawFormatString(150, 285, GetColor(255, 255, 255), "Aボタンで人数決定");
+
 	/*DrawFormatString2(500, 170, GetColor(180, 180, 255), -1, "PAD1: X=左 / B=右 / A=決定 / Y=戻る");
 	DrawFormatString2(500, 210, GetColor(180, 180, 255), -1, "KEY : ←/A/↑/W=左, →/D/↓/S=右, Enter/Space=決定, B=戻る");*/
 }
@@ -150,4 +167,17 @@ void PlayerNumScene::Release(void)
 		DeleteGraph(selectPromptImg_);
 		selectPromptImg_ = -1;
 	}
+
+	if (cursorLImg_ != -1)
+	{
+		DeleteGraph(cursorLImg_);
+		cursorLImg_ = -1;
+	}
+
+	if (decideImg_ != -1)
+	{
+		DeleteGraph(decideImg_);
+		decideImg_ = -1;
+	}
+
 }

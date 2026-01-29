@@ -33,6 +33,9 @@ void Result::Init(void)
 	// 背景色設定
 	bgImg_ = LoadGraph("Data/Image/Background.png");
 
+	// ボタン
+	//buttonImg_ = LoadGraph("data/Image/button/xbox_a_outline.png");
+
 	// フェード/演出用初期化
 	fadeTimerMs_ = 0;
 }
@@ -49,8 +52,8 @@ void Result::Update(void)
 	// 入力
 	InputManager& ins = InputManager::GetInstance();
 
-	// タイトルへ戻る
-	if (ins.IsNew(KEY_INPUT_RETURN) || ins.IsPadBtnNew(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT))
+	// タイトルへ戻る（決定/遷移は A(DOWN)）
+	if (ins.IsNew(KEY_INPUT_RETURN) || ins.IsPadBtnNew(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN))
 	{
 		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
 	}
@@ -122,11 +125,22 @@ void Result::Draw(void)
 		}
 	}
 
-	// 入力ガイド（点滅）
+	// ボタン描画
 	{
-		float blink = 0.5f + 0.5f * sinf(promptBlinkPhase_ * 6.0f); // 0～1
-		int c = static_cast<int>(220 * blink);
-		DrawString(40, 70, "Enter / PAD1-B: タイトルへ", GetColor(c, c, c));
+		const int btnX = Application::SCREEN_SIZE_X - 100;
+		const int btnY = Application::SCREEN_SIZE_Y - 80;
+		DrawRotaGraph(btnX, btnY, 1.0, 0.0, buttonImg_, TRUE);
+		// 点滅（フェードイン後、約0.5秒周期で点滅）
+		const float blinkCycle = 0.5f; // 秒
+		const float blinkPhase = fmodf(promptBlinkPhase_, blinkCycle) / blinkCycle; // 0.0～1.0
+		const float blinkAlpha = (blinkPhase < 0.5f) ? (blinkPhase * 2.0f) : (1.0f - (blinkPhase - 0.5f) * 2.0f);
+		const float finalAlpha = fadeAlpha * blinkAlpha;
+		int alphaInt = static_cast<int>(finalAlpha * 255.0f);
+		if (alphaInt > 255) alphaInt = 255;
+		if (alphaInt < 0) alphaInt = 0;
+		SetDrawBlendMode(DX_BLENDMODE_ALPHA, alphaInt);
+		DrawString(btnX - 40, btnY + 30, "Aでタイトルへ", GetColor(255, 255, 255));
+		SetDrawBlendMode(DX_BLENDMODE_NOBLEND, 0);
 	}
 }
 
@@ -140,6 +154,7 @@ void Result::Release(void)
 	modelPositions_.clear();
 
 	DeleteGraph(bgImg_);
+	DeleteGraph(buttonImg_);
 }
 
 // モデルの構築（表示するタイプを選んでロード・配置）

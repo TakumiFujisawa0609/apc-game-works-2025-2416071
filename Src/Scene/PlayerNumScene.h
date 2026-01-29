@@ -44,5 +44,12 @@ private:
 
 	// 人数選択してね画像
 	int selectPromptImg_;
+
+	// 選択肢ボタンUI画像
+	int cursorLImg_;
+	int cursorRImg_;
+
+	// 選択肢決定ボタンUI画像
+	int decideImg_;
 };
 

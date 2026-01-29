@@ -49,4 +49,7 @@ private:
     int   fadeTimerMs_ = 0;
     float cameraBobPhase_ = 0.0f;
     float promptBlinkPhase_ = 0.0f;
+
+	// ƒ{ƒ^ƒ“‰æ‘œ
+	int buttonImg_ = -1;
 };

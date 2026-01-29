@@ -93,4 +93,10 @@ private:
 
     // 点滅
     int blinkCounter_ = 0;
+
+    // 操作ガイド
+	int cursorLImg_ = -1;
+
+    // 確定ボタン画像
+	int decideBtnImg_ = -1;
 };

@@ -84,6 +84,12 @@ void CharacterSelect::Init()
     finished_ = false;
     duplicateBlock_ = false;
     blinkCounter_ = 0;
+
+    // 左右画像
+    cursorLImg_ = LoadGraph("Data/Image/button/xbox_stick_l_horizontal.png");
+
+
+    decideBtnImg_ = LoadGraph("Data/Image/button/xbox_button_color_a.png");
 }
 
 void CharacterSelect::Update()
@@ -229,8 +235,21 @@ void CharacterSelect::CompleteSelection()
 
 void CharacterSelect::Draw()
 {
+
+
+
 	// 背景描画
 	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 1.0, 0.0, bgImageId_, TRUE);
+
+    // ボタン画像　画面下部
+	DrawRotaGraph(120, Application::SCREEN_SIZE_Y - 80, 1.0, 0.0, cursorLImg_, TRUE);
+	// 画像横に文字表示
+	DrawFormatString(150, Application::SCREEN_SIZE_Y - 95, GetColor(255, 255, 255), "Lスティック左右でキャラクター変更");
+
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y - 80, 1.0, 0.0, decideBtnImg_, TRUE);
+	DrawFormatString(Application::SCREEN_SIZE_X / 2 + 35, Application::SCREEN_SIZE_Y - 95, GetColor(255, 255, 255), "Aボタンでキャラクター決定");
+
+
     DrawHeader();
     DrawCharacterGrid();
     DrawPlayerList();
@@ -469,4 +488,8 @@ void CharacterSelect::Release()
 
     // 背景解放
     DeleteGraph(bgImageId_);
+
+	// 画像解放
+	DeleteGraph(cursorLImg_);
+	DeleteGraph(decideBtnImg_);
 }

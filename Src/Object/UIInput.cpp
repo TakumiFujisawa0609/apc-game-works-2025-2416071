@@ -65,12 +65,12 @@ TitleInput UIInput::GetTitleInput()
     ti.keyboardGoPlayerSelect = KeyTrg(KEY_INPUT_RETURN);
     ti.keyboardGoHowToPlay = KeyTrg(KEY_INPUT_SPACE);
 
-    // どのパッドでも良い場合は全パッドをチェック
+    // どのパッドでも良い場合は全パッドをチェック（決定/遷移は A(DOWN) に統一）
     ti.goPlayerSelect =
-        PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT) ||
-        PadBtn(InputManager::JOYPAD_NO::PAD2, InputManager::JOYPAD_BTN::RIGHT) ||
-        PadBtn(InputManager::JOYPAD_NO::PAD3, InputManager::JOYPAD_BTN::RIGHT) ||
-        PadBtn(InputManager::JOYPAD_NO::PAD4, InputManager::JOYPAD_BTN::RIGHT);
+        PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN) ||
+        PadBtn(InputManager::JOYPAD_NO::PAD2, InputManager::JOYPAD_BTN::DOWN) ||
+        PadBtn(InputManager::JOYPAD_NO::PAD3, InputManager::JOYPAD_BTN::DOWN) ||
+        PadBtn(InputManager::JOYPAD_NO::PAD4, InputManager::JOYPAD_BTN::DOWN);
 
     ti.goHowToPlay =
         PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN) ||
@@ -92,10 +92,11 @@ ManualInput UIInput::GetManualInput()
     mi.nextPage = KeyTrg(KEY_INPUT_RIGHT);
 
     // パッド（どれかの PAD の入力で良い）
-    bool anyPadBack = PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT) ||
-        PadBtn(InputManager::JOYPAD_NO::PAD2, InputManager::JOYPAD_BTN::RIGHT) ||
-        PadBtn(InputManager::JOYPAD_NO::PAD3, InputManager::JOYPAD_BTN::RIGHT) ||
-        PadBtn(InputManager::JOYPAD_NO::PAD4, InputManager::JOYPAD_BTN::RIGHT);
+    // 遷移系は A(DOWN) に統一
+    bool anyPadBack = PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN) ||
+        PadBtn(InputManager::JOYPAD_NO::PAD2, InputManager::JOYPAD_BTN::DOWN) ||
+        PadBtn(InputManager::JOYPAD_NO::PAD3, InputManager::JOYPAD_BTN::DOWN) ||
+        PadBtn(InputManager::JOYPAD_NO::PAD4, InputManager::JOYPAD_BTN::DOWN);
 
     bool anyPadSelect = PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN) ||
         PadBtn(InputManager::JOYPAD_NO::PAD2, InputManager::JOYPAD_BTN::DOWN) ||
@@ -155,11 +156,11 @@ PlayerNumInput UIInput::GetPlayerNumInput()
 
 
         // D-Pad / ボタンでも判定
-        //pi.left = pi.left || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::LEFT);   // X / 左
-        //pi.right = pi.right || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT);  // B / 右
+        //pi.left = pi.left || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::LEFT);   // 左
+        //pi.right = pi.right || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT); // 右
 
-        pi.decide = pi.decide || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::RIGHT); // 右 を決定に変更
-        pi.back = pi.back || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::TOP);      // Y / 戻る
+        pi.decide = pi.decide || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN); // 決定=A(DOWN)
+        pi.back = pi.back || PadBtn(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::TOP);      // 戻る=TOP
     }
 
     return pi;
@@ -205,10 +206,9 @@ CharacterSelectInput UIInput::GetCharacterSelectInput(int activePlayerIndex)
         // D-Pad / ボタンでも判定
         /*ci.left = ci.left || PadBtn(padNo, InputManager::JOYPAD_BTN::LEFT);
         ci.right = ci.right || PadBtn(padNo, InputManager::JOYPAD_BTN::RIGHT);*/
-        ci.decide = ci.decide || PadBtn(padNo, InputManager::JOYPAD_BTN::RIGHT); // 右 を決定に変更
-        ci.back = ci.back || PadBtn(padNo, InputManager::JOYPAD_BTN::TOP);
+        ci.decide = ci.decide || PadBtn(padNo, InputManager::JOYPAD_BTN::DOWN); // 決定=A(DOWN)
+        ci.back = ci.back || PadBtn(padNo, InputManager::JOYPAD_BTN::TOP);      // 戻る=TOP
     }
-
 
     return ci;
 }

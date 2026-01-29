@@ -30,8 +30,8 @@ void TitleScene::Init(void)
     // タイトル画像
     titleImg_ = LoadGraph("Data/Image/Title.png");
 
-    // Bボタン画像は使用しないが互換のためロードは残してもよい
-    bButtonImg_ = LoadGraph("Data/Image/Bpush.png");
+	// Bボタン画像
+    aButtonImg_ = LoadGraph("Data/Image/button/xbox_button_color_a.png");
 }
 
 void TitleScene::Update(void)
@@ -60,15 +60,17 @@ void TitleScene::Draw(void)
     // タイトル描画
     DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 0.75, 0.0, titleImg_, TRUE);
 
-    // 画面下部に操作ガイド（A=決定）
-    DrawFormatString(Application::SCREEN_SIZE_X / 2 - 160, 560, GetColor(220, 240, 255),
-        "Press A (Pad) or Enter (KB) to Start");
+    // 画面下部に操作ガイド
+	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y - 100, 1.0, 0.0, aButtonImg_, TRUE);
+
+    // "ではじめる"を表示
+	DrawString(Application::SCREEN_SIZE_X / 2 + 35, Application::SCREEN_SIZE_Y - 105, "ではじめる", GetColor(255, 255, 255));
 }
 
 void TitleScene::Release(void)
 {
     // 画像解放
     DeleteGraph(titleImg_);
-    DeleteGraph(bButtonImg_);
+    DeleteGraph(aButtonImg_);
 }
 
