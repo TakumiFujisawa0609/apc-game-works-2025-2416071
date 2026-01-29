@@ -44,13 +44,14 @@ void SoundManager::LoadAll() {
 
     // SEパス（必要に応じて差し替え）
     const std::vector<std::string> sePaths = {
-        "Data/Sound/SE/decide.wav",     // DECIDE
+        "Data/Sound/SE/GoNextScene.mp3",     // DECIDE
         "Data/Sound/SE/back.wav",       // BACK
-        "Data/Sound/SE/move.wav",       // MOVE
+        "Data/Sound/SE/Select_Hb.mp3",       // MOVE
+		"Data/Sound/SE/Select_Hb2.mp3",      // MOVE2
         "Data/Sound/SE/jump.wav",       // JUMP
-        "Data/Sound/SE/dash.wav",       // DASH
+        "Data/Sound/SE/DASH.mp3",       // DASH
         "Data/Sound/SE/dead.wav",       // DEAD
-        "Data/Sound/SE/charge_loop.wav" // CHARGE_LOOP
+        "Data/Sound/SE/Ch_loop.mp3" // CHARGE_LOOP
     };
     for (int i = 0; i < static_cast<int>(SE_ID::MAX) && i < (int)sePaths.size(); ++i) {
         int h = LoadSoundMem(sePaths[i].c_str());

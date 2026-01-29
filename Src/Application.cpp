@@ -1,6 +1,7 @@
 #include <DxLib.h>
 #include "Manager/InputManager.h"
 #include "Manager/SceneManager.h"
+#include "Manager/SoundManager.h"
 #include "Application.h"
 
 Application* Application::instance_ = nullptr;
@@ -57,6 +58,10 @@ void Application::Init(void)
 
 	// シーン管理初期化
 	SceneManager::CreateInstance();
+
+	// サウンド管理初期化
+	SoundManager::CreateInstance();
+	SoundManager::GetInstance().Init();
 
 }
 

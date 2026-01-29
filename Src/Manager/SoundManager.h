@@ -16,6 +16,7 @@ enum class SE_ID {
     DECIDE = 0,  // 決定音（UI）
     BACK,        // 戻る音（UI）
     MOVE,        // UI移動
+	MOVE2,       // UI移動2（未使用）
     JUMP,        // ジャンプ
     DASH,        // ダッシュ開始
     DEAD,        // 死亡時

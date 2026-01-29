@@ -497,6 +497,11 @@ void Player::ApplyHit(const VECTOR& knockBack)
     if (moveVec_.y < -MAX_VERTICAL_SPEED) moveVec_.y = -MAX_VERTICAL_SPEED;
 }
 
+bool Player::IsDashChargeHeldPublic() const
+{
+    return controller_ ? controller_->IsDashChargeHeld() : false;
+}
+
 void Player::Die()
 {
     if (!isAlive_) return;

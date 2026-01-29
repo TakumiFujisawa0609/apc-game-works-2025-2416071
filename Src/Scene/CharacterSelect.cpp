@@ -1,6 +1,7 @@
 #include "CharacterSelect.h"
 #include "../Object/UIInput.h"
 #include "../Manager/SceneManager.h"
+#include "../Manager/SoundManager.h"
 #include "../Object/Player/Common/PlayerManager.h"
 #include "../Utility/AsoUtility.h"
 #include "../Application.h"
@@ -130,8 +131,11 @@ void CharacterSelect::HandleInput()
     // ”ñŠm’èŽž‚Ì‚ÝƒLƒƒƒ‰ˆÚ“®
     if (!confirmed_[currentPlayer_])
     {
+        int before = selectedIndex_[currentPlayer_];
         if (in.left)  ChangeCharacter(-1);
         if (in.right) ChangeCharacter(+1);
+        if (before != selectedIndex_[currentPlayer_])
+            SoundManager::GetInstance().PlaySE(SE_ID::MOVE);
     }
 
     // Œˆ’è
@@ -142,6 +146,7 @@ void CharacterSelect::HandleInput()
             duplicateBlock_ = true;
             return;
         }
+		SoundManager::GetInstance().PlaySE(SE_ID::MOVE2);
         DecideCurrent();
         return;
     }
@@ -228,15 +233,15 @@ void CharacterSelect::RevertPlayer()
 
 void CharacterSelect::CompleteSelection()
 {
+    SoundManager::GetInstance().PlaySE(SE_ID::DECIDE);
     finished_ = true;
     if (currentPlayer_ >= playerCount_) currentPlayer_ = playerCount_ - 1;
     if (currentPlayer_ < 0) currentPlayer_ = 0;
+
 }
 
 void CharacterSelect::Draw()
 {
-
-
 
 	// ”wŒi•`‰æ
 	DrawRotaGraph(Application::SCREEN_SIZE_X / 2, Application::SCREEN_SIZE_Y / 2, 1.0, 0.0, bgImageId_, TRUE);

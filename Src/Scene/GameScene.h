@@ -59,4 +59,10 @@ private:
 
     // ボタン表示用フラグ
 	bool showButtonHints_ = true;
+
+    // SE状態管理
+    std::vector<bool> prevCharging_;
+    std::vector<bool> prevDashing_;
+
+
 };

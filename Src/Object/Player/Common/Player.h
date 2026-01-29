@@ -80,6 +80,9 @@ public:
     // ノックバック適用
     void ApplyHit(const VECTOR& knockBack);
 
+    bool IsDashChargeHeldPublic() const;
+  
+
 protected:
 
     // 死亡

@@ -7,6 +7,7 @@
 #include "../Object/Player/Common/PlayerManager.h"
 #include "../Manager/Camera.h"
 #include "../Application.h"
+#include "../Manager/SoundManager.h"
 #include "TitleScene.h"
 
 TitleScene::TitleScene(void) : SceneBase()
@@ -48,6 +49,7 @@ void TitleScene::Update(void)
 
     // 進む：A（Pad）/ Enter（KB）
     if (ti.goPlayerSelect || ti.keyboardGoPlayerSelect) {
+        SoundManager::GetInstance().PlaySE(SE_ID::DECIDE);
         scene.ChangeScene(SceneManager::SCENE_ID::PLAYERNUMBERSELECT);
         return;
     }

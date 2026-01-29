@@ -1,5 +1,6 @@
 #include "../Manager/InputManager.h"
 #include "../Manager/SceneManager.h"
+#include "../Manager/SoundManager.h"
 #include "../Object/UIInput.h"
 #include "../Application.h"
 #include "PlayerNumScene.h"
@@ -40,6 +41,7 @@ void PlayerNumScene::Update(void)
 {
 	// キー + PAD1 の入力を統合
 	auto pi = UIInput::GetPlayerNumInput();
+	auto prev = selectNum_;
 
 	// 左 / 右 で選択移動
 	if (pi.left)
@@ -49,6 +51,10 @@ void PlayerNumScene::Update(void)
 		{
 			selectNum_ = SELECT::SELECT_MAX - 1;
 		}
+		if (prev != selectNum_)
+		{
+			SoundManager::GetInstance().PlaySE(SE_ID::MOVE);
+		}
 	}
 	else if (pi.right)
 	{
@@ -57,6 +63,10 @@ void PlayerNumScene::Update(void)
 		{
 			selectNum_ = SELECT::SELECT_1P;
 		}
+		if (prev != selectNum_)
+		{
+			SoundManager::GetInstance().PlaySE(SE_ID::MOVE);
+		}
 	}
 
 	// 決定
@@ -64,6 +74,7 @@ void PlayerNumScene::Update(void)
 	{
 		SceneManager::GetInstance().SetPlayerNum(GetSelectNum());
 		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::CHARASELECT);
+		SoundManager::GetInstance().PlaySE(SE_ID::DECIDE);
 		return;
 	}
 

@@ -4,6 +4,7 @@
 #include "../Manager/SceneManager.h"
 #include "../Object/Grid.h"
 #include "../Manager/Camera.h"
+#include "../Manager/SoundManager.h" // 追加
 #include "../Object/Player/Common/PlayerManager.h"
 #include "../Object/Stage/Stage.h"
 #include "GameScene.h"
@@ -22,7 +23,6 @@ GameScene::~GameScene()
 
 void GameScene::Init()
 {
-
 	// 画像の読み込み
 	attackButtonImg_ = LoadGraph("data/Image/button/xbox_lt_outline.png");
 	moveButtonImg_ = LoadGraph("data/Image/button/xbox_stick_l.png");
@@ -113,6 +113,24 @@ void GameScene::Init()
 
 	playerManager_->InitAllPlayers();
 	transitionTimer_ = 0;
+
+	// SE状態トラッキング初期化（プレイヤーIDに合わせて確保）
+	prevCharging_.clear();
+	prevDashing_.clear();
+	{
+		const auto raw = playerManager_->GetPlayerRawPlayers();
+		int maxId = -1;
+		for (auto* p : raw) {
+			if (!p) continue;
+			if (p->GetID() > maxId) {
+				maxId = p->GetID();
+			}
+		}
+		if (maxId >= 0) {
+			prevCharging_.assign(maxId + 1, false);
+			prevDashing_.assign(maxId + 1, false);
+		}
+	}
 }
 
 void GameScene::Update()
@@ -121,6 +139,42 @@ void GameScene::Update()
 
 	// プレイヤー／ステージ更新
 	playerManager_->UpdatePlayers(Stage::GetInstance());
+
+	// チャージ/ダッシュ状態に応じたSE制御
+	{
+		const auto raw = playerManager_->GetPlayerRawPlayers();
+		for (auto* p : raw) {
+			if (!p || !p->IsAlive()) continue;
+			int id = p->GetID();
+
+			if ((int)prevCharging_.size() <= id) prevCharging_.resize(id + 1, false);
+			if ((int)prevDashing_.size() <= id) prevDashing_.resize(id + 1, false);
+
+			// チャージ保持（LT押下中）
+			bool chargingNow = p->IsDashChargeHeldPublic();
+			if (chargingNow && !prevCharging_[id]) {
+				SoundManager::GetInstance().PlaySELoop(SE_ID::CHARGE_LOOP);
+			}
+			else if (!chargingNow && prevCharging_[id]) {
+				SoundManager::GetInstance().StopSE(SE_ID::CHARGE_LOOP);
+			}
+			prevCharging_[id] = chargingNow;
+
+			// ダッシュ開始/終了
+			bool dashingNow = p->IsDashing();
+			if (dashingNow && !prevDashing_[id]) {
+				// 開始: 単発＋ループ開始
+				SoundManager::GetInstance().PlaySE(SE_ID::DASH);
+				SoundManager::GetInstance().StopSE(SE_ID::CHARGE_LOOP);
+				SoundManager::GetInstance().PlaySELoop(SE_ID::DASH);
+			}
+			else if (!dashingNow && prevDashing_[id]) {
+				// 終了: ループ停止
+				SoundManager::GetInstance().StopSE(SE_ID::DASH);
+			}
+			prevDashing_[id] = dashingNow;
+		}
+	}
 
 	// シングルプレイ時：人間（ID=0）が死んだらゲームオーバー
 	if (singlePlayerMode_ && !playerManager_->GetIsGameOver())
@@ -143,6 +197,8 @@ void GameScene::Update()
 		transitionTimer_++;
 		if (transitionTimer_ > 90)
 		{
+			// 安全のためループSE停止
+			SoundManager::GetInstance().StopSE(SE_ID::CHARGE_LOOP);
 			SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::RESULT);
 		}
 	}
@@ -183,22 +239,6 @@ void GameScene::Draw()
 		// + 文字
 		DrawFormatString(80, 510, GetColor(255, 255, 255), "\n移動 / 突進方向");
 	}
-
-
-	// ゲームオーバー表示
-	//if (playerManager_->GetIsGameOver())
-	//{
-	//	if (playerNum_ == 1)
-	//	{
-	//		DrawString(100, 200, "GAME OVER", GetColor(250, 130, 130));
-	//	}
-	//	else
-	//	{
-	//		int winnerID = playerManager_->GetWinnerID();
-	//		DrawFormatString(100, 200, GetColor(255, 255, 0), "Winner: Player %d", winnerID + 1);
-	//	}
-	//}
-
 
 }
 
