@@ -8,6 +8,8 @@ enum class BGM_ID {
     TITLE = 0,
     GAME,
     RESULT,
+    WIN,
+    LOSE,
     MAX
 };
 

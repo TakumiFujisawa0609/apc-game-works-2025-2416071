@@ -35,6 +35,7 @@ void PlayerNumScene::Init(void)
 
 	decideImg_ = LoadGraph("Data/Image/button/xbox_button_color_a.png");
 
+	//SoundManager::GetInstance().PlayBGM(BGM_ID::TITLE, true);
 }
 
 void PlayerNumScene::Update(void)

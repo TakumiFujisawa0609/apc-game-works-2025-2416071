@@ -33,6 +33,8 @@ void TitleScene::Init(void)
 
 	// Bボタン画像
     aButtonImg_ = LoadGraph("Data/Image/button/xbox_button_color_a.png");
+
+   
 }
 
 void TitleScene::Update(void)
@@ -55,6 +57,8 @@ void TitleScene::Update(void)
     }
 
     // HowToPlay は未使用（必要なら有効化）
+	SoundManager::GetInstance().PlayBGM(BGM_ID::TITLE, true);
+    SoundManager::GetInstance().SetBGMVolume(100);
 }
 
 void TitleScene::Draw(void)

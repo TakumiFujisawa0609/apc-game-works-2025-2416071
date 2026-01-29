@@ -106,6 +106,11 @@ void GameScene::Init()
 			std::unique_ptr<InputController> aiController = std::make_unique<AIController>(i);
 			playerManager_->CreatePlayer(type, i, param, std::move(aiController));
 		}
+
+		SoundManager& snd = SoundManager::GetInstance();
+		//snd.StopAllBGM();
+		snd.PlayBGM(BGM_ID::GAME, true);   // ループ再生
+		snd.SetBGMVolume(75);
 	}
 
 	// Result シーンで使うため保存
@@ -139,6 +144,8 @@ void GameScene::Update()
 
 	// プレイヤー／ステージ更新
 	playerManager_->UpdatePlayers(Stage::GetInstance());
+
+	            
 
 	// チャージ/ダッシュ状態に応じたSE制御
 	{
@@ -197,8 +204,17 @@ void GameScene::Update()
 		transitionTimer_++;
 		if (transitionTimer_ > 90)
 		{
-			// 安全のためループSE停止
-			SoundManager::GetInstance().StopSE(SE_ID::CHARGE_LOOP);
+			// サウンドの安全停止（ループSE＋BGM）
+			SoundManager& snd = SoundManager::GetInstance();
+
+			snd.PlaySE(SE_ID::DEAD);
+			snd.StopSE(SE_ID::CHARGE_LOOP);
+			// ダッシュをDASHのループで代用している場合
+			snd.StopSE(SE_ID::DASH);
+
+			// BGM停止（全停止または個別）
+			snd.StopAllBGM();
+
 			SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::RESULT);
 		}
 	}

@@ -4,6 +4,7 @@
 #include "../Utility/AsoUtility.h"
 #include "../Manager/InputManager.h"
 #include "../Manager/SceneManager.h"
+#include "../Manager/SoundManager.h"
 
 Result::Result(void)
 {
@@ -38,6 +39,22 @@ void Result::Init(void)
 
 	// フェード/演出用初期化
 	fadeTimerMs_ = 0;
+
+	// ソロ負け時のBGM
+	SoundManager& snd = SoundManager::GetInstance();
+	//snd.StopAllBGM();                 // まず全停止
+	if (singlePlayer_ && playerWinID_ != 0) 
+	{
+		// 負けBGM（共通の RESULT を使用。個別に分ける場合は SoundManager 側に曲を追加）
+		snd.PlayBGM(BGM_ID::LOSE, true);
+		snd.SetBGMVolume(75);        // 必要なら音量調整（0～255）
+	}
+	else 
+	{
+		// それ以外（勝ち/マルチ勝者表示など）の場合にも同じ曲で良ければ再生
+		snd.PlayBGM(BGM_ID::WIN, true);
+		snd.SetBGMVolume(75);
+	}
 }
 
 void Result::Update(void)
@@ -56,6 +73,8 @@ void Result::Update(void)
 	if (ins.IsNew(KEY_INPUT_RETURN) || ins.IsPadBtnNew(InputManager::JOYPAD_NO::PAD1, InputManager::JOYPAD_BTN::DOWN))
 	{
 		SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::TITLE);
+		SoundManager::GetInstance().PlaySE(SE_ID::MOVE2);
+		SoundManager::GetInstance().StopAllBGM();
 	}
 }
 

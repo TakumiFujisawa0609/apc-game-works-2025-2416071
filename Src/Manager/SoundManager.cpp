@@ -32,9 +32,10 @@ void SoundManager::Destroy() {
 void SoundManager::LoadAll() {
     // BGMパス（必要に応じて差し替え）
     const std::vector<std::string> bgmPaths = {
-        "Data/Sound/BGM/title.wav",
-        "Data/Sound/BGM/game.wav",
-        "Data/Sound/BGM/result.wav"
+        "Data/Sound/BGM/Title.mp3",
+        "Data/Sound/BGM/Game.mp3",
+		"Data/Sound/BGM/Win.mp3",
+		"Data/Sound/BGM/Lose.mp3"
     };
     for (int i = 0; i < static_cast<int>(BGM_ID::MAX) && i < (int)bgmPaths.size(); ++i) {
         int h = LoadSoundMem(bgmPaths[i].c_str());
@@ -50,7 +51,7 @@ void SoundManager::LoadAll() {
 		"Data/Sound/SE/Select_Hb2.mp3",      // MOVE2
         "Data/Sound/SE/jump.wav",       // JUMP
         "Data/Sound/SE/DASH.mp3",       // DASH
-        "Data/Sound/SE/dead.wav",       // DEAD
+        "Data/Sound/SE/DEAD.mp3",       // DEAD
         "Data/Sound/SE/Ch_loop.mp3" // CHARGE_LOOP
     };
     for (int i = 0; i < static_cast<int>(SE_ID::MAX) && i < (int)sePaths.size(); ++i) {

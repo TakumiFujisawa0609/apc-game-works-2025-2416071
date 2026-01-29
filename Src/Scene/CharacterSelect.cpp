@@ -91,6 +91,8 @@ void CharacterSelect::Init()
 
 
     decideBtnImg_ = LoadGraph("Data/Image/button/xbox_button_color_a.png");
+
+    //SoundManager::GetInstance().PlayBGM(BGM_ID::TITLE, true);
 }
 
 void CharacterSelect::Update()
@@ -108,6 +110,7 @@ void CharacterSelect::Update()
         }
         SceneManager::GetInstance().SetSelectedPlayerNums(types);
         SceneManager::GetInstance().ChangeScene(SceneManager::SCENE_ID::GAME);
+		SoundManager::GetInstance().StopAllBGM();
         return;
     }
 
